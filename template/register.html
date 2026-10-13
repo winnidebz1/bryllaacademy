@@ -101,11 +101,12 @@
                             <div class="loginbox">
                                 <div class="w-100">
                                     <div class="d-flex align-items-center justify-content-between login-header">
-                                        <span class="register-brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></span>
+                                        <a href="/" class="register-brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></a>
+                                        <a href="/" class="link-1">Back to Home</a>
                                     </div>
                                     <h1 class="fs-32 fw-bold topic">Sign up</h1>
                                     <p class="small text-muted mb-3" role="status">Choose your course and pay first. You set a password only after Paystack confirms the payment.</p>
-                                    <form id="signup-form" class="mb-3 pb-3" action="checkout.html" method="get" novalidate>
+                                    <form id="signup-form" class="mb-3 pb-3" action="checkout" method="get" novalidate>
                                         <div class="mb-3 position-relative">
                                             <label class="form-label" for="signup-name">Full Name<span class="text-danger ms-1">*</span></label>
                                             <div class="position-relative">
@@ -130,7 +131,7 @@
                                             <div class="remember-me d-flex align-items-center">
                                                     <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" required>
                                                     <label class="form-check-label mb-0 d-inline-flex remember-me fs-14" for="flexCheckDefault">
-                                                        I agree with <a href="terms-and-conditions.html" class="link-2 mx-2">Terms of Service</a> and <a href="privacy-policy.html" class="link-2 mx-2">Privacy Policy</a>
+                                                        I agree with <a href="terms-and-conditions" class="link-2 mx-2">Terms of Service</a> and <a href="privacy-policy" class="link-2 mx-2">Privacy Policy</a>
                                                     </label>
                                             </div>
                                         </div>
@@ -141,7 +142,7 @@
                                     </form>
 
                                     <div class="fs-14 fw-normal d-flex align-items-center justify-content-center">
-                                        Already you have an account?<a href="login.html" class="link-2 ms-1"> Login</a>
+                                        Already you have an account?<a href="login" class="link-2 ms-1"> Login</a>
                                     </div>
     
                                     <!-- /Login -->
@@ -187,7 +188,7 @@
 				const email = document.getElementById("signup-email").value.trim();
 				sessionStorage.setItem("bryllaPendingName", name);
 				sessionStorage.setItem("bryllaPendingEmail", email);
-				window.location.assign("checkout.html?course=" + encodeURIComponent(courseField.value));
+				window.location.assign("checkout?course=" + encodeURIComponent(courseField.value));
 			});
 		</script>
 		
