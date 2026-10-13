@@ -267,6 +267,7 @@
 		var enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
 		if (enrolled) BryllaStudent.startCourse();
 		var sel = null;
+		var studentPicked = false;
 		var tab = "o";
 		var statusText = "";
 		var assignmentDialog = $("assignment-dialog");
@@ -449,6 +450,7 @@
 			} else if (button.dataset.t) {
 				tab = button.dataset.t;
 			}
+			if (button.dataset.id || button.dataset.a === "next") studentPicked = true;
 			if (button.dataset.a !== "assignment") render();
 		});
 		$("assignment-close").addEventListener("click", function () { assignmentDialog.close(); });
@@ -469,6 +471,7 @@
 		if (window.BryllaAuth) BryllaAuth.ready.then(function () {
 			enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
 			if (enrolled) BryllaStudent.startCourse();
+			if (!studentPicked) sel = null;
 			showStudent();
 			render();
 		});
