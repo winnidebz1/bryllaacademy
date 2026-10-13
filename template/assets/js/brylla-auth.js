@@ -79,13 +79,16 @@
 			return null;
 		}
 		var session = (await client.auth.getSession()).data.session;
-		if (!session) {
+		var checked = session ? await client.auth.getUser() : null;
+		if (checked && checked.error && !checked.error.status) throw checked.error;
+		if (!session || !checked || checked.error || !checked.data.user) {
+			if (session) await client.auth.signOut({ scope: "local" });
 			localStorage.removeItem(PROFILE_KEY);
 			applyEnrolments([]);
 			if (guarded) return toLogin();
 			return null;
 		}
-		user = session.user;
+		user = checked.data.user;
 		var results = await Promise.all([
 			client.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
 			client.from("enrollments").select("course_id,status").eq("user_id", user.id)
