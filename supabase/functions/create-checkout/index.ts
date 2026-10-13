@@ -34,7 +34,7 @@ Deno.serve(async (request) => {
 				amount: course.price_minor,
 				currency: course.currency,
 				reference,
-				callback_url: site ? site + "/payment-status.html" : undefined,
+				callback_url: site ? site + "/payment-status" : undefined,
 				metadata: { order_id: orderId, course_id: course.id },
 			}),
 		});

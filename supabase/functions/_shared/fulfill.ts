@@ -73,12 +73,12 @@ async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; ema
 	const site = Deno.env.get("SITE_URL") || "https://bryllaacademy.vercel.app";
 	const { data: course } = await supabase.from("courses").select("title").eq("id", order.course_id).maybeSingle();
 	const courseTitle = course?.title ?? "your course";
-	let link = site ? site + "/set-password.html" : "";
+	let link = site ? site + "/set-password" : "";
 	let kind = "invite";
 	const invite = await supabase.auth.admin.generateLink({
 		type: "invite",
 		email: order.email,
-		options: { data: { full_name: order.full_name }, redirectTo: (site ? site : "") + "/set-password.html" },
+		options: { data: { full_name: order.full_name }, redirectTo: (site ? site : "") + "/set-password" },
 	});
 	if (!invite.error && invite.data?.properties?.action_link) {
 		link = invite.data.properties.action_link;
@@ -88,7 +88,7 @@ async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; ema
 		const magic = await supabase.auth.admin.generateLink({
 			type: "magiclink",
 			email: order.email,
-			options: { redirectTo: (site ? site : "") + "/set-password.html" },
+			options: { redirectTo: (site ? site : "") + "/set-password" },
 		});
 		if (!magic.error && magic.data?.properties?.action_link) {
 			link = magic.data.properties.action_link;
