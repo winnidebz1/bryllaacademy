@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Payment status | Brylla Academy</title>
+	<link rel="icon" type="image/png" href="assets/img/logo.png">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+	<style>
+		body { margin: 0; font-family: Inter, "Segoe UI", Arial, sans-serif; background: #f4f8fb; color: #122d49; }
+		main { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
+		a { color: #073b70; }
+	</style>
+</head>
+<body>
+	<main>
+		<a href="index-4.html"><img src="assets/img/logo.png" alt="Brylla Academy" width="120"></a>
+		<h1>Payment status</h1>
+		<p id="payment-status" role="status">Verifying the payment with Paystack…</p>
+		<p><a href="checkout.html?course=bookkeeping">Try checkout again</a> · <a href="account-setup.html">Resend the setup email</a></p>
+	</main>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-checkout.js"></script>
+	<script>
+		var params = new URLSearchParams(location.search);
+		var reference = params.get("reference") || params.get("trxref") || "";
+		var status = document.getElementById("payment-status");
+		if (!reference) {
+			status.textContent = "There is no payment to verify. The course is still locked.";
+		} else if (!window.BryllaCheckout.configured()) {
+			status.textContent = "Payment verification is not connected yet. Returning from Paystack does not unlock the course.";
+		} else {
+			window.BryllaCheckout.post("verify-payment", { reference: reference }).then(function (result) {
+				if (!result.ok) {
+					status.textContent = "The payment was not confirmed (" + result.code + "). The course is still locked.";
+					return;
+				}
+				status.textContent = result.email === "sent"
+					? "Payment confirmed. Check your email for the password setup or sign-in link."
+					: "Payment confirmed. The setup email is waiting to be sent, so you do not need to pay again.";
+			}).catch(function (error) {
+				status.textContent = error.message + " The course stays locked.";
+			});
+		}
+	</script>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html> 
+<html lang="en">
+	<head>
+	
+		<!-- Meta Tags -->
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Sign in to your Brylla Academy account and continue building practical, career-focused skills.">
+		<meta name="author" content="Brylla Academy">
+		<meta name="robots" content="index, follow">
+		
+		<title>Sign In | Brylla Academy</title>
+
+		<!-- Favicon -->
+		<link rel="icon" type="image/png" href="assets/img/logo.png">
+		<link rel="apple-touch-icon" href="assets/img/logo.png">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+		
+		<!-- Fontawesome CSS -->
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+
+		<!-- Select2 CSS -->
+		<link rel="stylesheet" href="assets/plugins/select2/css/select2.min.css">
+		
+        <!-- Slick CSS -->
+		<link rel="stylesheet" href="assets/plugins/slick/slick.css">
+		<link rel="stylesheet" href="assets/plugins/slick/slick-theme.css">
+		
+		<!-- Feathericon CSS -->
+        <link rel="stylesheet" href="assets/plugins/feather/feather.css">
+
+		<!-- Tabler Icon CSS -->
+		<link rel="stylesheet" href="assets/plugins/tabler-icons/tabler-icons.css">
+
+        <!-- Iconsax CSS -->
+		<link rel="stylesheet" href="assets/css/iconsax.css">
+
+		<!-- Main CSS -->
+		<link rel="stylesheet" href="assets/css/style.css">
+		<style>
+			body.login-page {
+				--brylla-navy: #073b70;
+				--brylla-navy-deep: #062b52;
+				--brylla-teal: #13b8ad;
+				--brylla-orange: #f28a3c;
+				font-family: "Inter", "Segoe UI", Arial, sans-serif;
+				font-size: 14px;
+			}
+			.login-page h1, .login-page h2, .login-page h3 { font-family: "Inter", "Segoe UI", Arial, sans-serif; font-weight: 700; letter-spacing: -.035em; }
+			.login-page .login-content .login-wrap-bg { background: #fff; }
+			.login-page .login-content .login-wrap-bg { position: relative; right: auto; width: 100%; max-width: 100%; flex: 0 0 100%; }
+			.login-page .login-content > .row { margin-right: 0; margin-left: 0; }
+			.login-page .login-content .login-wrap-bg .login-wrapper { max-width: 680px; margin: 0 auto; }
+			.login-page .login-content .login-wrap-bg .login-wrapper .loginbox { width: 100%; padding: 20px 40px; }
+			.login-page .login-content .login-wrap-bg .login-header { justify-content: center !important; margin-bottom: 24px; }
+			.login-page .login-brand-window { width: 175px; height: 116px; position: relative; display: block; overflow: hidden; }
+			.login-page .login-brand-window img { position: absolute; top: 50%; left: 50%; width: 280px; max-width: none; height: 280px; transform: translate(-50%, -50%); }
+			.login-page .login-content .topic { margin-bottom: 28px; color: var(--brylla-navy-deep); }
+			.login-page .form-label { color: var(--brylla-navy-deep); font-weight: 600; }
+			.login-page .login-content .login-wrap-bg .form-control:focus { border-color: var(--brylla-teal); box-shadow: 0 0 0 .2rem rgba(19,184,173,.14); }
+			.login-page .form-check-input:checked { background-color: var(--brylla-teal); border-color: var(--brylla-teal); }
+			.login-page .link-2, .login-page .link-2:hover { color: var(--brylla-navy); }
+			.login-page .btn.btn-secondary { background: var(--brylla-navy); border-color: var(--brylla-navy); color: #fff; font-family: inherit; font-weight: 700; }
+			.login-page .btn.btn-secondary:hover, .login-page .btn.btn-secondary:focus { background: var(--brylla-navy-deep); border-color: var(--brylla-navy-deep); color: #fff; }
+			@media (max-width: 991.98px) {
+				.login-page .login-content .login-wrap-bg .login-wrapper .loginbox { padding: 20px 30px; }
+			}
+		</style>
+	</head>
+	<body class="login-page">
+
+		<!-- Main Wrapper -->
+		<div class="main-wrapper">
+            <div class="login-content">
+                <div class="row">
+                    <div class="col-12 login-wrap-bg">
+                        <!-- Login -->
+                        <div class="login-wrapper">
+                            <div class="loginbox">
+                                <div class="w-100">
+                                    <div class="d-flex align-items-center justify-content-between login-header">
+                                        <span class="login-brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></span>
+                                    </div>
+                                    <h1 class="fs-32 fw-bold topic">Sign into Your Account</h1>
+                                    <form action="student-dashboard.html" class="mb-3 pb-3">
+                                        <div class="mb-3 position-relative">
+                                            <label class="form-label">Email<span class="text-danger ms-1">*</span></label>
+                                            <div class="position-relative">
+                                                <input type="email" class="form-control form-control-lg">
+                                                <span><i class="isax isax-sms input-icon text-gray-7 fs-14"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3 position-relative">
+                                            <label class="form-label">Password <span class="text-danger ms-1">*</span></label>
+                                            <div class="position-relative" id="passwordInput">
+                                                <input type="password" class="pass-inputs form-control form-control-lg">
+                                                <span class="isax toggle-passwords isax-eye-slash fs-14"></span>
+                                            </div>	
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between mb-4">
+                                            <div class="remember-me d-flex align-items-center">
+                                                <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault">
+                                                <label class="form-check-label ms-2" for="flexCheckDefault">
+                                                    Remember Me
+                                                </label>
+                                            </div>
+                                            <div class="">
+                                                <a href="forgot-password.html" class="link-2">
+                                                    Forgot Password ?
+                                                </a>
+                                            </div>
+                                        </div>
+                                        <div class="d-grid">
+                                            <button class="btn btn-secondary btn-lg" type="submit">Login <i class="isax isax-arrow-right-3 ms-1"></i></button>
+                                        </div>
+                                    </form>
+
+                                    <div class="fs-14 fw-normal d-flex align-items-center justify-content-center">
+                                        Don't you have an account?<a href="register.html" class="link-2 ms-1"> Sign up</a>
+                                    </div>
+    
+                                    <!-- /Login -->
+        
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+	   <!-- /Main Wrapper -->
+	  
+		<!-- jQuery -->
+		<script src="assets/js/jquery-3.7.1.min.js"></script>
+		
+		<!-- Bootstrap Core JS -->
+		<script src="assets/js/bootstrap.bundle.min.js"></script>
+		
+		<!-- Select2 JS -->
+	  	<script src="assets/plugins/select2/js/select2.min.js"></script>
+
+        <!-- Slick Slider -->
+		<script src="assets/plugins/slick/slick.js"></script>   
+		
+		<!-- Custom JS -->
+		<script src="assets/js/script.js"></script>
+		<script>
+			document.querySelector("form").addEventListener("submit", function (event) {
+				event.preventDefault();
+				sessionStorage.setItem("brylla-role", "student");
+				fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: "student" }) }).finally(function () {
+					location.href = "student-dashboard.html";
+				});
+			});
+		</script>
+	</body>
+</html>

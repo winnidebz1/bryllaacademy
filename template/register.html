@@ -1,0 +1,195 @@
+<!DOCTYPE html> 
+<html lang="en">
+	<head>
+	
+		<!-- Meta Tags -->
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Create your Brylla Academy account and start building practical, career-focused skills.">
+		<meta name="theme-color" content="#073b70">
+		<meta name="author" content="Brylla Academy">
+		<meta name="robots" content="index, follow">
+		
+		<title>Create an Account | Brylla Academy</title>
+
+		<!-- Favicon -->
+		<link rel="icon" type="image/png" href="assets/img/logo.png">
+		<link rel="apple-touch-icon" href="assets/img/logo.png">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+		
+		<!-- Fontawesome CSS -->
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+
+		<!-- Select2 CSS -->
+		<link rel="stylesheet" href="assets/plugins/select2/css/select2.min.css">
+		
+        <!-- Slick CSS -->
+		<link rel="stylesheet" href="assets/plugins/slick/slick.css">
+		<link rel="stylesheet" href="assets/plugins/slick/slick-theme.css">
+		
+		<!-- Feathericon CSS -->
+        <link rel="stylesheet" href="assets/plugins/feather/feather.css">
+
+		<!-- Tabler Icon CSS -->
+		<link rel="stylesheet" href="assets/plugins/tabler-icons/tabler-icons.css">
+
+        <!-- Iconsax CSS -->
+		<link rel="stylesheet" href="assets/css/iconsax.css">
+
+		<!-- Main CSS -->
+		<link rel="stylesheet" href="assets/css/style.css">
+		<style>
+			body.register-page {
+				--brylla-navy: #073b70;
+				--brylla-navy-deep: #062b52;
+				--brylla-teal: #13b8ad;
+				--brylla-orange: #f28a3c;
+				font-family: "Inter", "Segoe UI", Arial, sans-serif;
+				font-size: 14px;
+			}
+			.register-page h1, .register-page h2, .register-page h3 { font-family: "Inter", "Segoe UI", Arial, sans-serif; font-weight: 700; letter-spacing: -.035em; }
+			.register-page .login-content .login-wrap-bg { background: #fff; }
+			.register-page .login-content .login-wrap-bg { position: relative; right: auto; width: 100%; max-width: 100%; flex: 0 0 100%; }
+			.register-page .login-content > .row { margin-right: 0; margin-left: 0; }
+			.register-page .login-content .login-wrap-bg .login-wrapper { max-width: 680px; margin: 0 auto; }
+			.register-page .login-content .login-wrap-bg .login-wrapper .loginbox { width: 100%; padding: 20px 40px; }
+			.register-page .login-content .login-wrap-bg .login-header { justify-content: center !important; margin-bottom: 24px; }
+			.register-page .register-brand-window { width: 175px; height: 125px; position: relative; display: block; overflow: hidden; }
+			.register-page .register-brand-window img { position: absolute; top: calc(50% + 25px); left: 50%; width: 276px; max-width: none; height: 276px; transform: translate(-50%, -50%); }
+			.register-page .login-content .topic { margin-bottom: 28px; color: var(--brylla-navy-deep); }
+			.register-page .form-label { color: var(--brylla-navy-deep); font-weight: 600; }
+			.register-page .login-content .login-wrap-bg .form-control:focus { border-color: var(--brylla-teal); box-shadow: 0 0 0 .2rem rgba(19,184,173,.14); }
+			.register-page .form-check-input:checked { background-color: var(--brylla-teal); border-color: var(--brylla-teal); }
+			.register-page .link-2, .register-page .link-2:hover { color: var(--brylla-navy); }
+			.register-page .btn.btn-secondary {
+				background: var(--brylla-navy);
+				border-color: var(--brylla-navy);
+				color: #fff;
+				font-family: inherit;
+				font-weight: 700;
+			}
+			.register-page .btn.btn-secondary:hover,
+			.register-page .btn.btn-secondary:focus {
+				background: var(--brylla-navy-deep);
+				border-color: var(--brylla-navy-deep);
+				color: #fff;
+			}
+			.register-page .login-content .or::before,
+			.register-page .login-content .or::after { background: #dfe8ef; }
+			@media (max-width: 991.98px) {
+				.register-page .login-content .login-wrap-bg .login-wrapper .loginbox { padding: 20px 30px; }
+				.register-page .register-brand-window img { width: 261px; height: 261px; }
+			}
+		</style>
+	</head>
+	<body class="register-page">
+
+		<!-- Main Wrapper -->
+		<div class="main-wrapper">
+            <div class="login-content">
+                <div class="row">
+                    <div class="col-12 login-wrap-bg">
+                        <!-- Login -->
+                        <div class="login-wrapper">
+                            <div class="loginbox">
+                                <div class="w-100">
+                                    <div class="d-flex align-items-center justify-content-between login-header">
+                                        <span class="register-brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></span>
+                                    </div>
+                                    <h1 class="fs-32 fw-bold topic">Sign up</h1>
+                                    <p class="small text-muted mb-3" role="status">Choose your course and pay first. You set a password only after Paystack confirms the payment.</p>
+                                    <form id="signup-form" class="mb-3 pb-3" action="checkout.html" method="get" novalidate>
+                                        <div class="mb-3 position-relative">
+                                            <label class="form-label" for="signup-name">Full Name<span class="text-danger ms-1">*</span></label>
+                                            <div class="position-relative">
+                                                <input id="signup-name" name="name" type="text" class="form-control form-control-lg" autocomplete="name" required>
+                                                <span><i class="isax isax-user input-icon text-gray-7 fs-14"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3 position-relative">
+                                            <label class="form-label" for="signup-email">Email<span class="text-danger ms-1">*</span></label>
+                                            <div class="position-relative">
+                                                <input id="signup-email" name="email" type="email" class="form-control form-control-lg" autocomplete="email" required>
+                                                <span><i class="isax isax-sms input-icon text-gray-7 fs-14"></i></span>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            <label class="form-label" for="signup-course">Course<span class="text-danger ms-1">*</span></label>
+                                            <select id="signup-course" name="course" class="form-select form-select-lg" required>
+                                                <option value="bookkeeping">Bookkeeping — GHS 950</option>
+                                            </select>
+                                        </div>
+                                        <div class="d-flex align-items-center justify-content-between mb-4">
+                                            <div class="remember-me d-flex align-items-center">
+                                                    <input class="form-check-input" type="checkbox" value="" id="flexCheckDefault" required>
+                                                    <label class="form-check-label mb-0 d-inline-flex remember-me fs-14" for="flexCheckDefault">
+                                                        I agree with <a href="terms-and-conditions.html" class="link-2 mx-2">Terms of Service</a> and <a href="privacy-policy.html" class="link-2 mx-2">Privacy Policy</a>
+                                                    </label>
+                                            </div>
+                                        </div>
+                                        <p class="text-danger small mb-3" id="signup-error" role="alert" hidden></p>
+                                        <div class="d-grid">
+                                            <button class="btn btn-secondary btn-lg" type="submit">Continue to checkout <i class="isax isax-arrow-right-3 ms-1"></i></button>
+                                        </div>
+                                    </form>
+
+                                    <div class="fs-14 fw-normal d-flex align-items-center justify-content-center">
+                                        Already you have an account?<a href="login.html" class="link-2 ms-1"> Login</a>
+                                    </div>
+    
+                                    <!-- /Login -->
+        
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+	   <!-- /Main Wrapper -->
+	  
+		<!-- jQuery -->
+		<script src="assets/js/jquery-3.7.1.min.js"></script>
+		
+		<!-- Bootstrap Core JS -->
+		<script src="assets/js/bootstrap.bundle.min.js"></script>
+		
+		<!-- Select2 JS -->
+	  	<script src="assets/plugins/select2/js/select2.min.js"></script>
+
+        <!-- Slick Slider -->
+		<script src="assets/plugins/slick/slick.js"></script>
+
+        <!-- Validation-->
+		<script src="assets/js/validation.js"></script>	
+		
+		<!-- Custom JS -->
+		<script src="assets/js/script.js"></script>
+		<script>
+			const params = new URLSearchParams(window.location.search);
+			const courseField = document.getElementById("signup-course");
+			const requested = params.get("course");
+			if ([...courseField.options].some((option) => option.value === requested)) courseField.value = requested;
+			document.getElementById("signup-form").addEventListener("submit", (event) => {
+				event.preventDefault();
+				const form = event.currentTarget;
+				const error = document.getElementById("signup-error");
+				error.hidden = true;
+				if (!form.reportValidity()) return;
+				const name = document.getElementById("signup-name").value.trim();
+				const email = document.getElementById("signup-email").value.trim();
+				sessionStorage.setItem("bryllaPendingName", name);
+				sessionStorage.setItem("bryllaPendingEmail", email);
+				window.location.assign("checkout.html?course=" + encodeURIComponent(courseField.value));
+			});
+		</script>
+		
+	</body>
+</html>

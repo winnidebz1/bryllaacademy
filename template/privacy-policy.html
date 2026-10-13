@@ -1,0 +1,707 @@
+<!DOCTYPE html> 
+<html lang="en">
+	<head>
+	
+		<!-- Meta Tags -->
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Learn how Brylla Academy handles information when you use our website, courses, and learning services.">
+		<meta name="theme-color" content="#073b70">
+		<meta name="author" content="Brylla Academy">
+		<meta name="robots" content="index, follow">
+		
+		<title>Privacy Policy | Brylla Academy</title>
+
+		<!-- Favicon -->
+		<link rel="icon" type="image/png" href="assets/img/logo.png">
+		<link rel="apple-touch-icon" href="assets/img/logo.png">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+		<!-- Theme Settings Js -->
+		<script src="assets/js/theme-script.js"></script>
+		
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+		
+		<!-- Fontawesome CSS -->
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+		
+		<!-- Feathericon CSS -->
+        <link rel="stylesheet" href="assets/plugins/feather/feather.css">
+
+		<!-- Tabler Icon CSS -->
+		<link rel="stylesheet" href="assets/plugins/tabler-icons/tabler-icons.css">
+
+        <!-- Iconsax CSS -->
+		<link rel="stylesheet" href="assets/css/iconsax.css">
+
+		<!-- Main CSS -->
+		<link rel="stylesheet" href="assets/css/style.css">
+		<style>
+			body.privacy-page {
+				--brylla-navy: #073b70;
+				--brylla-navy-deep: #062b52;
+				--brylla-teal: #13b8ad;
+				--brylla-orange: #f28a3c;
+				--brylla-ink: #122d49;
+				--brylla-muted: #60748a;
+				font-family: "Inter", "Segoe UI", Arial, sans-serif;
+				font-size: 14px;
+				color: var(--brylla-ink);
+			}
+			.privacy-page h1, .privacy-page h2, .privacy-page h3, .privacy-page h4, .privacy-page h5, .privacy-page h6 {
+				font-family: "Inter", "Segoe UI", Arial, sans-serif;
+				color: var(--brylla-navy-deep);
+				font-weight: 700;
+				letter-spacing: -.035em;
+			}
+			.privacy-page .header-topbar, .privacy-page header.header-two, .privacy-page footer.footer { display: none; }
+			.privacy-site-header { position: relative; z-index: 5; background: #fff; border-bottom: 1px solid #e3ebf2; }
+			.privacy-site-header .container { min-height: 108px; display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+			.privacy-brand-window { width: 165px; height: 104px; position: relative; display: block; overflow: hidden; }
+			.privacy-brand-window img { position: absolute; top: 50%; left: 50%; width: 230px; max-width: none; height: 230px; transform: translate(-50%, -50%); }
+			.privacy-site-header nav { display: flex; align-items: center; gap: 24px; }
+			.privacy-site-header nav a { color: #35516c; font-size: 14px; font-weight: 600; text-decoration: none; }
+			.privacy-site-header nav a:hover { color: #078d87; }
+			.privacy-site-header .privacy-signup { padding: 10px 17px; border-radius: 8px; background: var(--brylla-navy); color: #fff; }
+			.privacy-site-header .privacy-signup:hover { background: var(--brylla-navy-deep); color: #fff; }
+			.privacy-page .breadcrumb-bar { padding: 54px 0; background: linear-gradient(120deg, #f3f8fb, #e6f5f5); }
+			.privacy-page .breadcrumb-title { color: var(--brylla-navy-deep); font-size: clamp(28px, 4vw, 40px); }
+			.privacy-page .breadcrumb a { color: var(--brylla-navy); }
+			.privacy-page .content { padding: 64px 0; }
+			.privacy-page .content .col-xl-8 { padding: 38px 42px; border: 1px solid #e3ebf2; border-radius: 16px; background: #fff; box-shadow: 0 16px 42px rgba(6,43,82,.06); }
+			.privacy-page .content p { color: var(--brylla-muted); font-size: 14px; line-height: 1.75; }
+			.privacy-page .content h6 { margin-top: 24px; color: var(--brylla-navy); font-size: 17px; }
+			.privacy-site-footer { padding: 26px 0; background: var(--brylla-navy-deep); color: rgba(255,255,255,.82); }
+			.privacy-site-footer .container { display: flex; align-items: center; justify-content: space-between; gap: 20px; }
+			.privacy-footer-brand { display: flex; align-items: center; gap: 12px; }
+			.privacy-footer-logo { position: relative; display: block; width: 50px; height: 50px; flex: 0 0 50px; overflow: hidden; border: 1px solid rgba(255,255,255,.22); border-radius: 50%; background: #fff; }
+			.privacy-footer-logo img { position: absolute; top: 50%; left: 50%; width: 114px; height: 114px; max-width: none; transform: translate(-50%, -50%); }
+			.privacy-site-footer p { margin: 0; font-size: 13px; }
+			.privacy-site-footer nav { display: flex; gap: 20px; }
+			.privacy-site-footer a { color: #fff; font-size: 13px; text-decoration: none; }
+			.privacy-site-footer a:hover { color: var(--brylla-teal); }
+			.privacy-page .footer { display: none; }
+			@media (max-width: 575.98px) {
+				.privacy-site-header .container { min-height: 96px; }
+				.privacy-brand-window { width: 130px; height: 88px; }
+				.privacy-brand-window img { width: 190px; height: 190px; }
+				.privacy-site-header nav { gap: 12px; }
+				.privacy-site-header nav a { font-size: 12px; }
+				.privacy-site-header .privacy-signup { padding: 8px 10px; }
+				.privacy-page .content { padding: 32px 0; }
+				.privacy-page .content .col-xl-8 { padding: 24px 20px; }
+				.privacy-site-footer .container { align-items: flex-start; flex-direction: column; }
+			}
+		</style>
+	</head>
+	<body class="privacy-page">
+
+		<!-- Main Wrapper -->
+		<div class="main-wrapper">
+			<header class="privacy-site-header">
+				<div class="container">
+					<a class="privacy-brand-window" href="index-4.html" aria-label="Brylla Academy home">
+						<img src="assets/img/logo.png" alt="Brylla Academy">
+					</a>
+					<nav aria-label="Main navigation">
+						<a href="index-4.html">Home</a>
+						<a href="login.html">Sign in</a>
+						<a class="privacy-signup" href="register.html">Get started</a>
+					</nav>
+				</div>
+			</header>
+
+            <!-- Header Topbar-->
+			<div class="header-topbar text-center">
+				<div class="container">
+					<div class="row">
+						<div class="col-lg-6">
+							<div class="d-flex align-items-center justify-content-center justify-content-lg-start">
+								<p class="d-flex align-items-center fw-medium fs-14 mb-2 me-3"><i class="isax isax-location5 me-2"></i>1442 Crosswind Drive Madisonville</p>
+								<p class="d-flex align-items-center fw-medium fs-14 mb-2"><i class="isax isax-call-calling5 me-2"></i>+1 45887 77874</p>
+							</div>
+						</div>
+						<div class="col-lg-6">
+							<div class="d-flex align-items-center justify-content-center justify-content-lg-end">
+								<div class="dropdown flag-dropdown mb-2 me-3">
+									<a href="javascript:void(0);" class="dropdown-toggle d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+										<img src="assets/img/flags/us-flag.svg" class="me-2" alt="flag">ENG
+									</a>
+									<ul class="dropdown-menu p-2 mt-2">
+										<li>
+											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
+												<img src="assets/img/flags/us-flag.svg" class="me-2" alt="flag">ENG
+											</a>
+										</li>
+										<li>
+											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
+												<img src="assets/img/flags/arab-flag.svg" class="me-2" alt="flag">ARA
+											</a>
+										</li>
+										<li>
+											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
+												<img src="assets/img/flags/france-flag.svg" class="me-2" alt="flag">FRE
+											</a>
+										</li>
+									</ul>
+								</div>
+								<div class="dropdown mb-2 me-3">
+									<a href="javascript:void(0);" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+										USD
+									</a>
+									<ul class="dropdown-menu p-2 mt-2">
+										<li><a class="dropdown-item rounded" href="javascript:void(0);">USD</a></li>
+										<li><a class="dropdown-item rounded" href="javascript:void(0);">YEN</a></li>
+										<li><a class="dropdown-item rounded" href="javascript:void(0);">EURO</a></li>
+									</ul>
+								</div>
+								<ul class="social-icon d-flex align-items-center mb-2">
+									<li class="me-2">
+										<a href="javascript:void(0);"><i class="fa-brands fa-facebook-f"></i></a>
+									</li>
+									<li class="me-2">
+										<a href="javascript:void(0);"><i class="fa-brands fa-instagram"></i></a>
+									</li>
+									<li class="me-2">
+										<a href="javascript:void(0);"><i class="fa-brands fa-x-twitter"></i></a>
+									</li>
+									<li class="me-2">
+										<a href="javascript:void(0);"><i class="fa-brands fa-youtube"></i></a>
+									</li>
+									<li>
+										<a href="javascript:void(0);"><i class="fa-brands fa-linkedin"></i></a>
+									</li>
+								</ul>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Header Topbar-->
+	
+			<!-- Header -->
+			<header class="header-two">
+				<div class="container">
+					<div class="header-nav">
+						<div class="navbar-header">
+							<a id="mobile_btn" href="javascript:void(0);">
+								<span class="bar-icon">
+									<span></span>
+									<span></span>
+									<span></span>
+								</span>
+							</a>
+							<div class="navbar-logo">
+								<a class="logo-white header-logo" href="index.html">
+									<img src="assets/img/logo.svg" class="logo" alt="Logo">
+								</a>
+								<a class="logo-dark header-logo" href="index.html">
+									<img src="assets/img/logo-white.svg" class="logo" alt="Logo">
+								</a>
+							</div>
+						</div>
+						<div class="main-menu-wrapper">								
+							<div class="menu-header">
+								<a href="index.html" class="menu-logo">
+									<img src="assets/img/logo.svg" class="img-fluid" alt="Logo">
+								</a>
+								<a id="menu_close" class="menu-close" href="javascript:void(0);">
+									<i class="fas fa-times"></i>
+								</a>
+							</div>
+							<ul class="main-nav">
+								<li class="has-submenu megamenu">
+									<a href="#">Home <i class="fas fa-chevron-down"></i></a>
+									<ul class="submenu mega-submenu">
+										<li>
+											<div class="megamenu-wrapper">
+												<div class="row">
+													<div class="col-lg-2">
+														<div class="single-demo">
+															<div class="demo-img">
+																<a href="index.html" class="inner-demo-img"><img src="assets/img/home/home-01.jpg" class="img-fluid " alt="img"></a>
+															</div>
+															<div class="demo-info">
+																<a href="index.html" class="inner-demo-img">Home 1</a>
+															</div>
+														</div>
+													</div>
+													<div class="col-lg-2">
+														<div class="single-demo">
+															<div class="demo-img">
+																<a href="index-2.html" class="inner-demo-img"><img src="assets/img/home/home-02.jpg" class="img-fluid " alt="img"></a>
+															</div>
+															<div class="demo-info">
+																<a href="index-2.html" class="inner-demo-img">Home 2</a>
+															</div>
+														</div>
+													</div>
+													<div class="col-lg-2">
+														<div class="single-demo">
+															<div class="demo-img">
+																<a href="index-3.html" class="inner-demo-img"><img src="assets/img/home/home-03.jpg" class="img-fluid " alt="img"></a>
+															</div>
+															<div class="demo-info">
+																<a href="index-3.html" class="inner-demo-img">Home 3</a>
+															</div>
+														</div>
+													</div>
+													<div class="col-lg-2">
+														<div class="single-demo">
+															<div class="demo-img">
+																<a href="index-4.html" class="inner-demo-img"><img src="assets/img/home/home-04.jpg" class="img-fluid " alt="img"></a>
+															</div>
+															<div class="demo-info">
+																<a href="index-4.html" class="inner-demo-img">Home 4</a>
+															</div>
+														</div>
+													</div>
+													<div class="col-lg-2">
+														<div class="single-demo">
+															<div class="demo-img">
+																<a href="index-5.html" class="inner-demo-img"><img src="assets/img/home/home-05.jpg" class="img-fluid " alt="img"></a>
+															</div>
+															<div class="demo-info">
+																<a href="index-5.html" class="inner-demo-img">Home 5</a>
+															</div>
+														</div>
+													</div>
+													<div class="col-lg-2">
+														<div class="single-demo">
+															<div class="demo-img">
+																<a href="index-6.html" class="inner-demo-img"><img src="assets/img/home/home-06.jpg" class="img-fluid " alt="img"></a>
+															</div>
+															<div class="demo-info">
+																<a href="index-6.html" class="inner-demo-img">Home 6</a>
+															</div>
+														</div>
+													</div>
+												</div>
+											</div>
+										</li>
+									</ul>
+								</li>
+								<li class="has-submenu">
+									<a href="#">Courses <i class="fas fa-chevron-down"></i></a>
+									<ul class="submenu">
+										<li class="has-submenu">
+											<a href="javascript:void(0);">Courses</a>
+											<ul class="submenu">
+												<li><a href="course-grid.html">Course Grid</a></li>
+												<li><a href="course-list.html">Course List</a></li>
+											</ul>
+										</li>
+										<li class="has-submenu">
+											<a href="javascript:void(0);">Course Category</a>
+											<ul class="submenu">
+												<li><a href="course-category.html">Course Category</a></li>
+												<li><a href="course-category-2.html">Course Category 2</a></li>
+												<li><a href="course-category-3.html">Course Category 3</a></li>
+											</ul>
+										</li>
+										<li class="has-submenu">
+											<a href="javascript:void(0);">Course Details</a>
+											<ul class="submenu">
+												<li><a href="course-details.html">Course Details</a></li>
+												<li><a href="course-details-2.html">Course Details 2</a></li>
+											</ul>
+										</li>										
+										<li><a href="course-resume.html">Course Resume</a></li>
+										<li><a href="course-watch.html">Course Watch</a></li>
+										<li><a href="cart.html">Course Cart</a></li>
+										<li><a href="checkout.html">Course Checkout</a></li>
+										<li><a href="add-course.html">Add New Course</a></li>
+									</ul>
+								</li>
+								<li class="has-submenu">
+									<a href="javascript:void(0);">Dashboard <i class="fas fa-chevron-down"></i></a>
+									<ul class="submenu">
+										<li class="has-submenu">
+											<a href="javascript:void(0);">Instructor Dashboard</a>
+											<ul class="submenu">
+												<li><a href="instructor-dashboard.html">Dashboard</a></li>
+												<li><a href="instructor-profile.html">My Profile</a></li>
+												<li><a href="instructor-course.html">Course</a></li>
+												<li><a href="instructor-announcements.html">Announcements</a></li>
+												<li><a href="instructor-assignment.html">Assignments</a></li>
+												<li class="has-submenu">
+													<a href="javascript:void(0);">Student</a>
+													<ul class="submenu">
+														<li><a href="students.html">Student Grid</a></li>
+														<li><a href="student-list.html">Student List</a></li>
+														<li><a href="student-details.html">Student Details</a></li>
+													</ul>
+												</li>
+												<li><a href="instructor-quiz.html">Quiz</a></li>
+												<li><a href="instructor-quiz-results.html">Quiz Results</a></li>
+												<li><a href="instructor-certificate.html">Certificates</a></li>
+												<li><a href="instructor-earnings.html">Earning</a></li>
+												<li><a href="instructor-payout.html">Payout</a></li>
+												<li><a href="instructor-statements.html">Statement</a></li>
+												<li><a href="instructor-tickets.html">Support Tickets</a></li>
+												<li><a href="instructor-settings.html">Settings</a></li>
+											</ul>
+										</li>
+										<li class="has-submenu">
+											<a href="javascript:void(0);">Student Dashboard</a>
+											<ul class="submenu">
+												<li><a href="student-dashboard.html">Student Dashboard</a></li>
+												<li><a href="student-profile.html">My Profile</a></li>
+												<li><a href="student-courses.html">Enrolled Courses</a></li>
+												<li><a href="student-certificates.html">My Certificates</a></li>
+												<li><a href="student-wishlist.html">Wishlist</a></li>
+												<li><a href="student-reviews.html">Reviews</a></li>
+												<li><a href="student-quiz.html">My Quiz Attempts</a></li>
+												<li><a href="student-order-history.html">Order History</a></li>
+												<li><a href="student-referral.html">Referrals</a></li>
+												<li><a href="student-messages.html">Messages</a></li>
+												<li><a href="student-tickets.html">Support Ticket</a></li>
+												<li><a href="student-settings.html">Settings</a></li>
+											</ul>
+										</li>
+									</ul>
+								</li>
+								<li class="has-submenu active">
+									<a href="#">Pages <i class="fas fa-chevron-down"></i></a>
+									<ul class="submenu">
+										<li class="has-submenu">
+											<a href="#">Instructors</a>
+											<ul class="submenu">
+												<li><a href="instructor-grid.html">Instructor Grid</a></li>
+												<li><a href="instructor-list.html">Instructor List</a></li>
+												<li><a href="instructor-details.html">Instructor Details</a></li>
+											</ul>
+										</li>
+										<li><a href="about-us.html">About Us</a></li>
+										<li><a href="contact-us.html">Contact us</a></li>
+										<li><a href="notifications.html">Notifications</a></li>
+										<li><a href="become-an-instructor.html">Become an Instructor</a></li>
+										<li><a href="testimonials.html">Testimonials</a></li>
+										<li class="has-submenu">
+											<a href="#">Authentication</a>
+											<ul class="submenu">
+												<li><a href="login.html">Login</a></li>
+												<li><a href="register.html">Register</a></li>
+												<li><a href="forgot-password.html">Forgot Password</a></li>
+												<li><a href="reset-password.html">Reset Password</a></li>
+												<li><a href="set-password.html">Set Password</a></li>
+												<li><a href="otp.html">OTP</a></li>
+												<li><a href="lock-screen.html">Lock Screen</a></li>
+											</ul>
+										</li>
+										<li class="has-submenu">
+											<a href="#">Error</a>
+											<ul class="submenu">
+												<li><a href="error-404.html">404 Error</a></li>
+												<li><a href="error-500.html">500 Error</a></li>
+											</ul>
+										</li>
+										<li><a href="pricing-plan.html">Pricing Plan</a></li>
+										<li><a href="faq.html">FAQ</a></li>
+										<li><a href="coming-soon.html">Coming Soon</a></li>
+										<li><a href="under-construction.html">Under Construction</a></li>
+										<li><a href="terms-and-conditions.html">Terms & Conditions</a></li>
+										<li class="active"><a href="privacy-policy.html">Privacy Policy</a></li>
+										<li><a href="index-rtl.html">RTL</a></li>
+									</ul>
+								</li>	
+								<li class="has-submenu">
+									<a href="#">Blog <i class="fas fa-chevron-down"></i></a>
+									<ul class="submenu">
+										<li class="has-submenu">
+											<a href="#">Blog Layouts</a>
+											<ul class="submenu">
+												<li><a href="blog-grid.html">Blog 1 Grid</a></li>
+												<li><a href="blog-2-grid.html">Blog 2 Grid</a></li>
+												<li><a href="blog-3-grid.html">Blog 3 Grid</a></li>
+												<li><a href="blog-carousal.html">Blog Carousal</a></li>
+												<li><a href="blog-masonry.html">Blog Mansory</a></li>
+												<li><a href="blog-left-sidebar.html">Blog Left Sidebar</a></li>
+												<li><a href="blog-right-sidebar.html">Blog Right Sidebar</a></li>
+											</ul>
+										</li>
+										<li class="has-submenu">
+											<a href="#">Blog Details</a>
+											<ul class="submenu">
+												<li><a href="blog-details.html">Blog Details</a></li>
+												<li><a href="blog-details-left-sidebar.html">Blog Details Left Sidebar</a></li>
+												<li><a href="blog-details-right-sidebar.html">Blog Details Right Sidebar</a></li>
+											</ul>
+										</li>
+									</ul>
+								</li>
+							</ul>
+							
+							<div class="menu-dropdown">
+								<div class="cart-item">
+									<h6>Cart & Wishlist</h6>                                
+									<div class="icon-btn">
+										<a href="cart.html" class="position-relative">
+											<i class="isax isax-shopping-cart5"></i>
+											<span class="count-icon bg-success p-1 rounded-pill text-white fs-10 fw-bold">1</span>
+										</a>
+									</div>
+								</div>
+								<div class="dropdown flag-dropdown mb-2">
+									<a href="javascript:void(0);" class="dropdown-toggle d-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
+										<img src="assets/img/flags/us-flag.svg" class="me-2" alt="flag">ENG
+									</a>
+									<ul class="dropdown-menu p-2 mt-2">
+										<li>
+											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
+												<img src="assets/img/flags/us-flag.svg" class="me-2" alt="flag">ENG
+											</a>
+										</li>
+										<li>
+											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
+												<img src="assets/img/flags/arab-flag.svg" class="me-2" alt="flag">ARA
+											</a>
+										</li>
+										<li>
+											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
+												<img src="assets/img/flags/france-flag.svg" class="me-2" alt="flag">FRE
+											</a>
+										</li>
+									</ul>
+								</div>
+								<div class="dropdown mb-2">
+									<a href="javascript:void(0);" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+										USD
+									</a>
+									<ul class="dropdown-menu p-2 mt-2">
+										<li><a class="dropdown-item rounded" href="javascript:void(0);">USD</a></li>
+										<li><a class="dropdown-item rounded" href="javascript:void(0);">YEN</a></li>
+										<li><a class="dropdown-item rounded" href="javascript:void(0);">EURO</a></li>
+									</ul>
+								</div>
+								<div class="dropdown mb-2">
+									<a href="javascript:void(0);" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
+										Light
+									</a>
+									<ul class="dropdown-menu p-2 mt-2">
+										<li><a class="dropdown-item rounded" href="javascript:void(0);">Light</a></li>
+										<li><a class="dropdown-item rounded" href="javascript:void(0);">Dark</a></li>
+									</ul>
+								</div>
+							</div>
+							<div class="menu-login">
+								<a href="login.html" class="btn btn-primary w-100 mb-2"><i class="isax isax-user me-2"></i>Sign In</a>
+								<a href="register.html" class="btn btn-secondary w-100"><i class="isax isax-user-edit me-2"></i>Register</a>
+							</div>
+						</div>
+						<div class="header-btn d-flex align-items-center">
+							<div class="icon-btn me-2">
+								<a href="javascript:void(0);" id="dark-mode-toggle" class="theme-toggle activate">
+									<i class="isax isax-sun-15"></i>
+								</a>
+								<a href="javascript:void(0);" id="light-mode-toggle" class="theme-toggle">
+									<i class="isax isax-moon"></i>
+								</a>
+							</div>
+							<div class="icon-btn me-3">
+								<a href="cart.html" class="position-relative">
+									<i class="isax isax-shopping-cart5"></i>
+									<span class="count-icon bg-success p-1 rounded-pill text-white fs-10 fw-bold">1</span>
+								</a>
+							</div>
+							<a href="login.html" class="btn btn-light d-inline-flex align-items-center me-2">
+								<i class="isax isax-lock-circle me-2"></i>Sign In
+							</a>
+							<a href="register.html" class="btn btn-secondary me-0">
+								<i class="isax isax-user-edit me-2"></i>Register
+							</a>
+						</div>
+					</div>
+				</div>
+			</header>
+			<!-- /Header -->		
+
+			<!-- Breadcrumb -->
+			<div class="breadcrumb-bar text-center">
+				<div class="container">
+					<div class="row">
+						<div class="col-md-12 col-12">
+							<h2 class="breadcrumb-title mb-2">Privacy Policy</h2>
+							<nav aria-label="breadcrumb">
+								<ol class="breadcrumb justify-content-center mb-0">
+									<li class="breadcrumb-item"><a href="index-4.html">Home</a></li>
+									<li class="breadcrumb-item active" aria-current="page">Privacy Policy</li>
+								</ol>
+							</nav>
+						</div>
+					</div>
+				</div>
+			</div>
+			<!-- /Breadcrumb -->
+
+			<div class="content">
+				<div class="container">
+					<div class="row">
+						<div class="col-xl-8 mx-auto">
+							<p class="mb-4">This Privacy Policy explains how Brylla Academy handles information when you visit our website, create an account, or use our courses and learning services.</p>
+							<div class="mb-4">
+								<h6 class="mb-2">Information you provide</h6>
+								<p class="mb-1 d-flex">When you register or contact us, we may collect information such as your name, email address, account credentials, and the information you include in your messages or course work.</p>
+								<p class="mb-0 d-flex align-items-center">We may also receive basic technical and usage information from your browser or the learning platform when you use the services.</p>
+							</div>
+							<div class="mb-4">
+								<h6 class="mb-2">How we use information</h6>
+								<p class="mb-1 d-flex">We use information to create and maintain accounts, provide courses and feedback, respond to requests, communicate service-related updates, protect the platform, and improve our learning services.</p>
+								<p class="mb-0 d-flex align-items-center">We use information for other purposes only where permitted by law or with your permission where required.</p>
+							</div>
+							<div class="mb-4">
+								<h6 class="mb-2">How information is shared</h6>
+								<p class="mb-0 d-flex align-items-center">We may share information with service providers that help us operate the website and learning platform, or where disclosure is required by law or needed to protect users and the services. We do not publish your private account information for other learners to see.</p>
+							</div>
+							<div class="mb-4">
+								<h6 class="mb-2">Storage and protection</h6>
+								<p class="mb-0 d-flex align-items-center">We keep information for as long as reasonably needed to provide the services, meet legal obligations, and resolve disputes. We take reasonable steps to protect it, but no online service can guarantee absolute security.</p>
+							</div>
+							<div class="mb-4">
+								<h6 class="mb-2">Your choices</h6>
+								<p class="mb-0">You can ask us to correct or delete your account information, subject to legal or operational requirements. Contact Brylla Academy using the contact options provided on our website. You can also control cookies through your browser settings; some site features may not work as intended if cookies are disabled.</p>
+							</div>
+							<div class="mb-4">
+								<h6 class="mb-2">Third-party services and links</h6>
+								<p class="mb-0">Our website or courses may link to services operated by others. Their privacy practices are governed by their own policies, so review those policies before providing information to them.</p>
+							</div>
+							<div class="mb-0">
+								<h6 class="mb-2">Updates and questions</h6>
+								<p class="mb-0">We may update this policy as our services change. The latest version will be posted on this page. If you have questions about privacy at Brylla Academy, contact us using the contact options on our website.</p>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<footer class="privacy-site-footer">
+				<div class="container">
+					<div class="privacy-footer-brand">
+						<span class="privacy-footer-logo"><img src="assets/img/logo.png" alt=""></span>
+						<p>&copy; 2026 Brylla Academy. All rights reserved.</p>
+					</div>
+					<nav aria-label="Legal">
+						<a href="terms-and-conditions.html">Terms of Service</a>
+						<a href="privacy-policy.html" aria-current="page">Privacy Policy</a>
+					</nav>
+				</div>
+			</footer>
+
+        	<!-- Footer -->
+			<footer class="footer">
+				<div class="footer-bg">
+					<img src="assets/img/bg/footer-bg-01.png" class="footer-bg-1" alt="">
+					<img src="assets/img/bg/footer-bg-02.png" class="footer-bg-2" alt="">
+				</div>
+				<div class="footer-top">
+					<div class="container">
+						<div class="row row-gap-4">
+							<div class="col-lg-4">
+								<div class="footer-about">
+									<div class="footer-logo">
+										<img src="assets/img/logo.svg" alt="">
+									</div>
+									<p>Platform designed to help organizations, educators, and learners manage, deliver, and track learning and training activities.</p>
+									<div class="d-flex align-items-center">
+										<a href="#" class="me-2"><img src="assets/img/icon/appstore.svg" alt=""></a>
+										<a href="#"><img src="assets/img/icon/googleplay.svg" alt=""></a>
+									</div>
+								</div>
+							</div>
+							<div class="col-lg-8">
+								<div class="row row-gap-4">
+									<div class="col-lg-3">
+										<div class="footer-widget footer-menu">
+											<h6 class="footer-title">For Instructor</h6>
+											<ul>
+												<li><a href="course-grid.html">Search Mentors</a></li>
+												<li><a href="login.html">Login</a></li>
+												<li><a href="register.html">Register</a></li>
+												<li><a href="course-list.html">Booking</a></li>
+												<li><a href="student-dashboard.html">Students Dashboard</a></li>
+											</ul>
+										</div>
+									</div>
+									<div class="col-lg-3">
+										<div class="footer-widget footer-menu">
+											<h6 class="footer-title">For Student</h6>
+											<ul>
+												<li><a href="javascript:void(0);">Appointments</a></li>
+												<li><a href="instructor-message.html">Chat</a></li>
+												<li><a href="login.html">Login</a></li>
+												<li><a href="register.html">Register</a></li>
+												<li><a href="instructor-dashboard.html">Instructor Dashboard</a></li>
+											</ul>
+										</div>
+									</div>
+									<div class="col-lg-6">
+										<div class="footer-widget footer-contact">
+											<h6 class="footer-title">News letter</h6>
+											<div class="subscribe-input">
+												<form action="javascript:void(0);">
+													<input type="email" class="form-control" placeholder="Enter your Email Address">
+													<button type="submit" class="btn btn-primary btn-sm inline-flex align-items-center"><i class="isax isax-send-2 me-1"></i>Subscribe</button>
+												</form>
+											</div>
+											<div class="footer-contact-info">
+												<div class="footer-address d-flex align-items-center">
+													<img src="assets/img/icon/icon-20.svg" alt="Img" class="img-fluid me-2">
+													<p> 3556  Beech Street, San Francisco,<br> California, CA 94108 </p>
+												</div>
+												<div class="footer-address d-flex align-items-center">
+													<img src="assets/img/icon/icon-19.svg" alt="Img" class="img-fluid me-2">
+													<p>dreamslms@example.com</p>
+												</div>
+												<div class="footer-address d-flex align-items-center">
+													<img src="assets/img/icon/icon-21.svg" alt="Img" class="img-fluid me-2">
+													<p>+19 123-456-7890</p>
+												</div>
+											</div>
+										</div>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+				<div class="footer-bottom">
+					<div class="container">
+						<div class="row row-gap-2">
+							<div class="col-md-6">
+								<div class="text-center text-md-start">
+									<p class="text-white">Copyright &copy; 2025 DreamsLMS. All rights reserved.</p>
+								</div>
+							</div>
+							<div class="col-md-6">
+								<div>
+									<ul class="d-flex align-items-center justify-content-center justify-content-md-end footer-link">
+										<li><a href="terms-and-conditions.html">Terms & Conditions</a></li>
+										<li><a href="privacy-policy.html">Privacy Policy</a></li>
+									</ul>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</footer>
+			<!-- /Footer -->
+   
+		</div>
+	   <!-- /Main Wrapper -->
+	  
+		<!-- jQuery -->
+		<script src="assets/js/jquery-3.7.1.min.js"></script>
+		
+		<!-- Bootstrap Core JS -->
+		<script src="assets/js/bootstrap.bundle.min.js"></script>
+		
+		<!-- Custom JS -->
+		<script src="assets/js/script.js"></script>
+		
+	</body>
+</html>
