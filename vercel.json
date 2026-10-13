@@ -1,13 +1,18 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
+  "cleanUrls": true,
   "rewrites": [
     {
       "source": "/",
       "destination": "/template/index-4.html"
     },
     {
-      "source": "/((?!template/).*)",
-      "destination": "/template/$1"
+      "source": "/assets/:path*",
+      "destination": "/template/assets/:path*"
+    },
+    {
+      "source": "/:path((?!template|assets).*)",
+      "destination": "/template/:path.html"
     }
   ]
 }

@@ -66,21 +66,19 @@ export async function fulfil(supabase: SupabaseClient, reference: string) {
 		}, { onConflict: "order_id" });
 	}
 	const setup = await sendSetupEmail(supabase, order);
-	return { ok: true, code: decision.code, email: setup };
+	return { ok: true, code: decision.code, email: setup.status, setupUrl: setup.link, kind: setup.kind };
 }
 
 async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; email: string; full_name: string; course_id: string; user_id: string | null }) {
-	const { data: existing } = await supabase.from("email_events").select("status").eq("order_id", order.id).eq("kind", "account_setup").maybeSingle();
-	if (existing && existing.status === "sent") return "already_sent";
-	const site = Deno.env.get("SITE_URL") ?? "";
+	const site = Deno.env.get("SITE_URL") || "https://bryllaacademy.vercel.app";
 	const { data: course } = await supabase.from("courses").select("title").eq("id", order.course_id).maybeSingle();
 	const courseTitle = course?.title ?? "your course";
-	let link = site ? site + "/login.html" : "";
-	let kind = "sign_in";
+	let link = site ? site + "/set-password.html" : "";
+	let kind = "invite";
 	const invite = await supabase.auth.admin.generateLink({
 		type: "invite",
 		email: order.email,
-		options: { data: { full_name: order.full_name }, redirectTo: site ? site + "/account-setup.html" : undefined },
+		options: { data: { full_name: order.full_name }, redirectTo: (site ? site : "") + "/set-password.html" },
 	});
 	if (!invite.error && invite.data?.properties?.action_link) {
 		link = invite.data.properties.action_link;
@@ -90,7 +88,7 @@ async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; ema
 		const magic = await supabase.auth.admin.generateLink({
 			type: "magiclink",
 			email: order.email,
-			options: { redirectTo: site ? site + "/student-dashboard.html" : undefined },
+			options: { redirectTo: (site ? site : "") + "/set-password.html" },
 		});
 		if (!magic.error && magic.data?.properties?.action_link) {
 			link = magic.data.properties.action_link;
@@ -98,29 +96,37 @@ async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; ema
 			await linkUser(supabase, order, magic.data.user?.id, "active");
 		}
 	}
+	const { data: existing } = await supabase.from("email_events").select("status").eq("order_id", order.id).eq("kind", "account_setup").maybeSingle();
+	if (existing && existing.status === "sent") return { status: "already_sent", link, kind };
 	const resendKey = Deno.env.get("RESEND_API_KEY") ?? "";
 	const from = Deno.env.get("RESEND_FROM") ?? "";
 	if (!resendKey || !from) {
 		await supabase.from("email_events").upsert({ order_id: order.id, email: order.email, kind: "account_setup", status: "waiting_for_email_provider" }, { onConflict: "order_id,kind" });
-		return "waiting_for_email_provider";
+		return { status: "waiting_for_email_provider", link, kind };
 	}
-	const response = await fetch("https://api.resend.com/emails", {
-		method: "POST",
-		headers: { Authorization: "Bearer " + resendKey, "Content-Type": "application/json" },
-		body: JSON.stringify({
-			from,
-			to: order.email,
-			subject: kind === "invite" ? "Set your Brylla Academy password" : "Your Brylla Academy course is ready",
-			html: emailHtml(order.full_name, courseTitle, link, kind),
-		}),
-	});
+	let responseOk = false;
+	try {
+		const response = await fetch("https://api.resend.com/emails", {
+			method: "POST",
+			headers: { Authorization: "Bearer " + resendKey, "Content-Type": "application/json" },
+			body: JSON.stringify({
+				from,
+				to: order.email,
+				subject: kind === "invite" ? "Set your Brylla Academy password" : "Your Brylla Academy course is ready",
+				html: emailHtml(order.full_name, courseTitle, link, kind),
+			}),
+		});
+		responseOk = response.ok;
+	} catch (e) {
+		console.error("Resend error:", e);
+	}
 	await supabase.from("email_events").upsert({
 		order_id: order.id,
 		email: order.email,
 		kind: "account_setup",
-		status: response.ok ? "sent" : "failed",
+		status: responseOk ? "sent" : "failed",
 	}, { onConflict: "order_id,kind" });
-	return response.ok ? "sent" : "failed";
+	return { status: responseOk ? "sent" : "failed", link, kind };
 }
 
 async function linkUser(supabase: SupabaseClient, order: { id: string; full_name: string }, userId: string | undefined, status: string) {
