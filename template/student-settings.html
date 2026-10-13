@@ -122,6 +122,9 @@
 			.drawer, .scrim { transition: none; }
 		}
 	</style>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-auth.js" data-guard="student"></script>
 	</head>
 	<body>
 	<a class="skip-link" href="#main">Skip to main content</a>
@@ -169,7 +172,7 @@
 	</footer>
 	<script src="assets/js/brylla-student.js"></script>
 	<script>
-		const fallback = { name: "Ama Mensah", email: "ama.mensah@example.com" };
+		const fallback = { name: "", email: "" };
 		const headerEl = document.getElementById("site-header");
 		const navEl = document.getElementById("dashboard-nav");
 		const scrimEl = document.getElementById("menu-scrim");
@@ -349,13 +352,26 @@
 			student = { name: name, email: email };
 			if (window.BryllaStudent) BryllaStudent.saveProfile(student);
 			errorEl.hidden = true;
-			statusEl.textContent = "Saved. Your dashboard will show this name.";
+			statusEl.textContent = "Saving…";
 			renderHeader();
 			renderNav();
+			const saved = window.BryllaAuth ? BryllaAuth.saveName(name) : Promise.resolve({ ok: false });
+			saved.then(function (result) {
+				statusEl.textContent = result.ok ? "Saved. Your dashboard will show this name." : "Saved in this browser only. Your account could not be updated, so try again.";
+			});
 		});
+		function showAccount() {
+			student = loadProfile();
+			emailInput.readOnly = true;
+			emailInput.title = "Your sign-in email cannot be changed here.";
+			fillForm();
+			renderHeader();
+			renderNav();
+		}
 		fillForm();
 		renderHeader();
 		renderNav();
+		if (window.BryllaAuth) BryllaAuth.ready.then(showAccount);
 	</script>
 	</body>
 </html>

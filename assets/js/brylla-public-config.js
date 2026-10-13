@@ -1,4 +1,0 @@
-window.BryllaPublic = {
-	supabaseUrl: "https://pfcnbenzpezttqtsvvom.supabase.co",
-	supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmY25iZW56cGV6dHRxdHN2dm9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NDIyOTEsImV4cCI6MjEwNzQxODI5MX0.Pg3BuW8mqek4nxHkoVKi93oUHT6UfI28wsDAbkhrWX4"
-};

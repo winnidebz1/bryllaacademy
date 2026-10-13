@@ -149,6 +149,9 @@
 			.drawer { transition: none; }
 		}
 	</style>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-auth.js"></script>
 	</head>
 	<body>
 	<a class="skip" href="#main">Skip to main content</a>
@@ -455,11 +458,20 @@
 			$("assignment-status").textContent = "Online assignment submission is not connected yet. Your file has not been uploaded.";
 		});
 
-		var profile = BryllaStudent.loadProfile();
-		var studentName = profile ? profile.name : "Ama Mensah";
-		$("avatar").textContent = initials(studentName);
-		$("avatar").setAttribute("aria-label", "Settings, " + studentName);
+		function showStudent() {
+			var profile = BryllaStudent.loadProfile();
+			var studentName = profile ? profile.name : "Guest";
+			$("avatar").textContent = initials(studentName);
+			$("avatar").setAttribute("aria-label", "Settings, " + studentName);
+		}
+		showStudent();
 		render();
+		if (window.BryllaAuth) BryllaAuth.ready.then(function () {
+			enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
+			if (enrolled) BryllaStudent.startCourse();
+			showStudent();
+			render();
+		});
 
 		var menuBtn = $("menu-btn");
 		var drawer = $("drawer");

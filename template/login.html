@@ -90,18 +90,19 @@
                                         <a href="/" class="link-1">Back to Home</a>
                                     </div>
                                     <h1 class="fs-32 fw-bold topic">Sign into Your Account</h1>
-                                    <form action="student-dashboard" class="mb-3 pb-3">
+                                    <p id="login-notice" class="alert alert-success" role="status" hidden></p>
+                                    <form action="student-dashboard" class="mb-3 pb-3" id="login-form" novalidate>
                                         <div class="mb-3 position-relative">
-                                            <label class="form-label">Email<span class="text-danger ms-1">*</span></label>
+                                            <label class="form-label" for="login-email">Email<span class="text-danger ms-1">*</span></label>
                                             <div class="position-relative">
-                                                <input type="email" class="form-control form-control-lg" required>
+                                                <input type="email" id="login-email" autocomplete="email" class="form-control form-control-lg" required>
                                                 <span><i class="isax isax-sms input-icon text-gray-7 fs-14"></i></span>
                                             </div>
                                         </div>
                                         <div class="mb-3 position-relative">
-                                            <label class="form-label">Password <span class="text-danger ms-1">*</span></label>
+                                            <label class="form-label" for="login-password">Password <span class="text-danger ms-1">*</span></label>
                                             <div class="position-relative" id="passwordInput">
-                                                <input type="password" class="pass-inputs form-control form-control-lg" required>
+                                                <input type="password" id="login-password" autocomplete="current-password" class="pass-inputs form-control form-control-lg" required>
                                                 <span class="isax toggle-passwords isax-eye-slash fs-14"></span>
                                             </div>	
                                         </div>
@@ -118,8 +119,9 @@
                                                 </a>
                                             </div>
                                         </div>
+                                        <p id="login-error" class="text-danger mb-3" role="alert" hidden></p>
                                         <div class="d-grid">
-                                            <button class="btn btn-secondary btn-lg" type="submit">Login <i class="isax isax-arrow-right-3 ms-1"></i></button>
+                                            <button class="btn btn-secondary btn-lg" type="submit" id="login-button">Login <i class="isax isax-arrow-right-3 ms-1"></i></button>
                                         </div>
                                     </form>
 
@@ -152,12 +154,52 @@
 		
 		<!-- Custom JS -->
 		<script src="assets/js/script.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+		<script src="assets/js/brylla-public-config.js"></script>
 		<script>
-			document.querySelector("form").addEventListener("submit", function (event) {
-				event.preventDefault();
-				sessionStorage.setItem("brylla-role", "student");
-				location.href = "student-dashboard";
-			});
+			(function () {
+				var config = window.BryllaPublic || {};
+				var client = window.supabase && config.supabaseUrl ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
+				var params = new URLSearchParams(location.search);
+				var next = params.get("next") || "";
+				var destination = /^\/(?!\/)/.test(next) ? next : "student-dashboard";
+				var form = document.getElementById("login-form");
+				var errorEl = document.getElementById("login-error");
+				var button = document.getElementById("login-button");
+				var notice = document.getElementById("login-notice");
+
+				if (params.get("setup") === "done") {
+					notice.textContent = "Your password is saved. Sign in with your email and new password.";
+					notice.hidden = false;
+				}
+				if (client) {
+					client.auth.getSession().then(function (result) {
+						if (result.data.session && params.get("setup") !== "done") location.replace(destination);
+					});
+				}
+
+				function showError(message) {
+					errorEl.textContent = message;
+					errorEl.hidden = false;
+				}
+
+				form.addEventListener("submit", async function (event) {
+					event.preventDefault();
+					errorEl.hidden = true;
+					var email = document.getElementById("login-email").value.trim();
+					var password = document.getElementById("login-password").value;
+					if (!email || !password) return showError("Enter your email and password.");
+					if (!client) return showError("Sign-in is not available right now. Try again later.");
+					button.disabled = true;
+					var result = await client.auth.signInWithPassword({ email: email, password: password });
+					if (result.error) {
+						button.disabled = false;
+						return showError(result.error.status === 400 ? "That email and password don't match. Try again, or use Forgot Password." : result.error.message);
+					}
+					sessionStorage.setItem("brylla-role", "student");
+					location.replace(destination);
+				});
+			})();
 		</script>
 	</body>
 </html>

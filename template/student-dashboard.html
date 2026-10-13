@@ -605,6 +605,9 @@
 			}
 		}
 	</style>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-auth.js" data-guard="student"></script>
 </head>
 <body>
 	<script id="dashboard-data" type="application/json">
@@ -612,9 +615,9 @@
 		"academyName": "Brylla Academy",
 		"state": "learning",
 		"student": {
-			"name": "Ama Mensah",
-			"initials": "AM",
-			"email": "ama.mensah@example.com",
+			"name": "Student",
+			"initials": "ST",
+			"email": "",
 			"verified": true
 		},
 		"course": {
@@ -1283,6 +1286,7 @@
 		});
 		window.addEventListener("pageshow", function () { render(); });
 		render();
+		if (window.BryllaAuth) BryllaAuth.ready.then(render);
 	</script>
 </body>
 </html>

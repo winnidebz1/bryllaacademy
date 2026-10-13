@@ -163,11 +163,14 @@
 			.drawer, .scrim { transition: none; }
 		}
 	</style>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-auth.js" data-guard="student"></script>
 	</head>
 	<body>
 	<script id="courses-data" type="application/json">
 	{
-		"student": { "name": "Ama Mensah", "initials": "AM", "email": "ama.mensah@example.com" },
+		"student": { "name": "Student", "initials": "ST", "email": "" },
 		"notifications": 0,
 		"assignmentsDue": 0,
 		"openingSoon": 3,
@@ -240,6 +243,7 @@
 	<script src="assets/js/brylla-student.js"></script>
 	<script>
 		const data = JSON.parse(document.getElementById("courses-data").textContent);
+		const catalog = data.courses.slice();
 		const headerEl = document.getElementById("site-header");
 		const navEl = document.getElementById("dashboard-nav");
 		const mainEl = document.getElementById("main");
@@ -572,6 +576,7 @@
 		}
 		function applyBookkeepingProgress() {
 			if (!window.BryllaStudent) return;
+			data.courses = catalog.filter(function (item) { return BryllaStudent.courseRecord(item.id).enrolled; });
 			const summary = BryllaStudent.summary();
 			const profile = BryllaStudent.loadProfile();
 			if (profile) {
@@ -651,6 +656,7 @@
 			if (event.key === "brylla-course-progress" || event.key === "brylla-student-profile") render();
 		});
 		render();
+		if (window.BryllaAuth) BryllaAuth.ready.then(render);
 	</script>
 	</body>
 </html>
