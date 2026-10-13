@@ -1,0 +1,168 @@
+<!DOCTYPE html> 
+<html lang="en">
+	<head>
+	
+		<!-- Meta Tags -->
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Verify your email address to continue using your Brylla Academy account.">
+		<meta name="author" content="Brylla Academy">
+		<meta name="robots" content="index, follow">
+		
+		<title>Verify Your Email | Brylla Academy</title>
+
+		<!-- Favicon -->
+		<link rel="icon" type="image/png" href="assets/img/logo.png">
+		<link rel="apple-touch-icon" href="assets/img/logo.png">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+        
+		<!-- Bootstrap CSS -->
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+		
+		<!-- Fontawesome CSS -->
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+
+		<!-- Select2 CSS -->
+		<link rel="stylesheet" href="assets/plugins/select2/css/select2.min.css">
+		
+        <!-- Slick CSS -->
+		<link rel="stylesheet" href="assets/plugins/slick/slick.css">
+		<link rel="stylesheet" href="assets/plugins/slick/slick-theme.css">
+		
+		<!-- Feathericon CSS -->
+        <link rel="stylesheet" href="assets/plugins/feather/feather.css">
+
+		<!-- Tabler Icon CSS -->
+		<link rel="stylesheet" href="assets/plugins/tabler-icons/tabler-icons.css">
+
+        <!-- Iconsax CSS -->
+		<link rel="stylesheet" href="assets/css/iconsax.css">
+
+		<!-- Main CSS -->
+		<link rel="stylesheet" href="assets/css/style.css">
+		<style>
+			body.otp-page {
+				--brylla-navy: #073b70;
+				--brylla-navy-deep: #062b52;
+				--brylla-teal: #13b8ad;
+				--brylla-orange: #f28a3c;
+				font-family: "Inter", "Segoe UI", Arial, sans-serif;
+				font-size: 14px;
+			}
+			.otp-page h1, .otp-page h2, .otp-page h3 { font-family: "Inter", "Segoe UI", Arial, sans-serif; font-weight: 700; letter-spacing: -.035em; }
+			.otp-page .login-content .login-wrap-bg { background: #fff; }
+			.otp-page .login-content .login-wrap-bg { position: relative; right: auto; width: 100%; max-width: 100%; flex: 0 0 100%; }
+			.otp-page .login-content > .row { margin-right: 0; margin-left: 0; }
+			.otp-page .login-content .login-wrap-bg .login-wrapper { max-width: 680px; margin: 0 auto; }
+			.otp-page .login-content .login-wrap-bg .login-wrapper .loginbox { width: 100%; padding: 20px 40px; }
+			.otp-page .login-content .login-wrap-bg .login-header { justify-content: center !important; margin-bottom: 24px; }
+			.otp-page .otp-brand-window { width: 175px; height: 116px; position: relative; display: block; overflow: hidden; }
+			.otp-page .otp-brand-window img { position: absolute; top: 50%; left: 50%; width: 280px; max-width: none; height: 280px; transform: translate(-50%, -50%); }
+			.otp-page .login-content .topic { margin-bottom: 28px; color: var(--brylla-navy-deep); }
+			.otp-page .form-label { color: var(--brylla-navy-deep); font-weight: 600; }
+			.otp-page .login-content .login-wrap-bg .form-control:focus { border-color: var(--brylla-teal); box-shadow: 0 0 0 .2rem rgba(19,184,173,.14); }
+			.otp-page .login-content .otp { color: var(--brylla-navy-deep); font-weight: 700; }
+			.otp-page .link-2, .otp-page .link-2:hover { color: var(--brylla-navy); }
+			.otp-page .btn.btn-secondary { background: var(--brylla-navy); border-color: var(--brylla-navy); color: #fff; font-family: inherit; font-weight: 700; }
+			.otp-page .btn.btn-secondary:hover, .otp-page .btn.btn-secondary:focus { background: var(--brylla-navy-deep); border-color: var(--brylla-navy-deep); color: #fff; }
+			@media (max-width: 991.98px) {
+				.otp-page .login-content .login-wrap-bg .login-wrapper .loginbox { padding: 20px 30px; }
+			}
+		</style>
+	</head>
+	<body class="otp-page">
+
+		<!-- Main Wrapper -->
+		<div class="main-wrapper">
+            <div class="login-content">
+                <div class="row">
+                    <div class="col-12 login-wrap-bg">
+                        <!-- Login -->
+                        <div class="login-wrapper">
+                            <div class="loginbox">
+                                <div class="w-100">
+                                    <div class="d-flex align-items-center justify-content-between login-header">
+                                        <span class="otp-brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></span>
+                                    </div>
+                                    <div class="topic">
+                                        <h1 class="fs-32 fw-bold mb-3">Email OTP</h1>
+                                        <p class="fs-14 fw-normal mb-0">Verification email: <strong id="verification-email">the email used during signup</strong></p>
+                                    </div>
+                                    <div class="alert alert-info" role="status">
+                                        Email verification is not connected yet. No code has been sent, and verification will be enabled after the authentication provider is integrated.
+                                    </div>
+                                    <form class="mb-3 pb-3" aria-label="Email verification form">
+                                        <fieldset disabled>
+                                            <legend class="visually-hidden">Enter the verification code</legend>
+                                            <div class="d-flex align-items-center mb-3">
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 1">
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 2">
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 3">
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 4">
+                                            </div>
+                                            <div class="d-grid">
+                                                <button id="verify-email" class="btn btn-secondary btn-lg w-100" type="button">Verify email</button>
+                                            </div>
+                                        </fieldset>
+                                    </form>
+
+                                    <div class="fs-14 fw-normal d-flex align-items-center justify-content-center">
+                                        Didn’t get the code? <button class="btn btn-link link-2 ms-1 p-0" type="button" disabled>Resend code</button>
+                                    </div>
+                                    <div class="text-center mt-3"><a href="register.html" class="link-2">Back to sign up</a></div>
+    
+                                    <!-- /Login -->
+        
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+	   <!-- /Main Wrapper -->
+	  
+		<!-- jQuery -->
+		<script src="assets/js/jquery-3.7.1.min.js"></script>
+		
+		<!-- Bootstrap Core JS -->
+		<script src="assets/js/bootstrap.bundle.min.js"></script>
+		
+		<!-- Select2 JS -->
+	  	<script src="assets/plugins/select2/js/select2.min.js"></script>
+
+        <!-- Slick Slider -->
+		<script src="assets/plugins/slick/slick.js"></script>
+		
+		<!-- Custom JS -->
+		<script src="assets/js/script.js"></script>
+		<script src="assets/js/brylla-student.js"></script>
+		<script>
+			const pendingEmail = sessionStorage.getItem("bryllaPendingEmail");
+			const verificationEmail = document.getElementById("verification-email");
+			if (pendingEmail) {
+				verificationEmail.textContent = pendingEmail;
+			} else {
+				verificationEmail.textContent = "no signup email is available in this browser session";
+			}
+			document.getElementById("verify-email").addEventListener("click", function () {
+				const digits = Array.from(document.querySelectorAll(".otp")).map(function (input) { return input.value.trim(); }).join("");
+				if (digits.length < 4) {
+					document.querySelector(".otp").focus();
+					return;
+				}
+				const name = sessionStorage.getItem("bryllaPendingName") || "";
+				const email = sessionStorage.getItem("bryllaPendingEmail") || "";
+				const course = sessionStorage.getItem("bryllaPendingCourse") || "";
+				if (name && email && window.BryllaStudent) BryllaStudent.saveProfile({ name: name, email: email });
+				if (course && window.BryllaStudent) BryllaStudent.enroll(course);
+				window.location.assign(course ? "student-courses.html" : "student-dashboard.html");
+			});
+		</script>
+		
+	</body>
+</html>

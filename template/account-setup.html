@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Account setup | Brylla Academy</title>
+	<link rel="icon" type="image/png" href="assets/img/logo.png">
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+	<style>
+		body { margin: 0; font-family: Inter, "Segoe UI", Arial, sans-serif; background: #f4f8fb; color: #122d49; }
+		main { max-width: 560px; margin: 0 auto; padding: 32px 16px; }
+		form { background: #fff; border: 1px solid #e3ebf2; border-radius: 16px; padding: 20px; }
+		label { display: block; font-weight: 600; margin-bottom: 6px; }
+		input { width: 100%; box-sizing: border-box; border: 1px solid #e3ebf2; border-radius: 10px; padding: 12px; font: inherit; }
+		button { margin-top: 16px; background: #073b70; color: #fff; border: 0; border-radius: 999px; padding: 12px 18px; font: inherit; font-weight: 700; }
+		a { color: #073b70; }
+	</style>
+</head>
+<body>
+	<main>
+		<a href="index-4.html"><img src="assets/img/logo.png" alt="Brylla Academy" width="120"></a>
+		<h1>Finish account setup</h1>
+		<p>Use the link in your payment email to choose a password. If the link has expired, request another one. A new email is sent only when a paid order exists.</p>
+		<form id="resend-form">
+			<label for="setup-email">Email used at checkout</label>
+			<input id="setup-email" type="email" autocomplete="email" required>
+			<button type="submit">Resend setup email</button>
+			<p id="setup-status" role="status"></p>
+		</form>
+	</main>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-checkout.js"></script>
+	<script>
+		var status = document.getElementById("setup-status");
+		document.getElementById("resend-form").addEventListener("submit", function (event) {
+			event.preventDefault();
+			if (!window.BryllaCheckout.configured()) {
+				status.textContent = "Email recovery is not connected yet. A paid order is kept until the email provider is configured.";
+				return;
+			}
+			status.textContent = "Checking the paid order…";
+			window.BryllaCheckout.post("resend-setup", { email: document.getElementById("setup-email").value.trim() }).then(function () {
+				status.textContent = "If the payment is confirmed, the setup email has been sent again.";
+			}).catch(function (error) {
+				status.textContent = error.message;
+			});
+		});
+	</script>
+</body>
+</html>

@@ -1,0 +1,1288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="See what to do next in your Brylla Academy course.">
+	<meta name="theme-color" content="#073b70">
+	<title>Student dashboard | Brylla Academy</title>
+	<link rel="icon" type="image/png" href="assets/img/logo.png">
+	<link rel="apple-touch-icon" href="assets/img/logo.png">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--color-primary: #073b70;
+			--color-on-primary: #ffffff;
+			--color-accent: #13b8ad;
+			--color-accent-text: #04635e;
+			--color-banner: #073b70;
+			--color-banner-text: #ffffff;
+			--color-banner-muted: #d6e4f2;
+			--color-success: #078d87;
+			--color-success-strong: #04635e;
+			--color-live-bg: #e7f6f5;
+			--color-live-text: #04635e;
+			--color-deadline-bg: #fff1e6;
+			--color-deadline-text: #9a4e12;
+			--color-page: #f4f8fb;
+			--color-surface: #ffffff;
+			--color-border: #e3ebf2;
+			--color-text: #122d49;
+			--color-muted: #4d5d6c;
+			--color-danger: #b42318;
+			--color-hover: #f4f8fb;
+			--color-tint-purple: #e7eef6;
+			--color-tint-coral: #e7f6f5;
+			--color-tint-green: #e5f8f4;
+			--color-warning-bg: #fff6ec;
+			--color-warning-border: #f0d3b0;
+			--color-warning-text: #7a4510;
+			--color-scrim: rgba(0, 0, 0, 0.35);
+			--color-focus: #073b70;
+			--font: Inter, "Segoe UI", Arial, sans-serif;
+			--radius-card: 12px;
+			--radius-control: 8px;
+			--radius-pill: 999px;
+			--space-1: 4px;
+			--space-2: 8px;
+			--space-3: 12px;
+			--space-4: 16px;
+			--space-5: 24px;
+			--header-height: 54px;
+			--block-gap: 14px;
+			--drawer-width: 240px;
+			--motion: 200ms;
+		}
+
+		*, *::before, *::after { box-sizing: border-box; }
+		html, body { margin: 0; }
+		body {
+			background: var(--color-page);
+			color: var(--color-text);
+			font-family: var(--font);
+			font-size: 14px;
+			font-weight: 400;
+			line-height: 1.5;
+		}
+		h1, h2, h3, p { margin: 0; font-weight: 400; }
+		a { color: inherit; }
+		button, a { font-family: inherit; }
+		:focus { outline: none; }
+		:focus-visible {
+			outline: 2px solid var(--color-focus);
+			outline-offset: 2px;
+		}
+		.sr-only {
+			position: absolute;
+			width: 1px;
+			height: 1px;
+			padding: 0;
+			margin: -1px;
+			overflow: hidden;
+			clip: rect(0, 0, 0, 0);
+			white-space: nowrap;
+			border: 0;
+		}
+
+		.skip-link {
+			position: absolute;
+			left: var(--space-4);
+			top: var(--space-2);
+			z-index: 200;
+			padding: var(--space-2) var(--space-3);
+			border-radius: var(--radius-control);
+			background: var(--color-surface);
+			color: var(--color-primary);
+			font-weight: 500;
+			text-decoration: none;
+			transform: translateY(-140%);
+		}
+		.skip-link:focus { transform: none; }
+
+		.site-header {
+			position: sticky;
+			top: 0;
+			z-index: 100;
+			height: var(--header-height);
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			padding: 0 var(--space-4);
+			background: var(--color-surface);
+			border-bottom: 1px solid var(--color-border);
+		}
+		.header-start, .header-end {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			min-width: 0;
+		}
+		.icon-button {
+			width: 40px;
+			height: 40px;
+			display: inline-grid;
+			place-items: center;
+			padding: 0;
+			border: 0;
+			border-radius: var(--radius-control);
+			background: transparent;
+			color: var(--color-text);
+			text-decoration: none;
+			cursor: pointer;
+		}
+		.icon-button:hover { background: var(--color-hover); }
+		.icon-button svg { width: 20px; height: 20px; }
+		.icon-close { display: none; }
+		.menu-toggle.is-open .icon-menu { display: none; }
+		.menu-toggle.is-open .icon-close { display: block; }
+		.brand {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			min-width: 0;
+			color: var(--color-text);
+			text-decoration: none;
+		}
+		.brand-mark {
+			position: relative;
+			width: 84px;
+			height: 44px;
+			flex: 0 0 84px;
+			overflow: hidden;
+			display: block;
+		}
+		.brand-mark img {
+			position: absolute;
+			width: 107px;
+			height: 107px;
+			max-width: none;
+			top: calc(50% + 4px);
+			left: 50%;
+			transform: translate(-50%, -50%);
+		}
+		.notify-button { position: relative; }
+		.notify-badge {
+			position: absolute;
+			top: 4px;
+			right: 2px;
+			min-width: 16px;
+			height: 16px;
+			padding: 0 4px;
+			border-radius: var(--radius-pill);
+			background: var(--color-accent-text);
+			color: #ffffff;
+			font-size: 11px;
+			font-weight: 500;
+			line-height: 16px;
+			text-align: center;
+		}
+		.header-avatar {
+			width: 36px;
+			height: 36px;
+			display: grid;
+			place-items: center;
+			border-radius: 50%;
+			background: var(--color-banner-muted);
+			color: var(--color-banner);
+			font-size: 13px;
+			font-weight: 500;
+		}
+
+		.scrim {
+			position: fixed;
+			z-index: 80;
+			top: var(--header-height);
+			right: 0;
+			bottom: 0;
+			left: 0;
+			background: var(--color-scrim);
+			opacity: 0;
+			visibility: hidden;
+			transition: opacity var(--motion) ease, visibility 0s linear var(--motion);
+		}
+		.scrim.is-open {
+			opacity: 1;
+			visibility: visible;
+			transition: opacity var(--motion) ease, visibility 0s linear 0s;
+		}
+		.drawer {
+			position: fixed;
+			z-index: 90;
+			top: var(--header-height);
+			bottom: 0;
+			left: 0;
+			width: var(--drawer-width);
+			padding: var(--space-2);
+			overflow: auto;
+			background: var(--color-surface);
+			border-right: 1px solid var(--color-border);
+			opacity: 0;
+			visibility: hidden;
+			transform: translateX(-100%);
+			transition: transform var(--motion) ease, opacity var(--motion) ease, visibility 0s linear var(--motion);
+		}
+		.drawer.is-open {
+			opacity: 1;
+			visibility: visible;
+			transform: translateX(0);
+			transition: transform var(--motion) ease, opacity var(--motion) ease, visibility 0s linear 0s;
+		}
+		.nav-label {
+			margin: var(--space-3) var(--space-3) var(--space-1);
+			color: var(--color-muted);
+			font-size: 12px;
+			line-height: 1.3;
+		}
+		.nav-group-account {
+			margin-top: var(--space-2);
+			padding-top: var(--space-2);
+			border-top: 1px solid var(--color-border);
+		}
+		.nav-list { margin: 0; padding: 0; list-style: none; }
+		.nav-link {
+			display: flex;
+			align-items: center;
+			gap: var(--space-2);
+			padding: 9px var(--space-3);
+			border-radius: var(--radius-control);
+			color: var(--color-text);
+			font-size: 14px;
+			font-weight: 400;
+			line-height: 1.3;
+			text-decoration: none;
+		}
+		.nav-link svg { width: 18px; height: 18px; flex: 0 0 18px; }
+		.nav-link:hover { background: var(--color-hover); }
+		.nav-link[aria-current="page"] {
+			color: var(--color-accent-text);
+			font-weight: 500;
+		}
+		.nav-link.is-danger { color: var(--color-danger); }
+		.nav-badge {
+			margin-left: auto;
+			min-width: 18px;
+			height: 18px;
+			padding: 0 5px;
+			display: inline-grid;
+			place-items: center;
+			border-radius: var(--radius-pill);
+			background: var(--color-deadline-bg);
+			color: var(--color-deadline-text);
+			font-size: 12px;
+			font-weight: 500;
+		}
+
+		.dashboard {
+			display: flex;
+			flex-direction: column;
+			gap: var(--block-gap);
+			padding: var(--space-4);
+		}
+		.banner {
+			position: relative;
+			display: flex;
+			align-items: center;
+			gap: var(--space-4);
+			overflow: hidden;
+			padding: 20px 22px;
+			border-radius: var(--radius-card);
+			background: var(--color-banner);
+			color: var(--color-banner-text);
+		}
+		.banner::before, .banner::after {
+			content: "";
+			position: absolute;
+			border-radius: 50%;
+			background: rgba(255, 255, 255, 0.14);
+			pointer-events: none;
+		}
+		.banner::before { width: 180px; height: 180px; top: -78px; right: -36px; }
+		.banner::after { width: 120px; height: 120px; right: 96px; bottom: -68px; }
+		.avatar-wrap { position: relative; width: 60px; height: 60px; flex: 0 0 60px; z-index: 1; }
+		.banner-avatar {
+			width: 60px;
+			height: 60px;
+			display: grid;
+			place-items: center;
+			border: 3px solid #ffffff;
+			border-radius: 50%;
+			background: var(--color-banner-muted);
+			color: var(--color-banner);
+			font-size: 18px;
+			font-weight: 500;
+		}
+		.verified {
+			position: absolute;
+			right: -2px;
+			bottom: -2px;
+			width: 18px;
+			height: 18px;
+			display: grid;
+			place-items: center;
+			border: 2px solid #ffffff;
+			border-radius: 50%;
+			background: var(--color-success-strong);
+			color: #ffffff;
+		}
+		.verified svg { width: 10px; height: 10px; }
+		.banner-copy { position: relative; z-index: 1; min-width: 0; }
+		.banner h1 { font-size: 20px; font-weight: 500; line-height: 1.3; }
+		.banner-meta { margin-top: var(--space-1); color: var(--color-banner-muted); font-size: 14px; }
+
+		.card {
+			background: var(--color-surface);
+			border: 1px solid var(--color-border);
+			border-radius: var(--radius-card);
+		}
+		.continue-card, .payment-banner, .error-card {
+			display: flex;
+			align-items: center;
+			justify-content: space-between;
+			gap: var(--space-4);
+			padding: var(--space-4);
+		}
+		.continue-copy { min-width: 0; flex: 1; }
+		.continue-actions { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
+		.lesson-preview {
+			position: relative;
+			display: block;
+			width: 128px;
+			height: 72px;
+			overflow: hidden;
+			flex: 0 0 128px;
+			border-radius: 10px;
+			background: linear-gradient(145deg, #073b70 0%, #04635e 100%);
+			color: #ffffff;
+		}
+		.lesson-preview-label {
+			position: absolute;
+			left: 8px;
+			right: 8px;
+			bottom: 6px;
+			overflow: hidden;
+			font-size: 11px;
+			font-weight: 500;
+			line-height: 1.2;
+			text-overflow: ellipsis;
+			white-space: nowrap;
+		}
+		.lesson-preview-play {
+			position: absolute;
+			top: 50%;
+			left: 50%;
+			width: 28px;
+			height: 28px;
+			display: grid;
+			place-items: center;
+			transform: translate(-50%, -50%);
+			border-radius: 50%;
+			background: #ffffff;
+			color: var(--color-primary);
+		}
+		.lesson-preview-play svg { width: 12px; height: 12px; margin-left: 1px; }
+		.continue-title { font-size: 16px; font-weight: 500; line-height: 1.4; }
+		.continue-meta { margin-top: var(--space-1); color: var(--color-muted); font-size: 14px; }
+		.title-row { display: flex; align-items: center; gap: var(--space-2); }
+		.title-row svg { width: 18px; height: 18px; flex: 0 0 18px; color: var(--color-success-strong); }
+		.btn-fill, .btn-outline {
+			display: inline-flex;
+			align-items: center;
+			justify-content: center;
+			flex: 0 0 auto;
+			border-radius: var(--radius-pill);
+			font-size: 14px;
+			font-weight: 500;
+			line-height: 1;
+			text-decoration: none;
+			cursor: pointer;
+		}
+		.btn-fill {
+			height: 40px;
+			padding: 0 var(--space-4);
+			border: 0;
+			background: var(--color-primary);
+			color: var(--color-on-primary);
+		}
+		.btn-fill:hover { background: #062b52; }
+		.btn-fill:focus-visible { outline-color: #1c2430; outline-offset: 3px; }
+		.btn-outline {
+			height: 32px;
+			padding: 0 var(--space-3);
+			border: 1px solid #8b9aab;
+			background: var(--color-surface);
+			color: var(--color-text);
+			font-size: 13px;
+		}
+		.btn-outline:hover { background: var(--color-hover); }
+
+		.payment-banner {
+			border-color: var(--color-warning-border);
+			background: var(--color-warning-bg);
+			color: var(--color-warning-text);
+		}
+		.payment-copy { display: flex; align-items: flex-start; gap: var(--space-2); min-width: 0; }
+		.payment-copy svg { width: 18px; height: 18px; flex: 0 0 18px; margin-top: 1px; }
+		.payment-banner .btn-outline {
+			border-color: #8a6a28;
+			background: transparent;
+			color: var(--color-warning-text);
+		}
+
+		.stat-grid {
+			display: grid;
+			grid-template-columns: repeat(2, minmax(0, 1fr));
+			gap: var(--block-gap);
+		}
+		.stat-card {
+			display: flex;
+			align-items: center;
+			gap: var(--space-3);
+			padding: var(--space-4);
+		}
+		.stat-icon {
+			width: 44px;
+			height: 44px;
+			display: grid;
+			place-items: center;
+			flex: 0 0 44px;
+			border-radius: var(--radius-control);
+		}
+		.stat-icon svg { width: 22px; height: 22px; }
+		.tint-purple { background: var(--color-tint-purple); color: var(--color-primary); }
+		.tint-coral { background: var(--color-tint-coral); color: var(--color-accent-text); }
+		.tint-green { background: var(--color-tint-green); color: var(--color-success-strong); }
+		.stat-label { color: var(--color-muted); font-size: 13px; }
+		.stat-value { margin-top: 2px; font-size: 22px; font-weight: 500; line-height: 1.2; }
+
+		.upcoming h2 { margin-bottom: var(--space-2); font-size: 16px; font-weight: 500; }
+		.event-row {
+			display: flex;
+			align-items: center;
+			gap: var(--space-3);
+			padding: var(--space-3) var(--space-4);
+		}
+		.event-row + .event-row { border-top: 1px solid var(--color-border); }
+		.date-block {
+			width: 40px;
+			height: 40px;
+			display: flex;
+			flex-direction: column;
+			align-items: center;
+			justify-content: center;
+			flex: 0 0 40px;
+			border-radius: var(--radius-control);
+			line-height: 1.05;
+		}
+		.date-weekday { font-size: 10px; font-weight: 500; }
+		.date-day { font-size: 14px; font-weight: 500; }
+		.date-live { background: var(--color-live-bg); color: var(--color-live-text); }
+		.date-deadline { background: var(--color-deadline-bg); color: var(--color-deadline-text); }
+		.event-copy { min-width: 0; flex: 1; }
+		.event-title { font-size: 14px; font-weight: 500; }
+		.event-detail { margin-top: 2px; color: var(--color-muted); font-size: 13px; }
+		.empty-note { padding: var(--space-4); color: var(--color-muted); }
+
+		.error-card p { font-size: 14px; }
+
+		.sk {
+			background: #e6edf5;
+			border-radius: var(--radius-control);
+		}
+		.sk-banner { background: #d5e2f4; }
+		.sk-avatar { width: 60px; height: 60px; border-radius: 50%; background: rgba(255, 255, 255, 0.35); }
+		.sk-line { height: 12px; width: 220px; max-width: 100%; border-radius: var(--radius-pill); background: #e6edf5; }
+		.sk-line + .sk-line { margin-top: var(--space-2); }
+		.sk-line-short { width: 140px; }
+		.banner .sk-line { background: rgba(255, 255, 255, 0.35); }
+		.sk-pill { width: 132px; height: 40px; border-radius: var(--radius-pill); background: #e6edf5; }
+		.sk-block { height: 76px; }
+		@keyframes pulse {
+			50% { opacity: 0.55; }
+		}
+		.is-loading .sk, .is-loading .sk-avatar, .is-loading .sk-line, .is-loading .sk-pill {
+			animation: pulse 1.2s ease-in-out infinite;
+		}
+
+		.continue-label, .continue-minutes, .progress-block, .upcoming, .drawer-profile, .nav-mobile-only, .banner-course, .stat-card.stat-attended { display: none; }
+		.progress-labels { display: flex; justify-content: space-between; gap: 8px; margin-bottom: 6px; color: var(--color-muted); font-size: 12px; }
+		.progress-labels strong { color: var(--color-text); font-weight: 500; }
+		.progress-track { height: 8px; overflow: hidden; border-radius: 99px; background: #e3ebf2; }
+		.progress-track > span { display: block; height: 100%; border-radius: inherit; background: var(--color-success); }
+		.schedule-link { display: inline-flex; min-height: 44px; align-items: center; margin-top: 4px; color: var(--color-accent-text); font-size: 14px; font-weight: 500; }
+		.drawer-signout { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+		.drawer-profile { align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--color-border); }
+		.drawer-avatar { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-size: 14px; font-weight: 500; }
+		.drawer-profile-copy { min-width: 0; }
+		.drawer-name { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.drawer-email { color: var(--color-muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+		.label-short { display: none; }
+		body.menu-lock { overflow: hidden; }
+
+		.site-footer { padding: 35px 0; background: #041f3c; color: #d1e0ed; }
+		.footer-wrap { width: min(1140px, calc(100% - 32px)); margin: 0 auto; }
+		.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+		.footer-brand { display: flex; align-items: center; gap: 13px; text-decoration: none; }
+		.footer-brand-mark { position: relative; display: block; width: 72px; height: 72px; flex: 0 0 72px; overflow: hidden; border: 1px solid rgba(7,59,112,.12); border-radius: 50%; background: #fff; }
+		.footer-brand-mark img { position: absolute; top: calc(50% + 5px); left: 50%; width: 164px; height: 164px; max-width: none; transform: translate(-50%, -50%); }
+		.footer-brand strong { display: block; color: #fff; font-size: 15px; font-weight: 500; }
+		.footer-brand span { color: #aac0d3; font-size: 14px; }
+		.footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+		.footer-links a { color: #d1e0ed; font-size: 14px; text-decoration: none; }
+		.footer-links a:hover { color: #13b8ad; }
+		.copyright { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.14); color: #aac0d3; font-size: 14px; text-align: center; }
+
+		@media (max-width: 767px) {
+			.site-header {
+				height: calc(52px + env(safe-area-inset-top));
+				padding: env(safe-area-inset-top) max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left));
+			}
+			.site-header .icon-button { width: 44px; height: 44px; }
+			.header-avatar { width: 32px; height: 32px; }
+			.brand-mark { width: 64px; height: 36px; }
+			.brand-mark img { width: 88px; height: 88px; }
+			.scrim { top: calc(52px + env(safe-area-inset-top)); background: rgba(0, 0, 0, 0.4); }
+			.drawer {
+				top: calc(52px + env(safe-area-inset-top));
+				display: flex;
+				flex-direction: column;
+				width: min(80vw, 320px);
+				padding: 0;
+				padding-bottom: env(safe-area-inset-bottom);
+			}
+			.drawer-profile { display: flex; }
+			.drawer-scroll { flex: 1; overflow: auto; padding: 8px; }
+			.drawer-signout { margin-top: auto; padding: 8px; border-top: 1px solid var(--color-border); }
+			.nav-label { display: none; }
+			.nav-mobile-only { display: list-item; }
+			.nav-link { min-height: 44px; padding: 10px 12px; font-size: 15px; }
+			.nav-link svg { width: 20px; height: 20px; flex-basis: 20px; }
+			.nav-link[aria-current="page"] { background: var(--color-live-bg); }
+			.dashboard { padding: 12px; gap: 12px; }
+			.banner, .card { border-radius: 14px; }
+			.banner { padding: 14px; }
+			.banner::after { display: none; }
+			.avatar-wrap, .banner-avatar { width: 48px; height: 48px; flex-basis: 48px; }
+			.banner-avatar { border-width: 2px; font-size: 16px; }
+			.banner h1 { max-width: 100%; overflow: hidden; font-size: 17px; text-overflow: ellipsis; white-space: nowrap; }
+			.banner-meta { font-size: 12px; }
+			.banner-course { display: inline; }
+			.continue-card { flex-direction: column; align-items: stretch; padding: 14px; }
+			.continue-actions { width: 100%; }
+			.lesson-preview { width: 96px; height: 54px; flex-basis: 96px; }
+			.continue-label, .continue-minutes, .progress-block { display: block; }
+			.continue-meta { display: none; }
+			.continue-title { display: -webkit-box; overflow: hidden; font-size: 15px; -webkit-box-orient: vertical; -webkit-line-clamp: 2; }
+			.continue-minutes { margin-top: 4px; color: var(--color-muted); font-size: 13px; }
+			.continue-card .btn-fill { height: 44px; flex: 1; }
+			.payment-banner .btn-outline { width: 100%; height: 44px; }
+			.payment-banner { flex-direction: column; align-items: stretch; }
+			.stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+			.stat-card { flex-direction: column; align-items: center; padding: 12px 6px; text-align: center; }
+			.stat-card.stat-attended { display: flex; }
+			.stat-icon { width: 32px; height: 32px; flex-basis: 32px; }
+			.stat-icon svg { width: 16px; height: 16px; }
+			.stat-value { font-size: 18px; }
+			.stat-label { font-size: 11px; }
+			.label-long { display: none; }
+			.label-short { display: inline; }
+			.upcoming { display: block; }
+			.event-row { min-height: 44px; text-decoration: none; }
+			.event-title { font-size: 13px; }
+			.footer-inner { align-items: flex-start; flex-direction: column; }
+			.site-footer { padding-bottom: calc(35px + env(safe-area-inset-bottom)); }
+		}
+		@media (min-width: 480px) and (max-width: 767px) {
+			.dashboard { width: min(560px, 100%); margin-inline: auto; }
+		}
+
+		@media (prefers-reduced-motion: reduce) {
+			html { scroll-behavior: auto; }
+			.drawer, .scrim, .is-loading .sk, .is-loading .sk-avatar, .is-loading .sk-line, .is-loading .sk-pill {
+				animation: none;
+				transition: none;
+			}
+		}
+	</style>
+</head>
+<body>
+	<script id="dashboard-data" type="application/json">
+	{
+		"academyName": "Brylla Academy",
+		"state": "learning",
+		"student": {
+			"name": "Ama Mensah",
+			"initials": "AM",
+			"email": "ama.mensah@example.com",
+			"verified": true
+		},
+		"course": {
+			"name": "Bookkeeping",
+			"weekCurrent": 0,
+			"weeksTotal": 0,
+			"catalogWeeks": 6,
+			"priceLabel": "GHS 950",
+			"watchUrl": "course-watch.html",
+			"certificateUrl": "student-certificates.html"
+		},
+		"lesson": {
+			"title": "What a US bookkeeper does",
+			"minutesLeft": 0,
+			"percentComplete": 0
+		},
+		"stats": {
+			"lessonsDone": 0,
+			"lessonsTotal": 0,
+			"catalogLessons": 18,
+			"assignmentsDue": 0,
+			"attendancePercent": 0
+		},
+		"notifications": {
+			"unread": 0,
+			"url": "student-notifications.html"
+		},
+		"payment": {
+			"outstanding": false,
+			"balanceLabel": "GHS 200",
+			"dueDate": "2026-10-16",
+			"payUrl": "checkout.html"
+		},
+		"upcoming": [
+			{
+				"type": "live",
+				"title": "Chart of accounts build-off",
+				"date": "2026-10-08",
+				"detail": "10:00 am GMT",
+				"start": "20261008T100000Z",
+				"end": "20261008T110000Z",
+				"action": "Add to calendar"
+			},
+			{
+				"type": "assignment",
+				"title": "Journal entries and chart of accounts",
+				"date": "2026-10-09",
+				"detail": "11:59 pm GMT",
+				"action": "Open",
+				"url": "course-watch.html"
+			}
+		],
+		"navigation": [
+			{
+				"label": "Main",
+				"items": [
+					{ "label": "Dashboard", "href": "student-dashboard.html", "icon": "dashboard", "current": true }
+				]
+			},
+			{
+				"label": "Learning",
+				"items": [
+					{ "label": "My courses", "href": "student-courses.html", "icon": "courses" },
+					{ "label": "Quizes", "href": "student-quiz.html", "icon": "assignments" },
+					{ "label": "Assignments", "href": "student-quiz.html", "icon": "assignments", "badge": "due" },
+					{ "label": "Certificates", "href": "student-certificates.html", "icon": "certificate" }
+				]
+			},
+			{
+				"label": "Account",
+				"items": [
+					{ "label": "Payments", "href": "student-order-history.html", "icon": "payments" },
+					{ "label": "Settings", "href": "student-settings.html", "icon": "settings" },
+					{ "label": "Help", "href": "index-4.html#faqs", "icon": "help", "mobileOnly": true },
+					{ "label": "Sign out", "href": "index-4.html", "icon": "signout", "tone": "danger" }
+				]
+			}
+		]
+	}
+	</script>
+
+	<a class="skip-link" href="#main">Skip to main content</a>
+	<header class="site-header" id="site-header"></header>
+	<div class="scrim" id="menu-scrim"></div>
+	<nav class="drawer" id="dashboard-nav" aria-label="Dashboard" inert></nav>
+	<main class="dashboard" id="main"></main>
+	<footer class="site-footer">
+		<div class="footer-wrap">
+			<div class="footer-inner">
+				<a class="footer-brand" href="index-4.html">
+					<span class="footer-brand-mark"><img src="assets/img/logo.png" alt=""></span>
+					<span><strong>Brylla Academy</strong><span>Practical professional skills taught for the remote world.</span></span>
+				</a>
+				<nav class="footer-links" aria-label="Footer navigation">
+					<a href="index-4.html#courses">Courses</a>
+					<a href="index-4.html#stories">Student Stories</a>
+					<a href="index-4.html#toolkit">Career Toolkit</a>
+					<a href="index-4.html#faqs">FAQs</a>
+					<a href="index-4.html#contact">Contact</a>
+					<a href="login.html">Student Login</a>
+					<a href="instructor-login.html">Instructor Login</a>
+						</nav>
+			</div>
+			<p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p>
+			</div>
+		</footer>
+	<noscript><p style="padding:16px">Turn on JavaScript to view your dashboard.</p></noscript>
+
+	<script src="assets/js/brylla-student.js"></script>
+	<script>
+		const dashboard = JSON.parse(document.getElementById("dashboard-data").textContent);
+		const headerEl = document.getElementById("site-header");
+		const navEl = document.getElementById("dashboard-nav");
+		const mainEl = document.getElementById("main");
+		const scrimEl = document.getElementById("menu-scrim");
+		let menuOpen = false;
+		let runtimeState = null;
+
+		const svgNs = "http://www.w3.org/2000/svg";
+		const iconPaths = {
+			school: '<path d="M3 10 12 5l9 5-9 5-9-5z"/><path d="M7 12.2V16c0 .8 2.1 2.5 5 2.5s5-1.7 5-2.5v-3.8"/>',
+			menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+			close: '<path d="M6 6l12 12M18 6 6 18"/>',
+			bell: '<path d="M6 9a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+			check: '<path d="M5 12.5 9.2 17 19 7"/>',
+			play: '<path fill="currentColor" stroke="none" d="M8 5.5v13l11-6.5z"/>',
+			dashboard: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+			courses: '<path d="M4 6.5h10a3 3 0 0 1 3 3V19H7a3 3 0 0 0-3 3z"/><path d="M4 6.5A3 3 0 0 1 7 4h13v15"/>',
+			calendar: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',
+			assignments: '<rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5h6v3H9zM9 12h6M9 16h4"/>',
+			certificate: '<circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/>',
+			payments: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',
+			settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M4.8 6.8l1.6 1.6M17.6 15.6l1.6 1.6M3.5 12h2.2M18.3 12h2.2M4.8 17.2l1.6-1.6M17.6 8.4l1.6-1.6"/>',
+			signout: '<path d="M10 7V5H5v14h5v-2"/><path d="M10 12h9M16 8l4 4-4 4"/>',
+			help: '<circle cx="12" cy="12" r="8"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.7.3-1.2.9-1.2 1.6M12 17h.01"/>',
+			lessons: '<path d="M8 6h11M8 12h11M8 18h11"/><path d="M4.5 6h.01M4.5 12h.01M4.5 18h.01"/>',
+			warning: '<path d="M12 4.5 21 19H3L12 4.5z"/><path d="M12 10v4M12 17h.01"/>'
+		};
+
+		function icon(name) {
+			const svg = document.createElementNS(svgNs, "svg");
+			svg.setAttribute("viewBox", "0 0 24 24");
+			svg.setAttribute("fill", "none");
+			svg.setAttribute("stroke", "currentColor");
+			svg.setAttribute("stroke-width", "1.75");
+			svg.setAttribute("stroke-linecap", "round");
+			svg.setAttribute("stroke-linejoin", "round");
+			svg.setAttribute("aria-hidden", "true");
+			svg.innerHTML = iconPaths[name] || "";
+			return svg;
+		}
+
+		function el(tag, className, text) {
+			const node = document.createElement(tag);
+			if (className) node.className = className;
+			if (text != null) node.textContent = text;
+			return node;
+		}
+
+		function formatGhanaDate(isoDate) {
+			const date = new Date(isoDate + "T12:00:00");
+			const weekday = new Intl.DateTimeFormat("en-GB", { weekday: "short" }).format(date);
+			const month = new Intl.DateTimeFormat("en-GB", { month: "short" }).format(date);
+			return { label: weekday + " " + date.getDate() + " " + month, weekday: weekday, day: String(date.getDate()) };
+		}
+
+		function notificationLabel(count) {
+			if (!count) return "Notifications, no unread";
+			const noun = count === 1 ? "notification" : "notifications";
+			return "Notifications, " + count + " unread " + noun;
+		}
+
+		function badgeText(count) {
+			return count > 9 ? "9+" : String(count);
+		}
+
+		function readStored(key) {
+			try {
+				const raw = localStorage.getItem(key);
+				return raw ? JSON.parse(raw) : null;
+			} catch (error) {
+				return null;
+			}
+		}
+
+		function initialsFrom(name) {
+			const parts = String(name || "").trim().split(/\s+/).filter(Boolean);
+			return parts.slice(0, 2).map(function (part) { return part.charAt(0); }).join("").toUpperCase() || "ST";
+		}
+
+		function applyProfile(data) {
+			const profile = readStored("brylla-student-profile");
+			if (!profile || !profile.name) return;
+			data.student.name = profile.name;
+			if (profile.email) data.student.email = profile.email;
+			data.student.initials = initialsFrom(profile.name);
+		}
+
+		function applyLiveProgress(data) {
+			const progress = window.BryllaStudent ? BryllaStudent.summary() : null;
+			const started = Boolean(progress && progress.started);
+			if (!started) {
+				data.course.weekCurrent = 0;
+				data.course.weeksTotal = 0;
+				if (data.stats) {
+					data.stats.lessonsDone = 0;
+					data.stats.lessonsTotal = 0;
+					data.stats.assignmentsDue = 0;
+					data.stats.attendancePercent = 0;
+				}
+				if (data.lesson) {
+					data.lesson.minutesLeft = 0;
+					if (progress) data.lesson.title = progress.lessonTitle;
+				}
+				return;
+			}
+			data.course.weekCurrent = progress.weekCurrent;
+			data.course.weeksTotal = progress.weeksTotal;
+			if (data.stats) {
+				data.stats.lessonsDone = progress.lessonsDone;
+				data.stats.lessonsTotal = progress.lessonsTotal;
+				data.stats.assignmentsDue = progress.assignmentsDue;
+				data.stats.attendancePercent = progress.attendancePercent;
+			}
+			if (data.lesson) {
+				data.lesson.minutesLeft = progress.minutesLeft;
+				data.lesson.title = progress.lessonTitle;
+				data.lesson.percentComplete = progress.percentComplete;
+			}
+			if (progress.completed) data.state = "completed";
+		}
+
+		function viewModel() {
+			const data = JSON.parse(JSON.stringify(dashboard));
+			applyProfile(data);
+			const preview = runtimeState || new URLSearchParams(location.search).get("state");
+			if (preview === "payment") data.payment.outstanding = true;
+			else if (preview === "empty") data.upcoming = [];
+			else if (preview === "new" || preview === "completed" || preview === "loading" || preview === "error") data.state = preview;
+			if (data.state !== "completed") applyLiveProgress(data);
+			if (data.state === "new" && data.stats) data.stats.assignmentsDue = 0;
+			if (data.state === "completed") {
+				data.course.weekCurrent = data.course.catalogWeeks;
+				data.course.weeksTotal = data.course.catalogWeeks;
+				if (data.stats) {
+					data.stats.lessonsDone = data.stats.catalogLessons;
+					data.stats.lessonsTotal = data.stats.catalogLessons;
+					data.stats.assignmentsDue = 0;
+				}
+			}
+			if (data.stats && data.lesson) {
+				const total = data.stats.lessonsTotal;
+				data.lesson.percentComplete = total ? Math.round((data.stats.lessonsDone / total) * 100) : 0;
+			}
+			return data;
+		}
+
+		function focusable(container) {
+			return Array.from(container.querySelectorAll("a[href], button:not([disabled])")).filter(function (node) {
+				return node.getClientRects().length > 0;
+			});
+		}
+
+		function renderHeader(data) {
+			headerEl.replaceChildren();
+			const start = el("div", "header-start");
+			const toggle = el("button", "icon-button menu-toggle");
+			toggle.type = "button";
+			toggle.id = "menu-toggle";
+			toggle.setAttribute("aria-expanded", menuOpen ? "true" : "false");
+			toggle.setAttribute("aria-controls", "dashboard-nav");
+			toggle.setAttribute("aria-label", menuOpen ? "Close menu" : "Open menu");
+			if (menuOpen) toggle.classList.add("is-open");
+			const menuIcon = icon("menu");
+			menuIcon.classList.add("icon-menu");
+			const closeIcon = icon("close");
+			closeIcon.classList.add("icon-close");
+			toggle.append(menuIcon, closeIcon);
+			toggle.addEventListener("click", function () {
+				if (menuOpen) closeMenu();
+				else openMenu();
+			});
+
+			const brand = el("a", "brand");
+			brand.href = "student-dashboard.html";
+			brand.setAttribute("aria-label", data.academyName + " home");
+			const mark = el("span", "brand-mark");
+			const logo = document.createElement("img");
+			logo.src = "assets/img/logo.png";
+			logo.alt = "";
+			mark.append(logo);
+			brand.append(mark);
+			start.append(brand, toggle);
+
+			const end = el("div", "header-end");
+			const unread = data.notifications.unread;
+			const notify = el("a", "icon-button notify-button");
+			notify.href = data.notifications.url;
+			notify.setAttribute("aria-label", notificationLabel(unread));
+			notify.append(icon("bell"));
+			if (unread > 0) notify.append(el("span", "notify-badge", badgeText(unread)));
+			const avatar = el("span", "header-avatar", data.student.initials);
+			avatar.setAttribute("role", "img");
+			avatar.setAttribute("aria-label", data.student.name);
+			end.append(notify, avatar);
+			headerEl.append(start, end);
+		}
+
+		function renderNav(data) {
+			navEl.replaceChildren();
+			const profile = el("div", "drawer-profile");
+			profile.append(el("span", "drawer-avatar", data.student.initials));
+			const profileCopy = el("div", "drawer-profile-copy");
+			profileCopy.append(el("p", "drawer-name", data.student.name), el("p", "drawer-email", data.student.email));
+			profile.append(profileCopy);
+			const scroller = el("div", "drawer-scroll");
+			const signout = el("div", "drawer-signout");
+			const due = data.stats ? data.stats.assignmentsDue : 0;
+			data.navigation.forEach(function (group) {
+				const section = el("div", group.label === "Account" ? "nav-group nav-group-account" : "nav-group");
+				section.append(el("p", "nav-label", group.label));
+				const list = el("ul", "nav-list");
+				group.items.forEach(function (item) {
+					const li = document.createElement("li");
+					if (item.mobileOnly) li.classList.add("nav-mobile-only");
+					const link = el("a", "nav-link");
+					link.href = item.href;
+					if (item.current) link.setAttribute("aria-current", "page");
+					if (item.tone === "danger") link.classList.add("is-danger");
+					link.append(icon(item.icon), el("span", null, item.label));
+					if (item.badge === "due" && due > 0) {
+						link.append(el("span", "nav-badge", String(due)));
+						link.append(el("span", "sr-only", "due"));
+					}
+					link.addEventListener("click", function () { closeMenu(false); });
+					li.append(link);
+					if (item.tone === "danger") signout.append(li);
+					else list.append(li);
+				});
+				if (list.children.length) {
+					section.append(list);
+					scroller.append(section);
+				}
+			});
+			navEl.append(profile, scroller, signout);
+		}
+
+		function renderBanner(data) {
+			const section = el("section", "banner");
+			section.setAttribute("aria-labelledby", "student-name");
+			const wrap = el("div", "avatar-wrap");
+			wrap.append(el("div", "banner-avatar", data.student.initials));
+			if (data.student.verified) {
+				const tick = el("span", "verified");
+				tick.setAttribute("role", "img");
+				tick.setAttribute("aria-label", "Verified student");
+				tick.append(icon("check"));
+				wrap.append(tick);
+			}
+			const copy = el("div", "banner-copy");
+			const heading = el("h1", null, data.student.name);
+			heading.id = "student-name";
+			const meta = el("p", "banner-meta");
+			meta.append(el("span", "banner-course", data.course.name + ", "));
+			meta.append(document.createTextNode("Week " + data.course.weekCurrent + " of " + data.course.weeksTotal));
+			copy.append(heading, meta);
+			section.append(wrap, copy);
+			return section;
+		}
+
+		function renderPayment(data) {
+			const due = formatGhanaDate(data.payment.dueDate);
+			const section = el("section", "payment-banner");
+			section.setAttribute("role", "status");
+			section.setAttribute("aria-label", "Payment due");
+			const copy = el("div", "payment-copy");
+			copy.append(icon("warning"));
+			copy.append(el("p", null, "Payment due. Your balance of " + data.payment.balanceLabel + " is due by " + due.label + "."));
+			const pay = el("a", "btn-outline", "Pay now");
+			pay.href = data.payment.payUrl;
+			section.append(copy, pay);
+			return section;
+		}
+
+		function renderContinue(data) {
+			const section = el("section", "card continue-card");
+			const copy = el("div", "continue-copy");
+			let title = data.lesson.title;
+			let meta = data.lesson.minutesLeft + " min left, " + data.lesson.percentComplete + "% of course complete";
+			const record = window.BryllaStudent ? BryllaStudent.courseRecord("bookkeeping") : { enrolled: false };
+			const started = window.BryllaStudent ? BryllaStudent.summary().started : false;
+			let action = record.enrolled ? (started ? "Resume lesson" : "Start course") : "Enrol";
+			let href = record.enrolled ? data.course.watchUrl : "checkout.html?course=bookkeeping";
+			let showCheck = false;
+			if (data.state === "new") {
+				title = "Start your first lesson";
+				meta = data.course.name + " is ready when you are.";
+				if (record.enrolled) action = "Start course";
+			} else if (data.state === "completed") {
+				title = "You completed " + data.course.name;
+				meta = "Your certificate is ready to download.";
+				action = "Download certificate";
+				href = data.course.certificateUrl;
+				showCheck = true;
+			}
+			const titleRow = el("div", "title-row");
+			if (showCheck) titleRow.append(icon("check"));
+			const heading = el("h2", "continue-title", title);
+			heading.id = "continue-title";
+			titleRow.append(heading);
+			if (data.state !== "new" && data.state !== "completed") copy.append(el("p", "continue-label", "Continue learning"));
+			copy.append(titleRow);
+			if (data.state !== "new" && data.state !== "completed") {
+				copy.append(el("p", "continue-minutes", data.lesson.minutesLeft + " min left"));
+				const progress = el("div", "progress-block");
+				const labels = el("div", "progress-labels");
+				labels.append(el("span", null, "Course progress"), el("strong", null, data.lesson.percentComplete + "%"));
+				const track = el("div", "progress-track");
+				track.setAttribute("role", "progressbar");
+				track.setAttribute("aria-label", "Course progress");
+				track.setAttribute("aria-valuemin", "0");
+				track.setAttribute("aria-valuemax", "100");
+				track.setAttribute("aria-valuenow", String(data.lesson.percentComplete));
+				const fill = el("span");
+				fill.style.width = data.lesson.percentComplete + "%";
+				track.append(fill);
+				progress.append(labels, track);
+				copy.append(progress);
+			}
+			copy.append(el("p", "continue-meta", meta));
+			section.setAttribute("aria-labelledby", "continue-title");
+			const actions = el("div", "continue-actions");
+			function beginCourse() {
+				if (record.enrolled && window.BryllaStudent) BryllaStudent.startCourse();
+			}
+			if (data.state !== "completed") {
+				const preview = el("a", "lesson-preview");
+				preview.href = data.course.watchUrl;
+				preview.setAttribute("aria-label", "Open the " + data.course.name + " course preview");
+				if (record.enrolled) preview.addEventListener("click", beginCourse);
+				const play = el("span", "lesson-preview-play");
+				play.setAttribute("aria-hidden", "true");
+				play.append(icon("play"));
+				preview.append(play, el("span", "lesson-preview-label", data.course.name));
+				actions.append(preview);
+			}
+			const button = el("a", "btn-fill", action);
+			button.href = href;
+			if (record.enrolled && href === data.course.watchUrl) button.addEventListener("click", beginCourse);
+			actions.append(button);
+			section.append(copy, actions);
+			return section;
+		}
+
+		function renderStats(data) {
+			const section = el("section", "stat-grid");
+			section.setAttribute("aria-label", "Learning progress");
+			const items = [
+				["lessons", "tint-purple", "Lessons done", "Lessons", data.stats.lessonsDone + " / " + data.stats.lessonsTotal, ""],
+				["assignments", "tint-coral", "Assignments due", "Due", String(data.stats.assignmentsDue), ""],
+				["calendar", "tint-green", "Attendance", "Attended", (data.stats.attendancePercent || 0) + "%", "stat-attended"]
+			];
+			items.forEach(function (item) {
+				const card = el("article", "card stat-card" + (item[5] ? " " + item[5] : ""));
+				const tile = el("div", "stat-icon " + item[1]);
+				tile.append(icon(item[0]));
+				const copy = document.createElement("div");
+				const label = el("p", "stat-label");
+				label.append(el("span", "label-long", item[2]), el("span", "label-short", item[3]));
+				copy.append(label, el("p", "stat-value", item[4]));
+				card.append(tile, copy);
+				section.append(card);
+			});
+			return section;
+		}
+
+		function calendarHref(event) {
+			const body = [
+				"BEGIN:VCALENDAR",
+				"VERSION:2.0",
+				"PRODID:-//Brylla Academy//Dashboard//EN",
+				"BEGIN:VEVENT",
+				"DTSTART:" + event.start,
+				"DTEND:" + event.end,
+				"SUMMARY:" + event.title,
+				"END:VEVENT",
+				"END:VCALENDAR"
+			].join("\r\n");
+			return "data:text/calendar;charset=utf-8," + encodeURIComponent(body);
+		}
+
+		function renderUpcoming(data) {
+			const section = el("section", "upcoming");
+			section.setAttribute("aria-labelledby", "upcoming-title");
+			const heading = el("h2", null, "Coming up");
+			heading.id = "upcoming-title";
+			const card = el("div", "card");
+			if (!data.upcoming.length) {
+				card.append(el("p", "empty-note", "Nothing scheduled this week."));
+			} else {
+				data.upcoming.slice(0, 2).forEach(function (event) {
+					const when = formatGhanaDate(event.date);
+					const row = el("a", "event-row");
+					row.href = event.type === "live" ? calendarHref(event) : event.url;
+					if (event.type === "live") row.setAttribute("download", "brylla-class.ics");
+					const dateBlock = el("div", "date-block " + (event.type === "live" ? "date-live" : "date-deadline"));
+					dateBlock.append(el("span", "date-weekday", when.weekday), el("span", "date-day", when.day));
+					const kind = event.type === "live" ? "Live class" : "Assignment due";
+					const copy = el("div", "event-copy");
+					copy.append(el("h3", "event-title", event.title));
+					copy.append(el("p", "event-detail", kind + " · " + when.label + ", " + event.detail));
+					row.append(dateBlock, copy);
+					card.append(row);
+				});
+			}
+			section.append(heading, card);
+			if (data.upcoming.length > 2) {
+				const more = el("a", "schedule-link", "View schedule");
+				more.href = "student-courses.html";
+				section.append(more);
+			}
+			return section;
+		}
+
+		function renderLoading() {
+			mainEl.classList.add("is-loading");
+			mainEl.setAttribute("aria-busy", "true");
+			const status = el("p", "sr-only", "Loading your dashboard");
+			status.setAttribute("role", "status");
+			const banner = el("div", "banner sk-banner");
+			banner.setAttribute("aria-hidden", "true");
+			const lines = el("div");
+			lines.append(el("div", "sk-line"), el("div", "sk-line sk-line-short"));
+			banner.append(el("div", "sk-avatar"), lines);
+			const continueCard = el("div", "card continue-card");
+			continueCard.setAttribute("aria-hidden", "true");
+			const continueLines = el("div");
+			continueLines.append(el("div", "sk-line"), el("div", "sk-line sk-line-short"));
+			continueCard.append(continueLines, el("div", "sk-pill"));
+			const stats = el("div", "stat-grid");
+			stats.setAttribute("aria-hidden", "true");
+			for (let i = 0; i < 2; i += 1) stats.append(el("div", "card sk sk-block"));
+			mainEl.append(status, banner, continueCard, stats);
+		}
+
+		function renderError() {
+			const section = el("section", "card error-card");
+			section.setAttribute("role", "alert");
+			section.append(el("p", null, "We couldn't load your dashboard."));
+			const retry = el("button", "btn-fill", "Try again");
+			retry.type = "button";
+			retry.addEventListener("click", function () {
+				runtimeState = "learning";
+				const url = new URL(location.href);
+				url.searchParams.delete("state");
+				history.replaceState(null, "", url.pathname + url.search);
+				render();
+			});
+			section.append(retry);
+			mainEl.append(section);
+		}
+
+		function render() {
+			const data = viewModel();
+			renderHeader(data);
+			renderNav(data);
+			mainEl.classList.remove("is-loading");
+			mainEl.removeAttribute("aria-busy");
+			mainEl.replaceChildren();
+			if (data.state === "loading") {
+				renderLoading();
+				return;
+			}
+			if (data.state === "error") {
+				renderError();
+				return;
+			}
+			mainEl.append(renderBanner(data));
+			if (data.payment.outstanding) mainEl.append(renderPayment(data));
+			mainEl.append(renderContinue(data));
+			if (data.state !== "new" && data.stats) mainEl.append(renderStats(data));
+			mainEl.append(renderUpcoming(data));
+		}
+
+		function openMenu() {
+			menuOpen = true;
+			navEl.inert = false;
+			scrimEl.classList.add("is-open");
+			navEl.classList.add("is-open");
+			const toggle = document.getElementById("menu-toggle");
+			toggle.classList.add("is-open");
+			toggle.setAttribute("aria-expanded", "true");
+			toggle.setAttribute("aria-label", "Close menu");
+			mainEl.inert = true;
+			document.body.classList.add("menu-lock");
+			const footer = document.querySelector(".site-footer");
+			if (footer) footer.inert = true;
+			const first = focusable(navEl)[0];
+			if (first) first.focus();
+		}
+
+		function closeMenu(restoreFocus) {
+			if (!menuOpen) return;
+			menuOpen = false;
+			const toggle = document.getElementById("menu-toggle");
+			navEl.classList.remove("is-open");
+			scrimEl.classList.remove("is-open");
+			navEl.inert = true;
+			mainEl.inert = false;
+			document.body.classList.remove("menu-lock");
+			const footer = document.querySelector(".site-footer");
+			if (footer) footer.inert = false;
+			if (toggle) {
+				toggle.classList.remove("is-open");
+				toggle.setAttribute("aria-expanded", "false");
+				toggle.setAttribute("aria-label", "Open menu");
+				if (restoreFocus !== false) toggle.focus();
+			}
+		}
+
+		scrimEl.addEventListener("click", function () { closeMenu(); });
+		let swipeStart = 0;
+		navEl.addEventListener("touchstart", function (event) {
+			swipeStart = event.changedTouches[0].clientX;
+		}, { passive: true });
+		navEl.addEventListener("touchend", function (event) {
+			if (swipeStart - event.changedTouches[0].clientX > 48) closeMenu();
+		}, { passive: true });
+		document.addEventListener("keydown", function (event) {
+			if (!menuOpen) return;
+			if (event.key === "Escape") {
+				event.preventDefault();
+				closeMenu();
+				return;
+			}
+			if (event.key !== "Tab") return;
+			const items = focusable(navEl);
+			if (!items.length) return;
+			const first = items[0];
+			const last = items[items.length - 1];
+			const toggle = document.getElementById("menu-toggle");
+			const active = document.activeElement;
+			if (active === toggle) {
+				event.preventDefault();
+				(event.shiftKey ? last : first).focus();
+				return;
+			}
+			if (event.shiftKey && active === first) {
+				event.preventDefault();
+				last.focus();
+			} else if (!event.shiftKey && active === last) {
+				event.preventDefault();
+				first.focus();
+			}
+		});
+		document.addEventListener("focusin", function (event) {
+			if (!menuOpen) return;
+			const toggle = document.getElementById("menu-toggle");
+			if (navEl.contains(event.target) || event.target === toggle) return;
+			const first = focusable(navEl)[0];
+			if (first) first.focus();
+		});
+
+		window.addEventListener("storage", function (event) {
+			if (event.key === "brylla-course-progress" || event.key === "brylla-student-profile") render();
+		});
+		window.addEventListener("pageshow", function () { render(); });
+		render();
+	</script>
+</body>
+</html>
