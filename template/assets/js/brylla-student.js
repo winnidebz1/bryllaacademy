@@ -46,6 +46,10 @@
 		write(PROGRESS_KEY, progress);
 	}
 
+	function sendToAccount(kind, id) {
+		if (window.BryllaAuth && BryllaAuth.record) BryllaAuth.record(kind, id);
+	}
+
 	function lessonById(id) {
 		return lessons.filter(function (lesson) { return lesson.id === id; })[0] || null;
 	}
@@ -114,25 +118,29 @@
 
 	function startCourse() {
 		var progress = loadProgress();
+		var wasStarted = Boolean(progress.started);
 		progress.enrolled = true;
 		progress.started = true;
 		if (!progress.courses) progress.courses = {};
 		progress.courses.bookkeeping = { enrolled: true, started: true };
 		saveProgress(progress);
+		if (!wasStarted) sendToAccount("start", "bookkeeping");
 		return summary();
 	}
 
 	function completeLesson(id) {
 		var progress = loadProgress();
+		var wasStarted = Boolean(progress.started);
 		if (!progress.started) {
 			progress.enrolled = true;
 			progress.started = true;
 		}
 		var current = currentLesson(progress);
-		if (current.id === id && progress.completedLessonIds.indexOf(id) === -1) {
-			progress.completedLessonIds.push(id);
-		}
+		var added = current.id === id && progress.completedLessonIds.indexOf(id) === -1;
+		if (added) progress.completedLessonIds.push(id);
 		saveProgress(progress);
+		if (!wasStarted) sendToAccount("start", "bookkeeping");
+		if (added) sendToAccount("lesson", id);
 		return summary();
 	}
 
@@ -140,8 +148,10 @@
 		var progress = loadProgress();
 		if (!progress.started) return summary();
 		var known = lives.some(function (live) { return live.id === id; });
-		if (known && progress.attendedLiveIds.indexOf(id) === -1) progress.attendedLiveIds.push(id);
+		var added = known && progress.attendedLiveIds.indexOf(id) === -1;
+		if (added) progress.attendedLiveIds.push(id);
 		saveProgress(progress);
+		if (added) sendToAccount("live", id);
 		return summary();
 	}
 
