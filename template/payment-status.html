@@ -34,24 +34,24 @@
 	<script>
 		var params = new URLSearchParams(location.search);
 		var reference = params.get("reference") || params.get("trxref") || "";
-		var status = document.getElementById("payment-status");
+		var statusBox = document.getElementById("payment-status");
 		if (!reference) {
-			status.innerHTML = "There is no payment reference found. The course is still locked.<br><a class='btn' href='checkout?course=bookkeeping'>Go to checkout</a>";
+			statusBox.innerHTML = "There is no payment reference found. The course is still locked.<br><a class='btn' href='checkout?course=bookkeeping'>Go to checkout</a>";
 		} else if (!window.BryllaCheckout.configured()) {
-			status.textContent = "Payment verification service is not connected yet. Please contact support.";
+			statusBox.textContent = "Payment verification service is not connected yet. Please contact support.";
 		} else {
 			window.BryllaCheckout.post("verify-payment", { reference: reference }).then(function (result) {
 				if (!result.ok) {
-					status.innerHTML = "<strong>Payment status: " + (result.code || "pending") + "</strong><br>If you just completed payment, please wait a moment and retry.<br><button class='btn btn-retry' onclick='location.reload()'>Retry verification</button>";
+					statusBox.innerHTML = "<strong>Payment status: " + (result.code || "pending") + "</strong><br>If you just completed payment, please wait a moment and retry.<br><button class='btn btn-retry' onclick='location.reload()'>Retry verification</button>";
 					return;
 				}
 				var targetUrl = result.setupUrl || "set-password";
-				status.innerHTML = "<strong>Payment confirmed!</strong><br><br>Redirecting you to choose your password…<br><a id='continue-link' class='btn' href='" + targetUrl + "'>Continue to set password &rarr;</a>";
+				statusBox.innerHTML = "<strong>Payment confirmed!</strong><br><br>Redirecting you to choose your password…<br><a id='continue-link' class='btn' href='" + targetUrl + "'>Continue to set password &rarr;</a>";
 				setTimeout(function () {
 					window.location.assign(targetUrl);
 				}, 1200);
 			}).catch(function (error) {
-				status.innerHTML = "<strong>Verification error:</strong> " + error.message + "<br><br><button class='btn btn-retry' onclick='location.reload()'>Retry verification</button>";
+				statusBox.innerHTML = "<strong>Verification error:</strong> " + error.message + "<br><br><button class='btn btn-retry' onclick='location.reload()'>Retry verification</button>";
 			});
 		}
 	</script>

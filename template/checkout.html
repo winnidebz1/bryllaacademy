@@ -51,7 +51,7 @@
 		var params = new URLSearchParams(location.search);
 		var courseId = params.get("course") || "bookkeeping";
 		var course = catalog[courseId];
-		var status = document.getElementById("checkout-status");
+		var statusBox = document.getElementById("checkout-status");
 		var form = document.getElementById("checkout-form");
 		document.getElementById("checkout-name").value = sessionStorage.getItem("bryllaPendingName") || "";
 		document.getElementById("checkout-email").value = sessionStorage.getItem("bryllaPendingEmail") || "";
@@ -69,9 +69,9 @@
 			if (!form.reportValidity()) return;
 			var button = document.getElementById("pay-button");
 			button.disabled = true;
-			status.textContent = "Starting checkout…";
+			statusBox.textContent = "Starting checkout…";
 			if (!window.BryllaCheckout.configured()) {
-				status.textContent = "Payments are not connected yet. The course stays locked, and no account has been created.";
+				statusBox.textContent = "Payments are not connected yet. The course stays locked, and no account has been created.";
 				button.disabled = false;
 				return;
 			}
@@ -81,15 +81,22 @@
 				email: document.getElementById("checkout-email").value.trim()
 			}).then(function (result) {
 				if (result.status === "already_paid") {
-					status.textContent = result.message;
+					statusBox.textContent = result.message + " ";
+					var signIn = document.createElement("a");
+					signIn.href = "login";
+					signIn.textContent = "Sign in";
+					var resend = document.createElement("a");
+					resend.href = "account-setup";
+					resend.textContent = "resend the setup email";
+					statusBox.append(signIn, " or ", resend, ".");
 					button.disabled = false;
 					return;
 				}
 				if (!result.authorizationUrl) throw new Error("Paystack did not return a payment page.");
-				status.textContent = "Redirecting to Paystack…";
+				statusBox.textContent = "Redirecting to Paystack…";
 				location.assign(result.authorizationUrl);
 			}).catch(function (error) {
-				status.textContent = error.message;
+				statusBox.textContent = error.message;
 				button.disabled = false;
 			});
 		});

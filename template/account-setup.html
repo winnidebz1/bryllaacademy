@@ -31,18 +31,18 @@
 	<script src="assets/js/brylla-public-config.js"></script>
 	<script src="assets/js/brylla-checkout.js"></script>
 	<script>
-		var status = document.getElementById("setup-status");
+		var statusBox = document.getElementById("setup-status");
 		document.getElementById("resend-form").addEventListener("submit", function (event) {
 			event.preventDefault();
 			if (!window.BryllaCheckout.configured()) {
-				status.textContent = "Email recovery is not connected yet. A paid order is kept until the email provider is configured.";
+				statusBox.textContent = "Email recovery is not connected yet. A paid order is kept until the email provider is configured.";
 				return;
 			}
-			status.textContent = "Checking the paid order…";
+			statusBox.textContent = "Checking the paid order…";
 			window.BryllaCheckout.post("resend-setup", { email: document.getElementById("setup-email").value.trim() }).then(function () {
-				status.textContent = "If the payment is confirmed, the setup email has been sent again.";
+				statusBox.textContent = "If the payment is confirmed, the setup email has been sent again.";
 			}).catch(function (error) {
-				status.textContent = error.message;
+				statusBox.textContent = error.message;
 			});
 		});
 	</script>
