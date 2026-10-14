@@ -682,14 +682,12 @@
 				"items": [
 					{ "label": "My courses", "href": "student-courses", "icon": "courses" },
 					{ "label": "Quizes", "href": "student-quiz", "icon": "assignments" },
-					{ "label": "Assignments", "href": "student-quiz", "icon": "assignments", "badge": "due" },
 					{ "label": "Certificates", "href": "student-certificates", "icon": "certificate" }
 				]
 			},
 			{
 				"label": "Account",
 				"items": [
-					{ "label": "Payments", "href": "student-order-history", "icon": "payments" },
 					{ "label": "Settings", "href": "student-settings", "icon": "settings" },
 					{ "label": "Help", "href": "/#faqs", "icon": "help", "mobileOnly": true },
 					{ "label": "Sign out", "href": "login", "icon": "signout", "tone": "danger" }
@@ -718,7 +716,6 @@
 					<a href="/#faqs">FAQs</a>
 					<a href="contact-us">Contact</a>
 					<a href="login">Student Login</a>
-					<a href="instructor-login">Instructor Login</a>
 				</nav>
 			</div>
 			<p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p>
@@ -978,7 +975,8 @@
 				wrap.append(tick);
 			}
 			const copy = el("div", "banner-copy");
-			const heading = el("h1", null, data.student.name);
+			const firstName = String(data.student.name || "").trim().split(/\s+/)[0] || "Student";
+			const heading = el("h1", null, "Welcome, " + firstName);
 			heading.id = "student-name";
 			const meta = el("p", "banner-meta");
 			meta.append(el("span", "banner-course", data.course.name + ", "));

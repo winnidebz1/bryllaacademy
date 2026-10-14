@@ -40,6 +40,7 @@
 		{ label: "Teaching", items: [
 			{ label: "Overview", href: "instructor-dashboard.html", icon: "isax isax-grid-35", page: "dashboard" },
 			{ label: "My courses", href: "instructor-course.html", icon: "isax isax-teacher5", page: "courses" },
+			{ label: "Add course", href: "add-course.html", icon: "isax isax-add-circle5", page: "add-course" },
 			{ label: "Modules and lessons", href: "instructor-dashboard.html#module-editor", icon: "isax isax-book", page: "modules" },
 			{ label: "Assignments and grading", href: "instructor-assignment.html", icon: "isax isax-clipboard-text5", page: "assignments" },
 			{ label: "Students", href: "instructor-students.html", icon: "isax isax-profile-2user5", page: "students" },
@@ -409,7 +410,7 @@
 		var scored = data.enrolments.filter(function (row) { return row.progress != null; });
 		var completion = scored.length ? Math.round(scored.reduce(function (sum, row) { return sum + Number(row.progress); }, 0) / scored.length) : null;
 		root.innerHTML = '<div class="dash-head"><div><h1 class="h4 fw-bold">' + hello + ", " + esc(instructorName(data)) + '</h1><p class="mb-0">Your courses, students and grading for today.</p></div>' +
-			'<div class="d-flex flex-wrap gap-2"><a class="btn btn-primary rounded-pill" href="instructor-course.html#add-course">Create course</a><a class="btn btn-light rounded-pill" href="instructor-assignment.html">Review submissions</a></div></div>' +
+			'<div class="d-flex flex-wrap gap-2"><a class="btn btn-primary rounded-pill" href="add-course.html">Create course</a><a class="btn btn-light rounded-pill" href="instructor-assignment.html">Review submissions</a></div></div>' +
 			'<div class="row">' +
 			statCard("isax isax-teacher5", "bg-primary-transparent", "My courses", String(count.courses), "#my-courses", "all") +
 			statCard("isax isax-profile-2user5", "bg-info-transparent", "My students", String(count.students), "instructor-students.html") +
@@ -436,7 +437,7 @@
 						cell("Students", String(studentCount(data, item.id))) +
 						cell("Status", statusBadge(item.status)) + "</tr>";
 				})
-			) : empty(data.courses.length ? "No courses match." : "No courses yet. Add a Brylla course to see it here.", data.courses.length ? "" : '<a class="btn btn-primary rounded-pill mt-3" href="instructor-course.html#add-course">Add new course</a>')) +
+			) : empty(data.courses.length ? "No courses match." : "No courses yet. Add a Brylla course to see it here.", data.courses.length ? "" : '<a class="btn btn-primary rounded-pill mt-3" href="add-course.html">Add new course</a>')) +
 			moduleEditor(data, course);
 		bindDashboard(root, data);
 	}

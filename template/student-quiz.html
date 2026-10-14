@@ -1,5 +1,5 @@
 <!doctype html>
-<html data-saved=""><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.42.0/dist/tabler-icons.min.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.42.0/dist/tabler-icons.min.css"></noscript><style>
+<html lang="en" data-saved=""><head><meta charset="utf-8"><title>Quizzes | Brylla Academy</title><meta name="viewport" content="width=device-width, initial-scale=1"><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.42.0/dist/tabler-icons.min.css" media="print" onload="this.media='all'"><noscript><link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.42.0/dist/tabler-icons.min.css"></noscript><style>
 :root{--font-anthropic-sans:"anthropic-sans", ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;--font-anthropic-serif:"anthropic-serif", ui-serif, Georgia, "Times New Roman", serif}
 :root {
   --radius: calc(0.5rem * var(--cds-rem-scale, 1));
@@ -2293,51 +2293,85 @@ body[data-not-sent] > #vis-container ~ #not-sent {
 #qz h2:focus{outline:none}
 #qz .row{display:flex;justify-content:space-between;align-items:center;gap:12px}
 #qz .rv{padding:14px 0;border-top:0.5px solid var(--border)}
+#qz .ql{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+#qz .qi{width:100%;display:grid;grid-template-columns:1fr auto;grid-template-areas:"w c" "s c" "m c";align-items:center;column-gap:12px;text-align:left;padding:16px 18px;border:1px solid var(--border);border-radius:14px;background:var(--surface-2);color:inherit;font:inherit;cursor:pointer}
+#qz .qi:hover{border-color:#083b6c}
+#qz .qi:focus-visible{outline:3px solid #f28a3c;outline-offset:2px}
+#qz .qi.off{cursor:default;opacity:.65}
+#qz .qi.off:hover{border-color:var(--border)}
+#qz .qw{grid-area:w;font-size:12px;font-weight:500;color:#0f6b6b;text-transform:uppercase;letter-spacing:.04em}
+#qz .qs{grid-area:s;font-size:16px;font-weight:500;margin:2px 0}
+#qz .qm{grid-area:m;font-size:13px;color:var(--text-secondary)}
+#qz .qc{grid-area:c;font-size:20px;color:#083b6c}
+#qz .lnk{border:0;background:none;padding:0;font-size:14px;color:#0f6b6b;font-weight:500;cursor:pointer}
+#qz .lnk:hover{text-decoration:underline}
 </style>
-<h2 class="sr-only">Student quiz with a start screen, one question at a time with a timer and question navigator, and a results screen with answer review</h2>
+<h2 class="sr-only">Student quizzes: choose a subject, then take its quiz one question at a time with a timer, and review your answers</h2>
 <div id="qz">
   <div class="hd">
     <a class="brand" href="student-dashboard.html" aria-label="Brylla Academy home"><img src="assets/img/logo.png" alt="Brylla Academy"></a>
-    <a class="exit" href="student-dashboard.html">Exit quiz</a>
+    <a class="exit" href="student-dashboard.html">Back to dashboard</a>
   </div>
   <div class="wrap" id="body"></div>
 </div>
+<script src="assets/js/brylla-student.js"></script>
 <script>
 (function(){
-var Q=[
+var BANK_REC=[
 {q:"What is the main purpose of a bank reconciliation?",o:["Match your cash book to your bank statement","Work out the profit for the year","Record sales to customers","Prepare staff payroll"],c:0,e:"A reconciliation compares your own records with the bank's, so you can find and explain any differences."},
 {q:"A cheque you have written that the bank has not yet paid is called:",o:["A dishonoured cheque","An unpresented cheque","A direct debit","A bank charge"],c:1,e:"Until the payee banks it, the money is still in your account even though your cash book shows it as paid."},
 {q:"Bank charges appear on the statement but not in your cash book. What should you do?",o:["Ignore them until next year","Ask the bank to remove them","Record them in the cash book","Record them as sales"],c:2,e:"The bank has already taken the money, so your cash book must be updated to match."},
 {q:"A deposit made late in the day shows in your cash book but not yet on the statement. This is called:",o:["An overdraft","A standing order","An accrual","A deposit in transit"],c:3,e:"The money is on its way and will appear on the statement in the next day or so."},
 {q:"After reconciling, your adjusted cash book balance should equal:",o:["Last month's balance","The adjusted bank statement balance","Total sales for the month","Zero"],c:1,e:"When both sides agree after adjustments, the reconciliation is complete."}
 ];
+// Questions are added here per week as the instructor publishes each quiz.
+var QUESTIONS={3:{topic:"Bank reconciliation",items:BANK_REC}};
+var MODULES=(window.BryllaStudent&&BryllaStudent.modules)||[];
+var QUIZZES=MODULES.map(function(m){var set=QUESTIONS[m.week];return {id:"w"+m.week,week:m.week,subject:m.title,topic:set?set.topic:"",Q:set?set.items:null,att:0};});
 var PASS=70,MAX=2,TIME=600;
-var st={s:"intro",i:0,a:[],att:0,t:TIME,iv:null};
+var st={s:"list",quiz:null,i:0,a:[],t:TIME,iv:null};
 var root=document.getElementById("body");
+var Q=[];
+function esc(v){return String(v).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
 function fmt(t){var m=Math.floor(t/60),s=t%60;return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;}
 function stop(){clearInterval(st.iv);st.iv=null;}
 function score(){var n=0;Q.forEach(function(x,i){if(st.a[i]===x.c)n++;});return n;}
 function unans(){var n=0;for(var i=0;i<Q.length;i++){if(st.a[i]===undefined)n++;}return n;}
-function begin(){st.s="q";st.i=0;st.a=[];st.t=TIME;stop();st.iv=setInterval(tick,1000);draw();}
+function open(id){var quiz=QUIZZES.filter(function(x){return x.id===id&&x.Q;})[0];if(!quiz)return;stop();st.quiz=quiz;Q=quiz.Q;st.s="intro";draw();}
+function toList(){stop();st.s="list";st.quiz=null;Q=[];draw();}
+function begin(){if(st.quiz.att>=MAX)return;st.s="q";st.i=0;st.a=[];st.t=TIME;stop();st.iv=setInterval(tick,1000);draw();}
 function tick(){st.t--;var el=document.getElementById("tm");if(el){el.textContent=fmt(st.t);el.style.color=st.t<=60?"var(--text-warning)":"";}if(st.t<=0){submit();}}
-function submit(){stop();st.att++;st.s="r";draw();}
+function submit(){stop();st.quiz.att++;st.s="r";draw();}
+function list(){
+ var items=QUIZZES.map(function(x){
+  var label='<span class="qw">Week '+x.week+'</span><span class="qs">'+esc(x.subject)+'</span>';
+  if(!x.Q)return '<li><div class="qi off" aria-disabled="true">'+label+'<span class="qm">Not open yet</span></div></li>';
+  var meta=esc(x.topic)+' · '+x.Q.length+' questions · '+Math.round(TIME/60)+' minutes';
+  return '<li><button type="button" class="qi" data-a="open" data-id="'+x.id+'">'+label+'<span class="qm">'+meta+'</span><i class="ti ti-chevron-right qc" aria-hidden="true"></i></button></li>';
+ }).join("");
+ return '<h2 id="hd" tabindex="-1" style="margin:0 0 4px;font-size:22px;font-weight:500">Quizzes</h2>'+
+ '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary)">Bookkeeping. Choose a subject to open its quiz.</p>'+
+ (items?'<ul class="ql">'+items+'</ul>':'<div class="card">No quizzes yet. They appear here when your course opens.</div>');
+}
 function intro(){
+ var x=st.quiz,left=x.att<MAX;
  return '<div class="card"><i class="ti ti-clipboard-check" style="font-size:32px;color:#0a8f84" aria-hidden="true"></i>'+
- '<h2 id="hd" tabindex="-1" style="margin:8px 0 2px;font-size:22px;font-weight:500">Week 3 quiz</h2>'+
- '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary)">Bookkeeping, bank reconciliation</p>'+
+ '<h2 id="hd" tabindex="-1" style="margin:8px 0 2px;font-size:22px;font-weight:500">'+esc(x.subject)+'</h2>'+
+ '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary)">Week '+x.week+' quiz, '+esc(x.topic.toLowerCase())+'</p>'+
  '<ul style="list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:10px;font-size:14px">'+
- '<li><i class="ti ti-help-circle" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>5 questions</li>'+
- '<li><i class="ti ti-clock" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>10 minutes</li>'+
+ '<li><i class="ti ti-help-circle" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>'+Q.length+' questions</li>'+
+ '<li><i class="ti ti-clock" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>'+Math.round(TIME/60)+' minutes</li>'+
  '<li><i class="ti ti-target" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>Pass mark: '+PASS+'%</li>'+
- '<li><i class="ti ti-refresh" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>Attempts used: '+st.att+' of '+MAX+'</li></ul>'+
- '<p style="margin:0 0 18px;font-size:13px;color:var(--text-secondary)">You can move between questions. Your answers are checked when you submit.</p>'+
- '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center"><button class="b p" data-a="start">Start quiz</button><a href="#" style="font-size:14px;color:#0f6b6b;text-decoration:none;font-weight:500">Back to course</a></div></div>';
+ '<li><i class="ti ti-refresh" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>Attempts used: '+x.att+' of '+MAX+'</li></ul>'+
+ '<p style="margin:0 0 18px;font-size:13px;color:var(--text-secondary)">'+(left?'You can move between questions. Your answers are checked when you submit.':'No attempts left, ask your instructor for help.')+'</p>'+
+ '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+(left?'<button class="b p" data-a="start">Start quiz</button>':'')+'<button type="button" class="lnk" data-a="list">Back to quizzes</button></div></div>';
 }
 function question(){
  var q=Q[st.i],last=st.i===Q.length-1,u=unans();
  var opts=q.o.map(function(t,k){var on=st.a[st.i]===k;return '<label class="opt'+(on?' on':'')+'"><input type="radio" name="q'+st.i+'" value="'+k+'"'+(on?' checked':'')+'><span>'+t+'</span></label>';}).join("");
  var dots=Q.map(function(x,k){var a=st.a[k]!==undefined;return '<button class="dot'+(a?' a':'')+'" data-a="go" data-n="'+k+'"'+(k===st.i?' aria-current="step"':'')+' aria-label="Question '+(k+1)+(a?', answered':', not answered')+'">'+(k+1)+'</button>';}).join("");
- return '<div class="row" style="margin-bottom:10px"><span style="font-size:14px;color:var(--text-secondary)">Question '+(st.i+1)+' of '+Q.length+'</span><span style="font-size:14px"><i class="ti ti-clock" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i><span id="tm">'+fmt(st.t)+'</span></span></div>'+
+ return '<p style="margin:0 0 8px;font-size:13px;color:var(--text-secondary)">'+esc(st.quiz.subject)+'</p>'+
+ '<div class="row" style="margin-bottom:10px"><span style="font-size:14px;color:var(--text-secondary)">Question '+(st.i+1)+' of '+Q.length+'</span><span style="font-size:14px"><i class="ti ti-clock" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i><span id="tm">'+fmt(st.t)+'</span></span></div>'+
  '<div role="progressbar" aria-label="Quiz progress" aria-valuenow="'+(st.i+1)+'" aria-valuemin="1" aria-valuemax="'+Q.length+'" style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:'+((st.i+1)/Q.length*100)+'%;height:100%;background:#0a8f84"></div></div>'+
  '<h2 id="hd" tabindex="-1" style="margin:24px 0 16px;font-size:19px;font-weight:500;line-height:1.4">'+q.q+'</h2>'+
  '<div role="radiogroup" aria-labelledby="hd">'+opts+'</div>'+
@@ -2347,30 +2381,32 @@ function question(){
  (last?'<button class="b p" data-a="submit">Submit quiz</button>':'<button class="b p" data-a="next">Next<i class="ti ti-arrow-right" style="margin-left:6px;vertical-align:-2px" aria-hidden="true"></i></button>')+'</div>';
 }
 function results(){
- var n=score(),pct=Math.round(n/Q.length*100),ok=pct>=PASS,left=st.att<MAX;
+ var x=st.quiz,n=score(),pct=Math.round(n/Q.length*100),ok=pct>=PASS,left=x.att<MAX;
  var badge=ok?'<span style="background:var(--bg-success);color:var(--text-success);padding:3px 12px;border-radius:8px;font-size:13px"><i class="ti ti-circle-check" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i>Passed</span>':'<span style="background:var(--bg-warning);color:var(--text-warning);padding:3px 12px;border-radius:8px;font-size:13px"><i class="ti ti-alert-circle" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i>Not passed</span>';
  var retake='<button class="b'+(ok?'':' p')+'" data-a="retake">Retake quiz</button>';
- var back='<a class="b'+(ok?' p':'')+'" href="#" style="display:inline-flex;align-items:center;text-decoration:none;color:'+(ok?'#fff':'var(--text-primary)')+';border:'+(ok?'none':'0.5px solid var(--border-strong)')+';background:'+(ok?'#083b6c':'transparent')+'">Back to course</a>';
+ var back='<button type="button" class="b'+(ok?' p':'')+'" data-a="list"'+(ok?'':' style="border:0.5px solid var(--border-strong);background:transparent"')+'>Back to quizzes</button>';
  var btns=ok?back+(left?retake:''):(left?retake+back:back);
  var rev=Q.map(function(x,i){var a=st.a[i],right=a===x.c;
   return '<div class="rv"><div style="display:flex;gap:8px;align-items:flex-start"><i class="ti '+(right?'ti-circle-check':'ti-circle-x')+'" style="font-size:20px;margin-top:1px;color:'+(right?'var(--text-success)':'var(--text-danger)')+'" aria-hidden="true"></i><div><div style="font-size:14px;font-weight:500"><span class="sr-only">'+(right?'Correct. ':'Incorrect. ')+'</span>'+(i+1)+'. '+x.q+'</div>'+
   '<div style="font-size:13px;margin-top:4px;color:var(--text-secondary)">Your answer: '+(a===undefined?'Not answered':x.o[a])+'</div>'+
   (right?'':'<div style="font-size:13px;color:var(--text-success)">Correct answer: '+x.o[x.c]+'</div>')+
   '<div style="font-size:13px;margin-top:4px;color:var(--text-secondary)">'+x.e+'</div></div></div></div>';}).join("");
- return '<div class="card" style="text-align:center"><h2 id="hd" tabindex="-1" style="margin:0 0 4px;font-size:16px;font-weight:500">Week 3 quiz results</h2>'+
+ return '<div class="card" style="text-align:center"><h2 id="hd" tabindex="-1" style="margin:0 0 4px;font-size:16px;font-weight:500">'+esc(x.subject)+' results</h2>'+
  '<div style="font-size:44px;font-weight:500;line-height:1.2">'+pct+'%</div>'+
  '<div style="font-size:14px;color:var(--text-secondary);margin:2px 0 10px">'+n+' of '+Q.length+' correct, pass mark '+PASS+'%</div>'+badge+
- '<div style="font-size:13px;color:var(--text-secondary);margin:10px 0 16px">Attempt '+st.att+' of '+MAX+(ok||left?'':'. No attempts left, ask your instructor for help.')+'</div>'+
+ '<div style="font-size:13px;color:var(--text-secondary);margin:10px 0 16px">Attempt '+x.att+' of '+MAX+(ok||left?'':'. No attempts left, ask your instructor for help.')+'</div>'+
  '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+btns+'</div></div>'+
  '<div class="card" style="margin-top:14px;padding:6px 20px 10px"><div style="font-size:16px;font-weight:500;padding:14px 0 10px">Review your answers</div>'+rev+'</div>';
 }
 function draw(focus){
- root.innerHTML=st.s==="intro"?intro():st.s==="q"?question():results();
+ root.innerHTML=st.s==="list"?list():st.s==="intro"?intro():st.s==="q"?question():results();
  var el=document.querySelector(focus||"#hd");if(el)el.focus();
 }
 root.addEventListener("click",function(e){
  var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a;
- if(a==="start"||a==="retake")begin();
+ if(a==="open")open(b.dataset.id);
+ else if(a==="list")toList();
+ else if(a==="start"||a==="retake")begin();
  else if(a==="next"){st.i++;draw();}
  else if(a==="prev"){st.i--;draw();}
  else if(a==="go"){st.i=+b.dataset.n;draw();}
