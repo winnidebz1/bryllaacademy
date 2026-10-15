@@ -152,6 +152,7 @@
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
 	<script src="assets/js/brylla-auth.js"></script>
+	<script src="assets/js/brylla-notifications.js"></script>
 	</head>
 	<body>
 	<a class="skip" href="#main">Skip to main content</a>
@@ -164,7 +165,7 @@
 				<button class="icon-btn" id="menu-btn" type="button" aria-label="Open menu" aria-expanded="false" aria-controls="drawer"><i class="ti ti-menu-2" aria-hidden="true"></i></button>
 								</div>
 			<div class="head-right">
-				<a class="icon-btn" href="student-notifications.html" aria-label="Notifications, no unread"><i class="ti ti-bell" aria-hidden="true"></i></a>
+				<a class="icon-btn" data-student-notifications href="student-notifications.html" aria-label="Notifications, no unread"><i class="ti ti-bell" aria-hidden="true"></i></a>
 				<a class="avatar" id="avatar" href="student-settings.html"></a>
 					</div>
 				</div>
@@ -175,11 +176,8 @@
 		<a href="student-dashboard.html"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</a>
 		<p class="grp">Learning</p>
 		<a href="student-courses.html"><i class="ti ti-school" aria-hidden="true"></i>My courses</a>
-		<a href="student-courses.html"><i class="ti ti-calendar" aria-hidden="true"></i>Schedule</a>
-		<a href="student-quiz.html"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Assignments</a>
-		<a href="student-certificates.html"><i class="ti ti-certificate" aria-hidden="true"></i>Certificates</a>
+		<a href="student-quiz.html"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Quizes</a>
 		<p class="grp">Account</p>
-		<a href="student-order-history.html"><i class="ti ti-receipt" aria-hidden="true"></i>Payments</a>
 		<a href="student-settings.html"><i class="ti ti-settings" aria-hidden="true"></i>Settings</a>
 		<a class="out" href="index-4.html"><i class="ti ti-logout" aria-hidden="true"></i>Sign out</a>
 							</nav>

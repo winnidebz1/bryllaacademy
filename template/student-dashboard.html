@@ -681,8 +681,7 @@
 				"label": "Learning",
 				"items": [
 					{ "label": "My courses", "href": "student-courses", "icon": "courses" },
-					{ "label": "Quizes", "href": "student-quiz", "icon": "assignments" },
-					{ "label": "Certificates", "href": "student-certificates", "icon": "certificate" }
+					{ "label": "Quizes", "href": "student-quiz", "icon": "assignments" }
 				]
 			},
 			{
@@ -724,6 +723,7 @@
 	<noscript><p style="padding:16px">Turn on JavaScript to view your dashboard.</p></noscript>
 
 	<script src="assets/js/brylla-student.js"></script>
+	<script src="assets/js/brylla-notifications.js"></script>
 	<script>
 		const dashboard = JSON.parse(document.getElementById("dashboard-data").textContent);
 		const headerEl = document.getElementById("site-header");
@@ -788,7 +788,7 @@
 		}
 
 		function badgeText(count) {
-			return count > 9 ? "9+" : String(count);
+			return count > 99 ? "99+" : String(count);
 		}
 
 		function readStored(key) {
@@ -913,6 +913,8 @@
 			const unread = data.notifications.unread;
 			const notify = el("a", "icon-button notify-button");
 			notify.href = data.notifications.url;
+			notify.setAttribute("data-student-notifications", "");
+			notify.setAttribute("aria-haspopup", "dialog");
 			notify.setAttribute("aria-label", notificationLabel(unread));
 			notify.append(icon("bell"));
 			if (unread > 0) notify.append(el("span", "notify-badge", badgeText(unread)));

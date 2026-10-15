@@ -1,812 +1,335 @@
 <!DOCTYPE html> 
 <html lang="en">
 	<head>
-	
-		<!-- Meta Tags -->
 		<meta charset="utf-8">
-		<meta http-equiv="X-UA-Compatible" content="IE=edge">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
-		<meta name="description" content="Dreams LMS is a powerful Learning Management System template designed for educators, training institutions, and businesses. Manage courses, track student progress, conduct virtual classes, and enhance e-learning experiences with an intuitive and feature-rich platform.">
-		<meta name="keywords" content="LMS template, Learning Management System, e-learning software, online course platform, student management, education portal, virtual classroom, training management system, course tracking, online education">
-		<meta name="author" content="Dreams Technologies">
-		<meta name="robots" content="index, follow">
-		
-		<title>Brylla Academy</title>
-
-		<!-- Favicon -->
-		<link rel="shortcut icon" href="assets/img/favicon.png"> 
-		<link rel="apple-touch-icon" href="assets/img/apple-icon.png">
-
-		<!-- Theme Settings Js -->
-		<script src="assets/js/theme-script.js"></script>
-		
-		<!-- Bootstrap CSS -->
-		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
-		
-		<!-- Fontawesome CSS -->
-		<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
-		<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
-		
-		<!-- Feather CSS -->
-		<link rel="stylesheet" href="assets/css/feather.css">
-
-		<!-- Iconsax CSS -->
-		<link rel="stylesheet" href="assets/css/iconsax.css">
-
-		<!-- Select2 CSS -->
-		<link rel="stylesheet" href="assets/plugins/select2/css/select2.min.css">
-
-		<!-- Datepicker CSS -->
-		<link rel="stylesheet" href="assets/css/bootstrap-datetimepicker.min.css">
-
-		<!-- Main CSS -->
-		<link rel="stylesheet" href="assets/css/style.css">
-	
+	<meta name="description" content="Read your Brylla Academy notifications.">
+	<meta name="theme-color" content="#073b70">
+	<title>Notifications | Brylla Academy</title>
+	<link rel="icon" type="image/png" href="assets/img/logo.png">
+	<link rel="apple-touch-icon" href="assets/img/logo.png">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+	<style>
+		:root {
+			--color-primary: #073b70;
+			--color-on-primary: #ffffff;
+			--color-accent-text: #04635e;
+			--color-banner: #073b70;
+			--color-banner-muted: #d6e4f2;
+			--color-text: #122d49;
+			--color-muted: #60748a;
+			--color-border: #e3ebf2;
+			--color-page: #f4f8fb;
+			--color-surface: #ffffff;
+			--color-hover: #f4f8fb;
+			--color-danger: #9a3412;
+			--color-scrim: rgba(0, 0, 0, 0.35);
+			--color-focus: #073b70;
+			--font: Inter, "Segoe UI", Arial, sans-serif;
+			--radius-card: 12px;
+			--radius-control: 8px;
+			--radius-pill: 999px;
+			--space-1: 4px;
+			--space-2: 8px;
+			--space-3: 12px;
+			--space-4: 16px;
+			--space-5: 24px;
+			--header-height: 54px;
+			--drawer-width: 240px;
+			--motion: 200ms;
+		}
+		*, *::before, *::after { box-sizing: border-box; }
+		html, body { margin: 0; }
+		body { background: var(--color-page); color: var(--color-text); font-family: var(--font); font-size: 14px; line-height: 1.5; }
+		h1, h2, p { margin: 0; font-weight: 400; }
+		a { color: inherit; }
+		button, input, a { font-family: inherit; }
+		:focus { outline: none; }
+		:focus-visible { outline: 2px solid var(--color-focus); outline-offset: 2px; }
+		.skip-link { position: absolute; left: 16px; top: 8px; z-index: 200; padding: 8px 12px; border-radius: 8px; background: #fff; color: var(--color-primary); font-weight: 500; text-decoration: none; transform: translateY(-140%); }
+		.skip-link:focus { transform: none; }
+		.site-header { position: sticky; top: 0; z-index: 100; height: var(--header-height); display: flex; align-items: center; justify-content: space-between; padding: 0 16px; background: #fff; border-bottom: 1px solid var(--color-border); }
+		.header-start, .header-end { display: flex; align-items: center; gap: 8px; }
+		.icon-button { width: 40px; height: 40px; display: inline-grid; place-items: center; padding: 0; border: 0; border-radius: 8px; background: transparent; color: var(--color-text); cursor: pointer; }
+		.icon-button:hover { background: var(--color-hover); }
+		.icon-button svg { width: 20px; height: 20px; }
+		.icon-close { display: none; }
+		.menu-toggle.is-open .icon-menu { display: none; }
+		.menu-toggle.is-open .icon-close { display: block; }
+		.brand { display: flex; align-items: center; text-decoration: none; }
+		.brand-mark { position: relative; width: 84px; height: 44px; flex: 0 0 84px; overflow: hidden; display: block; }
+		.brand-mark img { position: absolute; width: 107px; height: 107px; max-width: none; top: calc(50% + 4px); left: 50%; transform: translate(-50%, -50%); }
+		.header-avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-size: 13px; font-weight: 500; }
+		.scrim { position: fixed; z-index: 80; top: var(--header-height); right: 0; bottom: 0; left: 0; background: var(--color-scrim); opacity: 0; visibility: hidden; transition: opacity var(--motion) ease, visibility 0s linear var(--motion); }
+		.scrim.is-open { opacity: 1; visibility: visible; transition: opacity var(--motion) ease; }
+		.drawer { position: fixed; z-index: 90; top: var(--header-height); bottom: 0; left: 0; width: var(--drawer-width); padding: 8px; overflow: auto; background: #fff; border-right: 1px solid var(--color-border); opacity: 0; visibility: hidden; transform: translateX(-100%); transition: transform var(--motion) ease, opacity var(--motion) ease, visibility 0s linear var(--motion); }
+		.drawer.is-open { opacity: 1; visibility: visible; transform: none; transition: transform var(--motion) ease, opacity var(--motion) ease; }
+		.nav-label { margin: 12px 12px 4px; color: var(--color-muted); font-size: 12px; }
+		.nav-group-account { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
+		.nav-list { margin: 0; padding: 0; list-style: none; }
+		.nav-link { display: flex; align-items: center; gap: 8px; padding: 9px 12px; border-radius: 8px; color: var(--color-text); text-decoration: none; }
+		.nav-link svg { width: 18px; height: 18px; flex: 0 0 18px; }
+		.nav-link:hover { background: var(--color-hover); }
+		.nav-link[aria-current="page"] { color: var(--color-accent-text); font-weight: 500; }
+		.nav-link.is-danger { color: var(--color-danger); }
+		.page { width: min(720px, 100%); margin: 0 auto; padding: 16px; }
+		.card { padding: 20px; background: #fff; border: 1px solid var(--color-border); border-radius: var(--radius-card); }
+		h1 { font-size: 20px; font-weight: 500; }
+		.lede { margin-top: 4px; color: var(--color-muted); }
+		form { display: grid; gap: 16px; margin-top: 20px; }
+		label { display: grid; gap: 6px; font-weight: 500; }
+		input { height: 44px; padding: 0 12px; border: 1px solid #c5d3e0; border-radius: 8px; color: var(--color-text); font-size: 14px; font-weight: 400; }
+		.field-error { color: var(--color-danger); font-size: 13px; font-weight: 400; }
+		.actions { display: flex; align-items: center; gap: 12px; }
+		button[type="submit"] { height: 40px; padding: 0 16px; border: 0; border-radius: var(--radius-pill); background: var(--color-primary); color: #fff; font-size: 14px; font-weight: 500; cursor: pointer; }
+		button[type="submit"]:hover { background: #062b52; }
+		.status { color: var(--color-accent-text); font-size: 14px; }
+		.site-footer { padding: 35px 0; background: #041f3c; color: #d1e0ed; }
+		.footer-wrap { width: min(1140px, calc(100% - 32px)); margin: 0 auto; }
+		.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+		.footer-brand { display: flex; align-items: center; gap: 13px; text-decoration: none; }
+		.footer-brand-mark { position: relative; display: block; width: 72px; height: 72px; flex: 0 0 72px; overflow: hidden; border: 1px solid rgba(7,59,112,.12); border-radius: 50%; background: #fff; }
+		.footer-brand-mark img { position: absolute; top: calc(50% + 5px); left: 50%; width: 164px; height: 164px; max-width: none; transform: translate(-50%, -50%); }
+		.footer-brand strong { display: block; color: #fff; font-size: 15px; font-weight: 500; }
+		.footer-brand span { color: #aac0d3; font-size: 14px; }
+		.footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+		.footer-links a { color: #d1e0ed; font-size: 14px; text-decoration: none; }
+		.footer-links a:hover { color: #13b8ad; }
+		.copyright { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.14); color: #aac0d3; font-size: 14px; text-align: center; }
+		.drawer-profile, .nav-mobile-only, .drawer-signout { display: none; }
+		body.menu-lock { overflow: hidden; }
+		@media (max-width: 767px) {
+			.site-header { height: calc(52px + env(safe-area-inset-top)); padding: env(safe-area-inset-top) max(8px, env(safe-area-inset-right)) 0 max(8px, env(safe-area-inset-left)); }
+			.site-header .icon-button { width: 44px; height: 44px; }
+			.brand-mark { width: 64px; height: 36px; flex-basis: 64px; }
+			.brand-mark img { width: 88px; height: 88px; }
+			.scrim { top: calc(52px + env(safe-area-inset-top)); background: rgba(0, 0, 0, 0.4); }
+			.drawer { top: calc(52px + env(safe-area-inset-top)); display: flex; flex-direction: column; width: min(80vw, 320px); padding: 0; }
+			.drawer-profile { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--color-border); }
+			.drawer-avatar { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-weight: 500; }
+			.drawer-name { font-weight: 500; }
+			.drawer-email { color: var(--color-muted); font-size: 13px; }
+			.drawer-scroll { flex: 1; overflow: auto; padding: 8px; }
+			.drawer-signout { display: block; margin-top: auto; padding: 8px; border-top: 1px solid var(--color-border); }
+			.nav-label { display: none; }
+			.nav-mobile-only { display: list-item; }
+			.nav-link { min-height: 44px; }
+			.footer-inner { align-items: flex-start; flex-direction: column; }
+		}
+		@media (prefers-reduced-motion: reduce) {
+			.drawer, .scrim { transition: none; }
+		}
+	</style>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-auth.js" data-guard="student"></script>
 	</head>
 	<body>
-
-		<!-- Main Wrapper -->
-		<div class="main-wrapper">
-
-			<!-- Header Topbar-->
-			<div class="header-topbar text-center">
-				<div class="container">
-					<div class="row">
-						<div class="col-lg-6">
-							<div class="d-flex align-items-center ">
-								<p class="d-flex align-items-center fw-medium fs-14 mb-2 me-3"><i class="isax isax-location me-2"></i>1442 Crosswind Drive Madisonville</p>
-								<p class="d-flex align-items-center fw-medium fs-14 mb-2"><i class="isax isax-call-calling5 me-2"></i>+1 45887 77874</p>
-							</div>
-						</div>
-						<div class="col-lg-6">
-							<div class="d-flex align-items-center justify-content-end">
-								<div class="dropdown flag-dropdown mb-2 me-3">
-									<a href="javascript:void(0);" class="dropdown-toggle d-inline-flex align-items-center" data-bs-toggle="dropdown" aria-expanded="false">
-										<img src="assets/img/flags/us-flag.svg" class="me-2" alt="flag">ENG
-									</a>
-									<ul class="dropdown-menu p-2 mt-2" style="">
-										<li>
-											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
-												<img src="assets/img/flags/us-flag.svg" class="me-2" alt="flag">ENG
-											</a>
-										</li>
-										<li>
-											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
-												<img src="assets/img/flags/arab-flag.svg" class="me-2" alt="flag">ARA
-											</a>
-										</li>
-										<li>
-											<a class="dropdown-item rounded d-flex align-items-center" href="javascript:void(0);">
-												<img src="assets/img/flags/france-flag.svg" class="me-2" alt="flag">FRE
-											</a>
-										</li>
-									</ul>
-								</div>
-								<div class="dropdown mb-2 me-3">
-									<a href="javascript:void(0);" class="dropdown-toggle" data-bs-toggle="dropdown" aria-expanded="false">
-										USD
-									</a>
-									<ul class="dropdown-menu p-2 mt-2" style="">
-										<li><a class="dropdown-item rounded" href="javascript:void(0);">USD</a></li>
-										<li><a class="dropdown-item rounded" href="javascript:void(0);">YEN</a></li>
-										<li><a class="dropdown-item rounded" href="javascript:void(0);">EURO</a></li>
-									</ul>
-								</div>
-								<ul class="social-icon d-flex align-items-center mb-2">
-                                    <li class="me-2">
-                                        <a href="javascript:void(0);"><i class="fa-brands fa-facebook-f"></i></a>
-                                    </li>
-                                    <li class="me-2">
-                                        <a href="javascript:void(0);"><i class="fa-brands fa-instagram"></i></a>
-                                    </li>
-									<li class="me-2">
-                                        <a href="javascript:void(0);"><i class="fa-brands fa-x-twitter"></i></a>
-                                    </li>
-									<li class="me-2">
-                                        <a href="javascript:void(0);"><i class="fa-brands fa-youtube"></i></a>
-                                    </li>
-                                    <li>
-                                        <a href="javascript:void(0);"><i class="fa-brands fa-linkedin"></i></a>
-                                    </li>
-                                </ul>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<!-- /Header Topbar-->
-		
-			<!-- Header -->
-			<header class="header-two">
-				<div class="container">
-					<div class="header-nav">
-						<div class="navbar-header">
-							<a id="mobile_btn" href="javascript:void(0);">
-								<span class="bar-icon">
-									<span></span>
-									<span></span>
-									<span></span>
-								</span>
-							</a>
-							<div class="navbar-logo">
-								<a class="logo-white header-logo" href="index.html">
-									<img src="assets/img/logo.svg" class="logo" alt="Logo">
-								</a>
-								<a class="logo-dark header-logo" href="index.html">
-									<img src="assets/img/logo-white.svg" class="logo" alt="Logo">
-								</a>
-							</div>
-						</div>
-						<div class="main-menu-wrapper">								
-							<div class="menu-header">
-								<a href="index.html" class="menu-logo">
-									<img src="assets/img/logo.svg" class="img-fluid" alt="Logo">
-								</a>
-								<a id="menu_close" class="menu-close" href="javascript:void(0);">
-									<i class="fas fa-times"></i>
-								</a>
-							</div>
-							<ul class="main-nav">
-								<li class="megamenu">
-									<a href="index-4.html">Home</a>
-									<ul class="submenu mega-submenu">
-										<li>
-											<div class="megamenu-wrapper">
-												<div class="row">
-													<div class="col-lg-2">
-														<div class="single-demo">
-															<div class="demo-img">
-																<a href="index.html" class="inner-demo-img"><img src="assets/img/home/home-01.jpg" class="img-fluid " alt="img"></a>
-															</div>
-															<div class="demo-info">
-																<a href="index.html" class="inner-demo-img">Home 1</a>
-															</div>
-														</div>
-													</div>
-													<div class="col-lg-2">
-														<div class="single-demo">
-															<div class="demo-img">
-																<a href="index-2.html" class="inner-demo-img"><img src="assets/img/home/home-02.jpg" class="img-fluid " alt="img"></a>
-															</div>
-															<div class="demo-info">
-																<a href="index-2.html" class="inner-demo-img">Home 2</a>
-															</div>
-														</div>
-													</div>
-													<div class="col-lg-2">
-														<div class="single-demo">
-															<div class="demo-img">
-																<a href="index-3.html" class="inner-demo-img"><img src="assets/img/home/home-03.jpg" class="img-fluid " alt="img"></a>
-															</div>
-															<div class="demo-info">
-																<a href="index-3.html" class="inner-demo-img">Home 3</a>
-															</div>
-														</div>
-													</div>
-													<div class="col-lg-2">
-														<div class="single-demo">
-															<div class="demo-img">
-																<a href="index-4.html" class="inner-demo-img"><img src="assets/img/home/home-04.jpg" class="img-fluid " alt="img"></a>
-															</div>
-															<div class="demo-info">
-																<a href="index-4.html" class="inner-demo-img">Home 4</a>
-															</div>
-														</div>
-													</div>
-													<div class="col-lg-2">
-														<div class="single-demo">
-															<div class="demo-img">
-																<a href="index-5.html" class="inner-demo-img"><img src="assets/img/home/home-05.jpg" class="img-fluid " alt="img"></a>
-															</div>
-															<div class="demo-info">
-																<a href="index-5.html" class="inner-demo-img">Home 5</a>
-															</div>
-														</div>
-													</div>
-													<div class="col-lg-2">
-														<div class="single-demo">
-															<div class="demo-img">
-																<a href="index-6.html" class="inner-demo-img"><img src="assets/img/home/home-06.jpg" class="img-fluid " alt="img"></a>
-															</div>
-															<div class="demo-info">
-																<a href="index-6.html" class="inner-demo-img">Home 6</a>
-															</div>
-														</div>
-													</div>
-												</div>
-											</div>
-										</li>
-									</ul>
-								</li>
-								<li class="has-submenu">
-									<a href="#">Courses <i class="isax isax-add"></i></a>
-									<ul class="submenu">
-										<li class="has-submenu">
-											<a href="javascript:void(0);">Courses</a>
-											<ul class="submenu">
-												<li><a href="course-grid.html">Course Grid</a></li>
-												<li><a href="course-list.html">Course List</a></li>
-											</ul>
-										</li>
-										<li class="has-submenu">
-											<a href="javascript:void(0);">Course Category</a>
-											<ul class="submenu">
-												<li><a href="course-category.html">Course Category</a></li>
-												<li><a href="course-category-2.html">Course Category 2</a></li>
-												<li><a href="course-category-3.html">Course Category 3</a></li>
-											</ul>
-										</li>
-										<li class="has-submenu">
-											<a href="javascript:void(0);">Course Details</a>
-											<ul class="submenu">
-												<li><a href="course-details.html">Course Details</a></li>
-												<li><a href="course-details-2.html">Course Details 2</a></li>
-											</ul>
-										</li>										
-										<li><a href="course-resume.html">Course Resume</a></li>
-										<li><a href="course-watch.html">Course Watch</a></li>
-										<li><a href="cart.html">Course Cart</a></li>
-										<li><a href="checkout.html">Course Checkout</a></li>
-										<li><a href="add-course.html">Add New Course</a></li>
-									</ul>
-								</li>
-								<li class="has-submenu active">
-									<a href="javascript:void(0);">Dashboard <i class="isax isax-add"></i></a>
-									<ul class="submenu">
-										<li class="has-submenu">
-											<a href="javascript:void(0);">Instructor Dashboard</a>
-											<ul class="submenu">
-												<li><a href="instructor-dashboard.html">Dashboard</a></li>
-												<li><a href="instructor-profile.html">My Profile</a></li>
-												<li><a href="instructor-course.html">Course</a></li>
-												<li><a href="instructor-announcements.html">Announcements</a></li>
-												<li><a href="instructor-assignment.html">Assignments</a></li>
-												<li class="has-submenu">
-													<a href="javascript:void(0);">Student</a>
-													<ul class="submenu">
-														<li><a href="students.html">Student Grid</a></li>
-														<li><a href="student-list.html">Student List</a></li>
-														<li><a href="student-details.html">Student Details</a></li>
-													</ul>
-												</li>
-												<li><a href="instructor-quiz.html">Quiz</a></li>
-												<li><a href="instructor-quiz-results.html">Quiz Results</a></li>
-												<li><a href="instructor-certificate.html">Certificates</a></li>
-												<li><a href="instructor-earnings.html">Earning</a></li>
-												<li><a href="instructor-payout.html">Payout</a></li>
-												<li><a href="instructor-statements.html">Statement</a></li>
-												<li><a href="instructor-tickets.html">Support Tickets</a></li>
-												<li><a href="instructor-settings.html">Settings</a></li>
-											</ul>
-										</li>
-										<li class="has-submenu active">
-											<a href="javascript:void(0);">Student Dashboard</a>
-											<ul class="submenu">
-												<li><a href="student-dashboard.html">Student Dashboard</a></li>
-												<li><a href="student-profile.html">My Profile</a></li>
-												<li><a href="student-courses.html">Enrolled Courses</a></li>
-												<li><a href="student-certificates.html">My Certificates</a></li>
-												<li><a href="student-wishlist.html">Wishlist</a></li>
-												<li><a href="student-reviews.html">Reviews</a></li>
-												<li><a href="student-quiz.html">My Quiz Attempts</a></li>
-												<li><a href="student-order-history.html">Order History</a></li>
-												<li><a href="student-referral.html">Referrals</a></li>
-												<li><a href="student-messages.html">Messages</a></li>
-												<li><a href="student-tickets.html">Support Ticket</a></li>
-												<li class="active"><a href="student-settings.html">Settings</a></li>
-											</ul>
-										</li>
-									</ul>
-								</li>	
-								<li class="has-submenu">
-									<a href="#">Pages <i class="isax isax-add"></i></a>
-									<ul class="submenu">
-										<li class="has-submenu">
-											<a href="#">Instructors</a>
-											<ul class="submenu">
-												<li><a href="instructor-grid.html">Instructor Grid</a></li>
-												<li><a href="instructor-list.html">Instructor List</a></li>
-												<li><a href="instructor-details.html">Instructor Details</a></li>
-											</ul>
-										</li>
-										<li><a href="about-us.html">About Us</a></li>
-										<li><a href="contact-us.html">Contact us</a></li>
-										<li><a href="notifications.html">Notifications</a></li>
-										<li><a href="become-an-instructor.html">Become an Instructor</a></li>
-										<li><a href="testimonials.html">Testimonials</a></li>
-										<li class="has-submenu">
-											<a href="#">Authentication</a>
-											<ul class="submenu">
-												<li><a href="login.html">Login</a></li>
-												<li><a href="register.html">Register</a></li>
-												<li><a href="forgot-password.html">Forgot Password</a></li>
-												<li><a href="reset-password.html">Reset Password</a></li>
-												<li><a href="set-password.html">Set Password</a></li>
-												<li><a href="otp.html">OTP</a></li>
-												<li><a href="lock-screen.html">Lock Screen</a></li>
-											</ul>
-										</li>
-										<li class="has-submenu">
-											<a href="#">Error</a>
-											<ul class="submenu">
-												<li><a href="error-404.html">404 Error</a></li>
-												<li><a href="error-500.html">500 Error</a></li>
-											</ul>
-										</li>
-										<li><a href="pricing-plan.html">Pricing Plan</a></li>
-										<li><a href="faq.html">FAQ</a></li>
-										<li><a href="coming-soon.html">Coming Soon</a></li>
-										<li><a href="under-construction.html">Under Construction</a></li>
-										<li><a href="terms-and-conditions.html">Terms & Conditions</a></li>
-										<li><a href="privacy-policy.html">Privacy Policy</a></li>
-										<li><a href="index-rtl.html">RTL</a></li>
-									</ul>
-								</li>
-								<li class="has-submenu">
-									<a href="#">Blog <i class="isax isax-add"></i></a>
-									<ul class="submenu">
-										<li class="has-submenu">
-											<a href="#">Blog Layouts</a>
-											<ul class="submenu">
-												<li><a href="blog-grid.html">Blog 1 Grid</a></li>
-												<li><a href="blog-2-grid.html">Blog 2 Grid</a></li>
-												<li><a href="blog-3-grid.html">Blog 3 Grid</a></li>
-												<li><a href="blog-carousal.html">Blog Carousal</a></li>
-												<li><a href="blog-masonry.html">Blog Mansory</a></li>
-												<li><a href="blog-left-sidebar.html">Blog Left Sidebar</a></li>
-												<li><a href="blog-right-sidebar.html">Blog Right Sidebar</a></li>
-											</ul>
-										</li>
-										<li class="has-submenu">
-											<a href="#">Blog Details</a>
-											<ul class="submenu">
-												<li><a href="blog-details.html">Blog Details</a></li>
-												<li><a href="blog-details-left-sidebar.html">Blog Details Left Sidebar</a></li>
-												<li><a href="blog-details-right-sidebar.html">Blog Details Right Sidebar</a></li>
-											</ul>
-										</li>
-									</ul>
-								</li>
-							</ul>
-						</div>
-						<div class="header-btn d-flex align-items-center">
-							<div class="icon-btn me-2">
-								<a href="javascript:void(0);" id="dark-mode-toggle" class="theme-toggle activate">
-									<i class="isax isax-sun-15"></i>
-								</a>
-								<a href="javascript:void(0);" id="light-mode-toggle" class="theme-toggle">
-									<i class="isax isax-moon"></i>
-								</a>
-							</div>
-							<div class="icon-btn me-3">
-								<a href="cart.html" class="position-relative">
-									<i class="isax isax-shopping-cart5"></i>
-									<span class="count-icon bg-success p-1 rounded-pill text-white fs-10 fw-bold">1</span>
-								</a>
-							</div>
-							<div class="dropdown profile-dropdown">
-                                <a href="javascript:void(0);" class="d-flex align-items-center" data-bs-toggle="dropdown">
-                                    <span class="avatar">
-										<img src="assets/img/user/user-02.jpg" alt="Img" class="img-fluid rounded-circle">
-									</span>
-                                </a>
-                                <div class="dropdown-menu dropdown-menu-end">
-									<div class="profile-header d-flex align-items-center">
-										<div class="avatar">
-											<img src="assets/img/user/user-02.jpg" alt="Img" class="img-fluid rounded-circle">
-										</div>
-										<div>
-											<h6>Ronald Richard</h6>
-											<p>studentdemo@example.com</p>
-										</div>
-									</div>
-									<ul class="profile-body">
-										<li>
-											<a class="dropdown-item d-inline-flex align-items-center rounded fw-medium" href="student-profile.html"><i class="isax isax-security-user me-2"></i>My Profile</a>
-										</li>
-										<li>
-											<a class="dropdown-item d-inline-flex align-items-center rounded fw-medium" href="student-quiz.html"><i class="isax isax-award me-2"></i>Quiz Attempts</a>
-										</li>
-										<li>
-											<a class="dropdown-item d-inline-flex align-items-center rounded fw-medium2" href="student-order-history.html"><i class="isax isax-shopping-cart me-2"></i>Order History</a>
-										</li>
-										<li>
-											<a class="dropdown-item d-inline-flex align-items-center rounded fw-medium" href="student-messages.html"><i class="isax isax-messages-3 me-2"></i>Messages<span class="message-count">2</span></a>
-										</li>
-										<li>
-											<a class="dropdown-item d-inline-flex align-items-center rounded fw-medium" href="student-settings.html"><i class="isax isax-setting-2 me-2"></i>Settings</a>
-										</li>										
-									</ul>
-									<div class="profile-footer">
-										<a class="dropdown-item d-inline-flex align-items-center rounded fw-medium" href="login.html"><i class="isax isax-arrow-2 me-2"></i>Log in as Instructor</a>
-										<a href="index.html" class="btn btn-secondary d-inline-flex align-items-center justify-content-center w-100"><i class="isax isax-logout me-2"></i>Logout</a>
-									</div>
-                                </div>
-                            </div>
-						</div>
-					</div>
-				</div>
-			</header>
-			<!-- /Header -->
-
-			<!-- Breadcrumb -->
-			<div class="breadcrumb-bar text-center">
-				<div class="container">
-					<div class="row">
-						<div class="col-md-12 col-12">
-							<h2 class="breadcrumb-title mb-2">Settings</h2>
-							<nav aria-label="breadcrumb">
-								<ol class="breadcrumb justify-content-center mb-0">
-									<li class="breadcrumb-item"><a href="#">Home</a></li>
-									<li class="breadcrumb-item active" aria-current="page">Settings</li>
-								</ol>
+	<a class="skip-link" href="#main">Skip to main content</a>
+	<header class="site-header" id="site-header"></header>
+	<div class="scrim" id="menu-scrim"></div>
+	<nav class="drawer" id="dashboard-nav" aria-label="Dashboard" inert></nav>
+	<main class="page" id="main">
+		<section class="card" id="notification-history" aria-live="polite">
+			<h1>Notifications</h1>
+			<p class="lede">Loading your notifications…</p>
+		</section>
+	</main>
+	<footer class="site-footer">
+		<div class="footer-wrap">
+			<div class="footer-inner">
+				<a class="footer-brand" href="index-4.html">
+					<span class="footer-brand-mark"><img src="assets/img/logo.png" alt=""></span>
+					<span><strong>Brylla Academy</strong><span>Practical professional skills taught for the remote world.</span></span>
+				</a>
+				<nav class="footer-links" aria-label="Footer navigation">
+					<a href="index-4.html#courses">Courses</a>
+					<a href="index-4.html#stories">Student Stories</a>
+					<a href="index-4.html#toolkit">Career Toolkit</a>
+					<a href="index-4.html#faqs">FAQs</a>
+					<a href="index-4.html#contact">Contact</a>
+					<a href="login.html">Student Login</a>
 							</nav>
-						</div>
-					</div>
-				</div>
 			</div>
-			<!-- /Breadcrumb -->
-
-			<div class="content">
-				<div class="container">
-							<!-- profile box -->
-					<div class="profile-card overflow-hidden bg-blue-gradient2 mb-5 p-5">
-						<div class="profile-card-bg">
-							<img src="assets/img/bg/card-bg-01.png" class="profile-card-bg-1" alt="">
-						</div>
-							<div class="row align-items-center row-gap-3">
-								<div class="col-lg-6">
-									<div class="d-flex align-items-center">
-										<span class="avatar avatar-xxl avatar-rounded me-3 border border-white border-2 position-relative">
-											<img src="assets/img/user/user-02.jpg" alt="">
-											<span class="verify-tick"><i class="isax isax-verify5"></i></span>
-										</span>
-										<div>
-											<h5 class="mb-1 text-white d-inline-flex align-items-center">Ronald Richard<a href="instructor-profile.html" class="link-light fs-16 ms-2"><i class="isax isax-edit-2"></i></a></h5>
-											<p class="text-light">Student</p>
-										</div>
-									</div>
-								</div>
-								<div class="col-lg-6">
-									<div class="d-flex align-items-center justify-content-lg-end flex-wrap gap-2">
-										<a href="become-an-instructor.html" class="btn btn-white rounded-pill me-3">Become an Instructor</a>
-										<a href="instructor-dashboard.html" class="btn btn-secondary rounded-pill">Instructor Dashboard</a>
-									</div>
-								</div>
-							</div>
-					</div>
-					<!-- profile box -->
-					<div class="row">
-					<!-- sidebar -->
-					<div class="col-lg-3 theiaStickySidebar">
-						<div class="settings-sidebar">
-								<div>
-									<h6 class="mb-3">Dashboard</h6>
-									<ul class="mb-3 pb-1">
-										<li>
-											<a href="student-dashboard.html" class="d-inline-flex align-items-center"><i class="isax isax-grid-35 me-2"></i>Dashboard</a>
-										</li>
-										<li>
-											<a href="student-profile.html" class="d-inline-flex align-items-center"><i class="fa-solid fa-user me-2"></i>My Profile</a>
-										</li>
-										<li>
-											<a href="student-courses.html" class="d-inline-flex align-items-center"><i class="isax isax-teacher5 me-2"></i>Enrolled Courses</a>
-										</li>
-										<li>
-											<a href="student-certificates.html" class="d-inline-flex align-items-center"><i class="isax isax-note-215 me-2"></i>My Certificates</a>
-										</li>
-										<li>
-											<a href="student-wishlist.html" class="d-inline-flex align-items-center"><i class="isax isax-heart5 me-2"></i>Wishlist</a>
-										</li>
-										<li>
-											<a href="student-reviews.html" class="d-inline-flex align-items-center"><i class="isax isax-star5 me-2"></i>Reviews</a>
-										</li>
-										<li>
-											<a href="student-quiz.html" class="d-inline-flex align-items-center"><i class="isax isax-award5 me-2"></i>My Quiz Attempts</a>
-										</li>
-										<li>
-											<a href="student-order-history.html" class="d-inline-flex align-items-center"><i class="isax isax-shopping-cart5 me-2"></i>Order History</a>
-										</li>
-										<li>
-											<a href="student-referral.html" class="d-inline-flex align-items-center"><i class="isax isax-tag-user5 me-2"></i>Referrals</a>
-										</li>
-										<li>
-											<a href="student-messages.html" class="d-inline-flex align-items-center"><i class="isax isax-messages-35 me-2"></i>Messages</a>
-										</li>
-										<li>
-											<a href="student-tickets.html" class="d-inline-flex align-items-center"><i class="isax isax-ticket5 me-2"></i>Support Tickets</a>
-										</li>
-									</ul>
-									<hr>
-									<h6 class="mb-3">Account Settings</h6>
-									<ul>
-										<li>
-											<a href="student-settings.html" class="d-inline-flex align-items-center active"><i class="isax isax-setting-25 me-2"></i>Settings</a>
-										</li>
-										<li>
-											<a href="login.html" class="d-inline-flex align-items-center"><i class="isax isax-logout5 me-2"></i>Logout</a>
-										</li>
-									</ul>
-								</div>
-						</div>
-					</div>
-					<!-- sidebar -->
-						<div class="col-lg-9">
-							<div class="mb-3">
-								<h5>Settings</h5>
-							</div>							
-								<ul class="settings-nav d-flex align-items-center flex-wrap border bg-light-900 rounded">
-									<li><a href="student-settings.html">Edit Profile</a></li>
-									<li><a href="student-change-password.html">Security</a></li>
-									<li><a href="student-social-profile.html">Social Profiles</a></li>
-									<li><a href="student-linked-accounts.html">Linked Accounts</a></li>
-									<li><a href="student-notifications.html" class="active">Notifications</a></li>
-									<li><a href="student-billing-address.html">Billing Address</a></li>
-								</ul>
-								
-								
-							
-							<form>
-								<!-- Title -->
-								<div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
-									<h5 class="fs-18 mb-0">General Notifications</h5>
-									<button class="btn btn-sm btn-dark" type="button">Toggle all</button>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>Subscriptions</h6>
-										<small>Notify me about activity from profile I’m subscribe to</small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="checkPrivacy1" checked="">
-									</div>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>Recommended Courses</h6>
-										<small>Notify me about courses that suits for me</small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="7" checked="">
-									</div>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>Reply to my comments</h6>
-										<small>Notify me about replies for my comments</small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="4">
-									</div>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>Activity on my comments</h6>
-										<small>Notify me about replies for my comments.</small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="5">
-									</div>
-								</div>
-								
-							</form>
-							<div class="text-center my-5"></div>
-							<form>
-								<!-- Title -->
-								<div class="d-flex justify-content-between align-items-center border-bottom pb-4 mb-4">
-									<h5 class="fs-18 mb-0">Email Notifications</h5>
-									<button class="btn btn-sm btn-dark" type="button">Toggle all</button>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>Courses Activity</h6>
-										<small>Send me emails about my courses activity and updates I request</small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="checkPrivacy6" checked="">
-									</div>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>Promotions & Recommendations</h6>
-										<small>Send me emails about my courses promotions and recommendations</small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="checkPrivacy7" checked="">
-									</div>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>Course Comments</h6>
-										<small>Get notified about comments on your posts and replies to your comments.</small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="6">
-									</div>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>Course Reminders</h6>
-										<small>Receive booking assistance reminders to stay updated on your scheduled sessions.</small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="17">
-									</div>
-								</div>
-
-								<!-- Item -->
-								<div class="d-flex justify-content-between align-items-center mb-4">
-									<!-- Content -->
-									<div>
-										<h6>System Updates</h6>
-										<small>Send me emails about updates to the LMS platform </small>
-									</div>
-									<!-- Switch -->
-									<div class="form-check form-switch form-check-md mb-0 ms-3">
-										<input class="form-check-input" type="checkbox" id="8">
-									</div>
-								</div>
-							</form>
-						</div>
-					</div>
-				</div>
-			</div>
-
-		<!-- Footer -->
-		<footer class="footer">
-			<div class="footer-bg">
-				<img src="assets/img/bg/footer-bg-01.png" class="footer-bg-1" alt="">
-				<img src="assets/img/bg/footer-bg-02.png" class="footer-bg-2" alt="">
-			</div>
-			<div class="footer-top">
-				<div class="container">
-					<div class="row row-gap-4">
-						<div class="col-lg-4">
-							<div class="footer-about">
-								<div class="footer-logo">
-									<img src="assets/img/logo.svg" alt="">
-								</div>
-								<p>Platform designed to help organizations, educators, and learners manage, deliver, and track learning and training activities.</p>
-								<div class="d-flex align-items-center">
-									<a href="#" class="me-2"><img src="assets/img/icon/appstore.svg" alt=""></a>
-									<a href="#"><img src="assets/img/icon/googleplay.svg" alt=""></a>
-								</div>
-							</div>
-						</div>
-						<div class="col-lg-8">
-							<div class="row row-gap-4">
-								<div class="col-lg-3">
-									<div class="footer-widget footer-menu">
-										<h5 class="footer-title">For Student</h5>
-										<ul>
-											<li><a href="javascript:void(0);">Appointments</a></li>
-											<li><a href="instructor-message.html">Chat</a></li>
-											<li><a href="login.html">Login</a></li>
-											<li><a href="register.html">Register</a></li>
-										</ul>
-									</div>
-								</div>
-								<div class="col-lg-6">
-									<div class="footer-widget footer-contact">
-										<h5 class="footer-title">Newsletter</h5>
-										<div class="subscribe-input">
-											<form action="javascript:void(0);">
-												<input type="email" class="form-control" placeholder="Enter your Email Address">
-												<button type="submit" class="btn btn-primary btn-sm inline-flex align-items-center"><i class="isax isax-send-2 me-1"></i>Subscribe</button>
-											</form>
-										</div>
-										<div class="footer-contact-info">
-											<div class="footer-address d-flex align-items-center">
-												<img src="assets/img/icon/icon-20.svg" alt="Img" class="img-fluid me-2">
-												<p> 3556  Beech Street, San Francisco,<br> California, CA 94108 </p>
-											</div>
-											<div class="footer-address d-flex align-items-center">
-												<img src="assets/img/icon/icon-19.svg" alt="Img" class="img-fluid me-2">
-												<p>dreamslms@example.com</p>
-											</div>
-											<div class="footer-address d-flex align-items-center">
-												<img src="assets/img/icon/icon-21.svg" alt="Img" class="img-fluid me-2">
-												<p>+19 123-456-7890</p>
-											</div>
-										</div>
-									</div>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<div class="footer-bottom">
-				<div class="container">
-					<div class="row row-gap-2">
-						<div class="col-md-6">
-							<div class="text-center text-md-start">
-								<p class="text-white">Copyright &copy; 2025 DreamsLMS. All rights reserved.</p>
-							</div>
-						</div>
-						<div class="col-md-6">
-							<div>
-								<ul class="d-flex align-items-center justify-content-center justify-content-md-end footer-link">
-									<li><a href="terms-and-conditions.html">Terms & Conditions</a></li>
-									<li><a href="privacy-policy.html">Privacy Policy</a></li>
-								</ul>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-		</footer>
-		<!-- /Footer -->
-
-			<!-- Delete Modal -->
-			<div class="modal fade" id="delete_modal">
-				<div class="modal-dialog modal-dialog-centered">
-					<div class="modal-content">
-						<div class="modal-body text-center custom-modal-body">
-							<span class="avatar avatar-lg bg-secondary-transparent rounded-circle mb-2">
-								<i class="isax isax-trash fs-24 text-danger"></i>
-							</span>
-							<div>
-								<h4 class="mb-2">Remove All</h4>
-								<p class="mb-3">Are you sure you want to remove all from wishlist?</p>
-								<div class="d-flex align-items-center justify-content-center">
-									<a href="#" class="btn bg-gray-100 rounded-pill me-2" data-bs-dismiss="modal">Cancel</a>
-									<a href="#" class="btn btn-secondary rounded-pill">Yes, Remove All</a>
-								</div>
-							</div>
-						</div>
-					</div>
-				</div>
-			</div>
-			<!-- /Delete Modal -->
-
+			<p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p>
 		</div>
-		<!-- /Main Wrapper -->
-	  
-		<!-- jQuery -->
-		<script src="assets/js/jquery-3.7.1.min.js"></script>
-		
-		<!-- Bootstrap Core JS -->
-		<script src="assets/js/bootstrap.bundle.min.js"></script>
-		
-		<!-- Sticky Sidebar JS -->
-        <script src="assets/plugins/theia-sticky-sidebar/ResizeSensor.js"></script>
-        <script src="assets/plugins/theia-sticky-sidebar/theia-sticky-sidebar.js"></script>
-		
-		<!-- Custom JS -->
-		<script src="assets/js/script.js"></script>
-		
+	</footer>
+	<script src="assets/js/brylla-student.js"></script>
+	<script src="assets/js/brylla-notifications.js"></script>
+	<script>
+		const fallback = { name: "", email: "" };
+		const headerEl = document.getElementById("site-header");
+		const navEl = document.getElementById("dashboard-nav");
+		const scrimEl = document.getElementById("menu-scrim");
+		const svgNs = "http://www.w3.org/2000/svg";
+		const iconPaths = {
+			menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+			close: '<path d="M6 6l12 12M18 6 6 18"/>',
+			dashboard: '<rect x="4" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="4" width="6.5" height="6.5" rx="1.5"/><rect x="4" y="13.5" width="6.5" height="6.5" rx="1.5"/><rect x="13.5" y="13.5" width="6.5" height="6.5" rx="1.5"/>',
+			courses: '<path d="M4 6.5h10a3 3 0 0 1 3 3V19H7a3 3 0 0 0-3 3z"/><path d="M4 6.5A3 3 0 0 1 7 4h13v15"/>',
+			calendar: '<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M8 3v4M16 3v4M4 10h16"/>',
+			assignments: '<rect x="6" y="3.5" width="12" height="17" rx="2"/><path d="M9 3.5h6v3H9zM9 12h6M9 16h4"/>',
+			certificate: '<circle cx="12" cy="9" r="5"/><path d="M9 13.5 8 21l4-2 4 2-1-7.5"/>',
+			payments: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',
+			settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M4.8 6.8l1.6 1.6M17.6 15.6l1.6 1.6M3.5 12h2.2M18.3 12h2.2M4.8 17.2l1.6-1.6M17.6 8.4l1.6-1.6"/>',
+			help: '<circle cx="12" cy="12" r="8"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.7.3-1.2.9-1.2 1.6M12 17h.01"/>',
+			bell: '<path d="M6 9a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9"/><path d="M10 20a2 2 0 0 0 4 0"/>',
+			signout: '<path d="M10 7V5H5v14h5v-2"/><path d="M10 12h9M16 8l4 4-4 4"/>'
+		};
+		const nav = [
+			{ label: "Main", items: [{ label: "Dashboard", href: "student-dashboard.html", icon: "dashboard" }] },
+			{ label: "Learning", items: [
+				{ label: "My courses", href: "student-courses.html", icon: "courses" },
+				{ label: "Quizes", href: "student-quiz.html", icon: "assignments" }
+			] },
+			{ label: "Account", items: [
+				{ label: "Settings", href: "student-settings.html", icon: "settings" },
+				{ label: "Help", href: "index-4.html#faqs", icon: "help", mobileOnly: true },
+				{ label: "Sign out", href: "index-4.html", icon: "signout", tone: "danger" }
+			] }
+		];
+		let menuOpen = false;
+		let student = loadProfile();
+
+		function loadProfile() {
+			const saved = window.BryllaStudent ? BryllaStudent.loadProfile() : null;
+			return saved || { name: fallback.name, email: fallback.email };
+		}
+		function initials(name) {
+			return name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(function (part) { return part.charAt(0); }).join("").toUpperCase() || "ST";
+		}
+		function icon(name) {
+			const svg = document.createElementNS(svgNs, "svg");
+			svg.setAttribute("viewBox", "0 0 24 24");
+			svg.setAttribute("fill", "none");
+			svg.setAttribute("stroke", "currentColor");
+			svg.setAttribute("stroke-width", "1.75");
+			svg.setAttribute("stroke-linecap", "round");
+			svg.setAttribute("stroke-linejoin", "round");
+			svg.setAttribute("aria-hidden", "true");
+			svg.innerHTML = iconPaths[name] || "";
+			return svg;
+		}
+		function el(tag, className, text) {
+			const node = document.createElement(tag);
+			if (className) node.className = className;
+			if (text != null) node.textContent = text;
+			return node;
+		}
+		function renderHeader() {
+			headerEl.replaceChildren();
+			const start = el("div", "header-start");
+			const toggle = el("button", "icon-button menu-toggle");
+			toggle.type = "button";
+			toggle.id = "menu-toggle";
+			toggle.setAttribute("aria-expanded", menuOpen ? "true" : "false");
+			toggle.setAttribute("aria-controls", "dashboard-nav");
+			toggle.setAttribute("aria-label", menuOpen ? "Close menu" : "Open menu");
+			if (menuOpen) toggle.classList.add("is-open");
+			const menuIcon = icon("menu");
+			menuIcon.classList.add("icon-menu");
+			const closeIcon = icon("close");
+			closeIcon.classList.add("icon-close");
+			toggle.append(menuIcon, closeIcon);
+			toggle.addEventListener("click", function () { menuOpen ? closeMenu() : openMenu(); });
+			const brand = el("a", "brand");
+			brand.href = "student-dashboard.html";
+			brand.setAttribute("aria-label", "Brylla Academy home");
+			const mark = el("span", "brand-mark");
+			const logo = document.createElement("img");
+			logo.src = "assets/img/logo.png";
+			logo.alt = "";
+			mark.append(logo);
+			brand.append(mark);
+			start.append(brand, toggle);
+			const notify = el("a", "icon-button notify-button");
+			notify.href = "student-notifications.html";
+			notify.setAttribute("data-student-notifications", "");
+			notify.setAttribute("aria-haspopup", "dialog");
+			notify.setAttribute("aria-label", "Notifications");
+			notify.append(icon("bell"));
+			const avatar = el("span", "header-avatar", initials(student.name));
+			avatar.setAttribute("aria-hidden", "true");
+			const end = el("div", "header-end");
+			end.append(notify, avatar);
+			headerEl.append(start, end);
+		}
+		function renderNav() {
+			navEl.replaceChildren();
+			const profile = el("div", "drawer-profile");
+			profile.append(el("span", "drawer-avatar", initials(student.name)));
+			const copy = document.createElement("div");
+			copy.append(el("p", "drawer-name", student.name), el("p", "drawer-email", student.email));
+			profile.append(copy);
+			const scroller = el("div", "drawer-scroll");
+			const signout = el("div", "drawer-signout");
+			nav.forEach(function (group) {
+				const section = el("div", group.label === "Account" ? "nav-group nav-group-account" : "nav-group");
+				section.append(el("p", "nav-label", group.label));
+				const list = el("ul", "nav-list");
+				group.items.forEach(function (item) {
+					const li = document.createElement("li");
+					if (item.mobileOnly) li.classList.add("nav-mobile-only");
+					const link = el("a", "nav-link");
+					link.href = item.href;
+					if (item.current) link.setAttribute("aria-current", "page");
+					if (item.tone === "danger") link.classList.add("is-danger");
+					link.append(icon(item.icon), el("span", null, item.label));
+					link.addEventListener("click", function () { closeMenu(false); });
+					li.append(link);
+					if (item.tone === "danger") signout.append(li);
+					else list.append(li);
+				});
+				section.append(list);
+				scroller.append(section);
+			});
+			navEl.append(profile, scroller, signout);
+		}
+		function focusable(container) {
+			return Array.from(container.querySelectorAll("a[href], button:not([disabled])")).filter(function (node) {
+				return node.getClientRects().length > 0;
+			});
+		}
+		function openMenu() {
+			menuOpen = true;
+			navEl.inert = false;
+			scrimEl.classList.add("is-open");
+			navEl.classList.add("is-open");
+			document.body.classList.add("menu-lock");
+			const toggle = document.getElementById("menu-toggle");
+			toggle.classList.add("is-open");
+			toggle.setAttribute("aria-expanded", "true");
+			toggle.setAttribute("aria-label", "Close menu");
+			const first = focusable(navEl)[0];
+			if (first) first.focus();
+		}
+		function closeMenu(restoreFocus) {
+			if (!menuOpen) return;
+			menuOpen = false;
+			navEl.classList.remove("is-open");
+			scrimEl.classList.remove("is-open");
+			navEl.inert = true;
+			document.body.classList.remove("menu-lock");
+			const toggle = document.getElementById("menu-toggle");
+			toggle.classList.remove("is-open");
+			toggle.setAttribute("aria-expanded", "false");
+			toggle.setAttribute("aria-label", "Open menu");
+			if (restoreFocus !== false) toggle.focus();
+		}
+		scrimEl.addEventListener("click", function () { closeMenu(); });
+		document.addEventListener("keydown", function (event) {
+			if (event.key === "Escape" && menuOpen) closeMenu();
+		});
+		function showAccount() {
+			student = loadProfile() || student;
+			renderHeader();
+			renderNav();
+		}
+		renderHeader();
+		renderNav();
+		if (window.BryllaAuth) BryllaAuth.ready.then(showAccount);
+	</script>
 	</body>
 </html>

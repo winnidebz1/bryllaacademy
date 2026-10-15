@@ -60,7 +60,7 @@
 		.nav-links a { color: #35516c; font-size: 14px; font-weight: 650; text-decoration: none; transition: color .2s; }
 		.nav-links a:hover { color: var(--teal-dark); }
 		.header-actions { display: flex; align-items: center; gap: 10px; }
-		.header-actions .btn-outline-brand { display: none; }
+		.header-actions .note-bell { flex: 0 0 auto; }
 		.navbar-toggler { border: 1px solid var(--line); padding: 8px 11px; color: var(--navy); }
 		.hero { position: relative; overflow: hidden; padding: 24px 0 48px; background: #f6f7fb; }
 		.hero:before { content: ""; position: absolute; width: 570px; height: 570px; top: -390px; left: -180px; border: 1px solid rgba(7,59,112,.08); border-radius: 50%; pointer-events: none; }
@@ -247,11 +247,14 @@
 		@media (max-width: 991.98px) {
 			.header-inner { min-height: 72px; }
 			.nav-links { gap: 16px; }
-			.header-actions .btn-outline-brand { display: none; }
+			.header-actions .note-bell { flex: 0 0 auto; }
 			.benefit-grid, .steps-grid { grid-template-columns: repeat(2, 1fr); }
 			.course-grid, .audit-grid { grid-template-columns: repeat(2, 1fr); }
 			.toolkit-grid { grid-template-columns: repeat(2, 1fr); }
 			.stories-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+		}
+		@media (max-width: 991.98px) {
+			.site-header .note-bell { margin-left: auto; }
 		}
 		@media (max-width: 767.98px) {
 			html { scroll-padding-top: 70px; }
@@ -260,7 +263,7 @@
 			.brand-window img { width: 115px; height: 115px; top: calc(50% + 4px); }
 			.header-actions { margin-left: auto; }
 			.header-actions .btn { padding: 9px 12px; font-size: 14px; }
-			.header-actions .btn-outline-brand { display: none; }
+			.header-actions .note-bell { flex: 0 0 auto; }
 			.navbar-collapse { width: 100%; padding: 3px 0 15px; }
 			.nav-links { align-items: stretch; flex-direction: column; gap: 0; }
 			.nav-links li { border-top: 1px solid var(--line); }
@@ -307,20 +310,19 @@
 			</button>
 			<div class="collapse navbar-collapse" id="siteNavigation">
 				<ul class="nav-links ms-lg-auto me-lg-4">
-					<li><a href="#home">Home</a></li>
-					<li><a href="#courses">Courses</a></li>
-					<li><a href="#how-it-works">How It Works</a></li>
-					<li><a href="#stories">Student Stories</a></li>
-					<li><a href="#toolkit">Career Toolkit</a></li>
-					<li><a href="#faqs">FAQs</a></li>
-					<li><a href="contact-us">Contact</a></li>
-					<li><a href="login">Login</a></li>
+					<li><a href="student-dashboard">Dashboard</a></li>
+					<li><a href="student-courses">My courses</a></li>
+					<li><a href="student-quiz">Quizzes</a></li>
+					<li><a href="student-settings">Settings</a></li>
+					<li><a href="#faqs">Help</a></li>
+					<li><a href="login">Sign out</a></li>
 				</ul>
 				<div class="header-actions">
 					<a class="btn btn-outline-brand" href="login">Login</a>
 					<a class="btn btn-accent" href="register">Signup</a>
 				</div>
 			</div>
+			<button class="note-bell" type="button" data-student-notifications aria-label="Notifications"></button>
 		</nav>
 	</header>
 
@@ -712,6 +714,10 @@
 		</div>
 	</footer>
 
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-auth.js"></script>
+	<script src="assets/js/brylla-notifications.js"></script>
 	<script src="assets/js/bootstrap.bundle.min.js"></script>
 	<script>
 		(() => {

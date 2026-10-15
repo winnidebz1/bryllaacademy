@@ -717,6 +717,40 @@
 		draw();
 	}
 
+	function staffClient() {
+		var config = window.BryllaPublic || {};
+		if (!window.supabase || !config.supabaseUrl || !config.supabaseAnonKey) return null;
+		if (!staffClient.current) staffClient.current = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+		return staffClient.current;
+	}
+
+	function deliverNotice(notice) {
+		var current = staffClient();
+		if (!current) return Promise.resolve({ ok: false, message: "Sign-in is not available on this page." });
+		return current.auth.getSession().then(function (result) {
+			var session = result.data.session;
+			if (!session) return { ok: false, message: "Sign in on Messages with an instructor or founder account." };
+			return current.from("profiles").select("role").eq("id", session.user.id).maybeSingle().then(function (profile) {
+				var role = profile.data && profile.data.role;
+				if (role !== "instructor" && role !== "founder") return { ok: false, message: "This account cannot send student notifications." };
+				return current.rpc("post_student_notice", {
+					p_type: notice.type,
+					p_title: notice.title,
+					p_message: notice.message,
+					p_destination: notice.destination || "student-dashboard",
+					p_course_id: notice.courseId || null,
+					p_student_id: notice.studentId || null,
+					p_idempotency_key: notice.key
+				}).then(function (sent) {
+					if (sent.error) return { ok: false, message: sent.error.message || "The message could not be sent." };
+					return { ok: true, count: sent.data || 0 };
+				});
+			});
+		}).catch(function () {
+			return { ok: false, message: "Check your connection and try again." };
+		});
+	}
+
 	function renderAnnouncements(root, data) {
 		var query = "";
 		var statusFilter = "all";
@@ -739,7 +773,7 @@
 					[{ label: "Title", sort: "title" }, { label: "Course" }, { label: "Status", sort: "status" }, { label: "Sent" }, { label: "Actions" }],
 					list.map(function (item) {
 						var course = courseById(data, item.courseId);
-						var sent = item.status === "published" ? "Sent to " + studentCount(data, item.courseId) + " students" : "Not sent";
+						var sent = item.deliverError ? "Not delivered" : (item.delivered != null ? "Sent to " + item.delivered + " students" : (item.status === "published" ? "Not delivered yet" : "Not sent"));
 						return "<tr>" + cell("Title", esc(item.title)) + cell("Course", esc(course ? course.title : "All courses")) + cell("Status", statusBadge(item.status)) + cell("Sent", sent) +
 							cell("Actions", '<button class="btn btn-light btn-sm" type="button" data-delete-announcement="' + esc(item.id) + '" aria-label="Delete ' + esc(item.title) + '" title="Delete"><i class="isax isax-trash" aria-hidden="true"></i></button>') + "</tr>";
 					})
@@ -773,10 +807,22 @@
 			});
 			document.getElementById("announcement-form").addEventListener("submit", function (event) {
 				event.preventDefault();
-				data.announcements.push({ id: "ann-" + Date.now(), title: document.getElementById("ann-title").value.trim(), courseId: document.getElementById("ann-course").value, status: document.getElementById("ann-status").value, body: document.getElementById("ann-body").value.trim() });
+				var item = { id: "ann-" + Date.now(), title: document.getElementById("ann-title").value.trim(), courseId: document.getElementById("ann-course").value, status: document.getElementById("ann-status").value, body: document.getElementById("ann-body").value.trim() };
+				data.announcements.push(item);
 				save(data);
-				toast("Announcement saved.");
-				draw();
+				if (item.status !== "published") {
+					toast("Announcement saved. Students are notified only when the status is Published.");
+					draw();
+					return;
+				}
+				toast("Sending the announcement to enrolled students…");
+				deliverNotice({ type: "announcement", title: item.title, message: item.body, courseId: item.courseId, destination: "student-dashboard", key: item.id.replace(/[^A-Za-z0-9]/g, "") }).then(function (result) {
+					item.delivered = result.ok ? result.count : null;
+					item.deliverError = result.ok ? "" : result.message;
+					save(data);
+					toast(result.ok ? "Announcement sent to " + result.count + " students." : "Saved here, but students were not notified. " + result.message);
+					draw();
+				});
 			});
 		}
 		draw();
@@ -1194,6 +1240,101 @@
 			statCard("isax isax-medal-star5", "bg-success-transparent", "Course completion", rate(completion), "instructor-analytics.html") +
 			"</div>";
 	}
+	function renderMessages(root) {
+		root.innerHTML = '<h1 class="h5 fw-bold">Messages</h1><p>A message sent here shows on that student\'s notification bell. Students cannot see each other\'s messages.</p>' +
+			'<div class="card mt-3"><div class="card-body">' +
+			'<form id="staff-sign-in"><h2 class="h6 fw-bold">Sign in to send</h2><p>Use the instructor or founder account. This replaces the academy session in this browser.</p>' +
+			'<label class="form-label" for="staff-email">Email</label><input class="form-control mb-2" id="staff-email" type="email" autocomplete="username" required>' +
+			'<label class="form-label" for="staff-password">Password</label><input class="form-control mb-3" id="staff-password" type="password" autocomplete="current-password" required>' +
+			'<button class="btn btn-primary rounded-pill" type="submit">Sign in</button><p id="staff-sign-status" class="mt-2 mb-0" role="status"></p></form>' +
+			'<form id="staff-message" hidden><p id="staff-who" class="mb-3"></p>' +
+			'<label class="form-label" for="msg-audience">Send to</label><select class="form-select mb-2" id="msg-audience"></select>' +
+			'<label class="form-label" for="msg-title">Title</label><input class="form-control mb-2" id="msg-title" maxlength="140" required>' +
+			'<label class="form-label" for="msg-body">Message</label><textarea class="form-control mb-3" id="msg-body" maxlength="2000" rows="4" required></textarea>' +
+			'<button class="btn btn-primary rounded-pill" type="submit">Send message</button><p id="msg-status" class="mt-2 mb-0" role="status"></p></form></div></div>';
+		var signForm = document.getElementById("staff-sign-in");
+		var messageForm = document.getElementById("staff-message");
+		var signStatus = document.getElementById("staff-sign-status");
+		var msgStatus = document.getElementById("msg-status");
+		var current = staffClient();
+		if (!current) {
+			signStatus.textContent = "Sign-in is not available on this page.";
+			return;
+		}
+		function showComposer(role, directory) {
+			signForm.hidden = true;
+			messageForm.hidden = false;
+			document.getElementById("staff-who").textContent = "Signed in as " + role + ".";
+			var courses = {};
+			directory.forEach(function (row) { courses[row.course_id] = row.course_title; });
+			var options = role === "founder" ? '<option value="all">All active students</option>' : "";
+			Object.keys(courses).forEach(function (id) {
+				options += '<option value="course:' + esc(id) + '">Everyone in ' + esc(courses[id]) + "</option>";
+			});
+			directory.forEach(function (row) {
+				options += '<option value="student:' + esc(row.user_id) + '">' + esc(row.full_name || row.email) + " — " + esc(row.course_title) + "</option>";
+			});
+			document.getElementById("msg-audience").innerHTML = options || '<option value="">No active students yet</option>';
+		}
+		function checkSession() {
+			return current.auth.getSession().then(function (result) {
+				var session = result.data.session;
+				if (!session) return;
+				return current.from("profiles").select("role").eq("id", session.user.id).maybeSingle().then(function (profile) {
+					var role = profile.data && profile.data.role;
+					if (role !== "instructor" && role !== "founder") {
+						signStatus.textContent = "This account is not an instructor or founder.";
+						return;
+					}
+					return current.rpc("staff_student_directory").then(function (directory) {
+						if (directory.error) throw directory.error;
+						showComposer(role, directory.data || []);
+					});
+				});
+			}).catch(function () {
+				signStatus.textContent = "Could not check your account. Try again.";
+			});
+		}
+		signForm.addEventListener("submit", function (event) {
+			event.preventDefault();
+			signStatus.textContent = "Signing in…";
+			current.auth.signInWithPassword({
+				email: document.getElementById("staff-email").value.trim(),
+				password: document.getElementById("staff-password").value
+			}).then(function (result) {
+				if (result.error) {
+					signStatus.textContent = "That email and password don't match.";
+					return;
+				}
+				document.getElementById("staff-password").value = "";
+				signStatus.textContent = "";
+				return checkSession();
+			});
+		});
+		messageForm.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var audience = document.getElementById("msg-audience").value;
+			if (!audience) {
+				msgStatus.textContent = "Choose who should receive this message.";
+				return;
+			}
+			var notice = { type: "message", title: document.getElementById("msg-title").value.trim(), message: document.getElementById("msg-body").value.trim(), destination: "student-dashboard", key: "msg" + Date.now() };
+			if (audience.indexOf("course:") === 0) notice.courseId = audience.slice(7);
+			else if (audience.indexOf("student:") === 0) notice.studentId = audience.slice(8);
+			msgStatus.textContent = "Sending…";
+			deliverNotice(notice).then(function (result) {
+				msgStatus.textContent = result.ok
+					? (result.count ? "Sent to " + result.count + " student" + (result.count === 1 ? "" : "s") + "." : "Nobody new was notified.")
+					: result.message;
+				if (result.ok && result.count) {
+					document.getElementById("msg-title").value = "";
+					document.getElementById("msg-body").value = "";
+				}
+			});
+		});
+		checkSession();
+	}
+
 	function renderEmptyPage(root, title, message) {
 		root.innerHTML = '<h1 class="h5 fw-bold">' + esc(title) + "</h1>" + empty(message);
 	}
@@ -1210,7 +1351,7 @@
 		profile: renderProfile,
 		analytics: renderAnalytics,
 		help: function (root) { renderEmptyPage(root, "Help", "Help articles will be added here. For now, use the menu to open courses, grading and students."); },
-		messages: function (root) { renderEmptyPage(root, "Messages", "No messages yet. Student messages will appear here."); },
+		messages: renderMessages,
 		settings: function (root) { renderEmptyPage(root, "Settings", "Account settings will be connected later."); },
 		notifications: function (root) { renderEmptyPage(root, "Notifications", "No notifications yet."); },
 		"admin-dashboard": renderAdminDashboard,
@@ -1222,7 +1363,7 @@
 		"admin-students": renderStudents,
 		"admin-instructors": renderAdminInstructors,
 		"admin-announcements": renderAnnouncements,
-		"admin-support": function (root) { renderEmptyPage(root, "Support", "No support messages yet."); },
+		"admin-support": renderMessages,
 		"admin-settings": function (root) { renderEmptyPage(root, "Platform settings", "Academy settings will be connected later."); },
 		"admin-help": function (root) { renderEmptyPage(root, "Help", "Help for academy operations will be added here."); }
 	};

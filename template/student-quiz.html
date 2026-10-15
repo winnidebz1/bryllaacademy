@@ -2310,10 +2310,14 @@ body[data-not-sent] > #vis-container ~ #not-sent {
 <div id="qz">
   <div class="hd">
     <a class="brand" href="student-dashboard.html" aria-label="Brylla Academy home"><img src="assets/img/logo.png" alt="Brylla Academy"></a>
-    <a class="exit" href="student-dashboard.html">Back to dashboard</a>
+    <div style="display:flex;align-items:center;gap:12px"><button class="note-bell" type="button" data-student-notifications aria-label="Notifications"></button><a class="exit" href="student-dashboard.html">Back to dashboard</a></div>
   </div>
   <div class="wrap" id="body"></div>
 </div>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="assets/js/brylla-public-config.js"></script>
+<script src="assets/js/brylla-auth.js"></script>
+<script src="assets/js/brylla-notifications.js"></script>
 <script src="assets/js/brylla-student.js"></script>
 <script>
 (function(){

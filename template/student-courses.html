@@ -240,6 +240,7 @@
 			</div>
 		</footer>
 	<script src="assets/js/brylla-student.js"></script>
+	<script src="assets/js/brylla-notifications.js"></script>
 	<script>
 		const data = JSON.parse(document.getElementById("courses-data").textContent);
 		const catalog = data.courses.slice();
@@ -277,8 +278,7 @@
 			{ label: "Main", items: [{ label: "Dashboard", href: "student-dashboard.html", icon: "dashboard" }] },
 			{ label: "Learning", items: [
 				{ label: "My courses", href: "student-courses.html", icon: "courses", current: true },
-				{ label: "Quizes", href: "student-quiz.html", icon: "assignments" },
-				{ label: "Certificates", href: "student-certificates.html", icon: "certificate" }
+				{ label: "Quizes", href: "student-quiz.html", icon: "assignments" }
 			] },
 			{ label: "Account", items: [
 				{ label: "Settings", href: "student-settings.html", icon: "settings" },
@@ -367,9 +367,11 @@
 			const end = el("div", "header-end");
 			const notify = el("a", "icon-button notify-button");
 			notify.href = "student-notifications.html";
+			notify.setAttribute("data-student-notifications", "");
+			notify.setAttribute("aria-haspopup", "dialog");
 			notify.setAttribute("aria-label", data.notifications ? "Notifications, " + data.notifications + " unread" : "Notifications, no unread");
 			notify.append(icon("bell"));
-			if (data.notifications > 0) notify.append(el("span", "notify-badge", data.notifications > 9 ? "9+" : String(data.notifications)));
+			if (data.notifications > 0) notify.append(el("span", "notify-badge", data.notifications > 99 ? "99+" : String(data.notifications)));
 			const avatar = el("span", "header-avatar", data.student.initials);
 			avatar.setAttribute("role", "img");
 			avatar.setAttribute("aria-label", data.student.name);

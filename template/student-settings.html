@@ -170,6 +170,7 @@
 		</div>
 	</footer>
 	<script src="assets/js/brylla-student.js"></script>
+	<script src="assets/js/brylla-notifications.js"></script>
 	<script>
 		const fallback = { name: "", email: "" };
 		const headerEl = document.getElementById("site-header");
@@ -191,14 +192,14 @@
 			payments: '<rect x="3" y="6" width="18" height="12" rx="2"/><path d="M3 10h18"/>',
 			settings: '<circle cx="12" cy="12" r="3"/><path d="M12 3.5v2.2M12 18.3v2.2M4.8 6.8l1.6 1.6M17.6 15.6l1.6 1.6M3.5 12h2.2M18.3 12h2.2M4.8 17.2l1.6-1.6M17.6 8.4l1.6-1.6"/>',
 			help: '<circle cx="12" cy="12" r="8"/><path d="M9.5 9.5a2.5 2.5 0 1 1 3.2 2.4c-.7.3-1.2.9-1.2 1.6M12 17h.01"/>',
+			bell: '<path d="M6 9a6 6 0 1 1 12 0c0 7 3 7 3 9H3c0-2 3-2 3-9"/><path d="M10 20a2 2 0 0 0 4 0"/>',
 			signout: '<path d="M10 7V5H5v14h5v-2"/><path d="M10 12h9M16 8l4 4-4 4"/>'
 		};
 		const nav = [
 			{ label: "Main", items: [{ label: "Dashboard", href: "student-dashboard.html", icon: "dashboard" }] },
 			{ label: "Learning", items: [
 				{ label: "My courses", href: "student-courses.html", icon: "courses" },
-				{ label: "Quizes", href: "student-quiz.html", icon: "assignments" },
-				{ label: "Certificates", href: "student-certificates.html", icon: "certificate" }
+				{ label: "Quizes", href: "student-quiz.html", icon: "assignments" }
 			] },
 			{ label: "Account", items: [
 				{ label: "Settings", href: "student-settings.html", icon: "settings", current: true },
@@ -264,10 +265,16 @@
 			mark.append(logo);
 			brand.append(mark);
 			start.append(brand, toggle);
+			const notify = el("a", "icon-button notify-button");
+			notify.href = "student-notifications.html";
+			notify.setAttribute("data-student-notifications", "");
+			notify.setAttribute("aria-haspopup", "dialog");
+			notify.setAttribute("aria-label", "Notifications");
+			notify.append(icon("bell"));
 			const avatar = el("span", "header-avatar", initials(student.name));
 			avatar.setAttribute("aria-hidden", "true");
 			const end = el("div", "header-end");
-			end.append(avatar);
+			end.append(notify, avatar);
 			headerEl.append(start, end);
 		}
 		function renderNav() {
