@@ -159,7 +159,7 @@
 		<script>
 			(function () {
 				var config = window.BryllaPublic || {};
-				var client = window.supabase && config.supabaseUrl ? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey) : null;
+				var client = config.client ? config.client() : null;
 				var params = new URLSearchParams(location.search);
 				var next = params.get("next") || "";
 				var destination = /^\/(?!\/)/.test(next) ? next : "student-dashboard";
@@ -172,12 +172,6 @@
 					notice.textContent = "Your password is saved. Sign in with your email and new password.";
 					notice.hidden = false;
 				}
-				if (client) {
-					client.auth.getSession().then(function (result) {
-						if (result.data.session && params.get("setup") !== "done") location.replace(destination);
-					});
-				}
-
 				function showError(message) {
 					errorEl.textContent = message;
 					errorEl.hidden = false;

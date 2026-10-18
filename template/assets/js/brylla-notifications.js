@@ -118,9 +118,7 @@
 	function ensureClient() {
 		if (client) return client;
 		if (window.BryllaAuth && BryllaAuth.client) client = BryllaAuth.client;
-		else if (window.supabase && window.BryllaPublic && BryllaPublic.supabaseUrl) {
-			client = window.supabase.createClient(BryllaPublic.supabaseUrl, BryllaPublic.supabaseAnonKey);
-		}
+		else if (window.BryllaPublic && BryllaPublic.client) client = BryllaPublic.client();
 		return client;
 	}
 

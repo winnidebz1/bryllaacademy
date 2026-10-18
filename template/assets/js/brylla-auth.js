@@ -6,9 +6,7 @@
 	var script = document.currentScript;
 	var guarded = Boolean(script && script.dataset.guard === "student");
 	var config = window.BryllaPublic || {};
-	var client = window.supabase && config.supabaseUrl && config.supabaseAnonKey
-		? window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey)
-		: null;
+	var client = config.client ? config.client() : null;
 	var user = null;
 
 	var cloak = null;
@@ -164,14 +162,26 @@
 		return state;
 	});
 
+	function clearAuthStorage() {
+		[localStorage, sessionStorage].forEach(function (store) {
+			try {
+				Object.keys(store).forEach(function (key) {
+					if (key.indexOf("sb-") === 0) store.removeItem(key);
+				});
+			} catch (error) { /* storage can be blocked */ }
+		});
+	}
+
 	async function signOut() {
 		try {
-			if (client) await client.auth.signOut();
+			if (client) await client.auth.signOut({ scope: "local" });
 		} catch (error) {
-			// The local session is cleared even when the network call fails.
+			// The saved session is removed below even when the network call fails.
 		}
+		clearAuthStorage();
 		localStorage.removeItem(PROFILE_KEY);
-		location.assign("/");
+		sessionStorage.removeItem("brylla-role");
+		location.assign("login");
 	}
 
 	async function saveName(name) {

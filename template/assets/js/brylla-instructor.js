@@ -720,7 +720,7 @@
 	function staffClient() {
 		var config = window.BryllaPublic || {};
 		if (!window.supabase || !config.supabaseUrl || !config.supabaseAnonKey) return null;
-		if (!staffClient.current) staffClient.current = window.supabase.createClient(config.supabaseUrl, config.supabaseAnonKey);
+		if (!staffClient.current && config.client) staffClient.current = config.client();
 		return staffClient.current;
 	}
 
