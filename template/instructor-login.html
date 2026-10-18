@@ -89,18 +89,18 @@
                                         <span class="login-brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></span>
                                     </div>
                                     <h1 class="fs-32 fw-bold topic">Instructor login</h1>
-                                    <form action="instructor-dashboard.html" class="mb-3 pb-3">
+                                    <form action="instructor-dashboard" class="mb-3 pb-3">
                                         <div class="mb-3 position-relative">
                                             <label class="form-label">Email<span class="text-danger ms-1">*</span></label>
                                             <div class="position-relative">
-                                                <input type="email" class="form-control form-control-lg">
+                                                <input id="login-email" type="email" class="form-control form-control-lg" autocomplete="username" required>
                                                 <span><i class="isax isax-sms input-icon text-gray-7 fs-14"></i></span>
                                             </div>
                                         </div>
                                         <div class="mb-3 position-relative">
                                             <label class="form-label">Password <span class="text-danger ms-1">*</span></label>
                                             <div class="position-relative" id="passwordInput">
-                                                <input type="password" class="pass-inputs form-control form-control-lg">
+                                                <input id="login-password" type="password" class="pass-inputs form-control form-control-lg" autocomplete="current-password" required>
                                                 <span class="isax toggle-passwords isax-eye-slash fs-14"></span>
                                             </div>	
                                         </div>
@@ -117,8 +117,9 @@
                                                 </a>
                                             </div>
                                         </div>
+                                        <p id="login-error" class="text-danger mb-3" hidden></p>
                                         <div class="d-grid">
-                                            <button class="btn btn-secondary btn-lg" type="submit">Login <i class="isax isax-arrow-right-3 ms-1"></i></button>
+                                            <button id="login-button" class="btn btn-secondary btn-lg" type="submit">Login <i class="isax isax-arrow-right-3 ms-1"></i></button>
                                         </div>
                                     </form>
 
@@ -152,14 +153,42 @@
 		
 		<!-- Custom JS -->
 		<script src="assets/js/script.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+		<script src="assets/js/brylla-public-config.js"></script>
 		<script>
-			document.querySelector("form").addEventListener("submit", function (event) {
-				event.preventDefault();
-				sessionStorage.setItem("brylla-role", "instructor");
-				fetch("/api/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ role: "instructor" }) }).finally(function () {
-					location.href = "instructor-dashboard.html";
+			(function () {
+				var client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
+				var form = document.querySelector("form");
+				var errorEl = document.getElementById("login-error");
+				var button = document.getElementById("login-button");
+				function showError(message) {
+					errorEl.textContent = message;
+					errorEl.hidden = false;
+				}
+				form.addEventListener("submit", async function (event) {
+					event.preventDefault();
+					errorEl.hidden = true;
+					var email = document.getElementById("login-email").value.trim();
+					var password = document.getElementById("login-password").value;
+					if (!email || !password) return showError("Enter your email and password.");
+					if (!client) return showError("Sign-in is not available right now. Try again later.");
+					button.disabled = true;
+					var result = await client.auth.signInWithPassword({ email: email, password: password });
+					if (result.error) {
+						button.disabled = false;
+						return showError(result.error.status === 400 ? "That email and password don't match." : result.error.message);
+					}
+					var profile = await client.from("profiles").select("role").eq("id", result.data.user.id).maybeSingle();
+					var role = profile.data && profile.data.role;
+					if (role !== "instructor" && role !== "founder") {
+						await client.auth.signOut({ scope: "local" });
+						button.disabled = false;
+						return showError("This login is for instructors. Use the student login for a student account.");
+					}
+					sessionStorage.setItem("brylla-role", role);
+					location.replace("instructor-dashboard");
 				});
-			});
+			})();
 		</script>
 	</body>
 </html>

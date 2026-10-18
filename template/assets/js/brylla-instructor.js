@@ -344,12 +344,28 @@
 				scrim.hidden = true;
 			}
 		});
+		function endStaffSession(event) {
+			if (event) event.preventDefault();
+			var current = staffClient();
+			var done = current ? current.auth.signOut({ scope: "local" }) : Promise.resolve();
+			done.finally(function () {
+				sessionStorage.removeItem("brylla-role");
+				try {
+					[localStorage, sessionStorage].forEach(function (store) {
+						Object.keys(store).forEach(function (key) {
+							if (key.indexOf("sb-") === 0) store.removeItem(key);
+						});
+					});
+				} catch (error) { /* storage can be blocked */ }
+				location.assign(currentArea() === "admin" ? "admin-login" : "instructor-login");
+			});
+		}
 		document.getElementById("instructor-menu").addEventListener("click", function (event) {
 			var link = event.target.closest("a");
 			if (!link) return;
 			if (link.hasAttribute("data-logout")) {
-				sessionStorage.removeItem("brylla-role");
-				fetch("/api/logout", { method: "POST" }).catch(function () {});
+				endStaffSession(event);
+				return;
 			}
 			if (dirty && !window.confirm("You have unsaved changes. Leave this page?")) event.preventDefault();
 			else dirty = false;
@@ -357,8 +373,7 @@
 		profileMenu.addEventListener("click", function (event) {
 			var link = event.target.closest("[data-logout]");
 			if (!link) return;
-			sessionStorage.removeItem("brylla-role");
-			fetch("/api/logout", { method: "POST" }).catch(function () {});
+			endStaffSession(event);
 		});
 		search.addEventListener("input", function () {
 			var query = search.value.trim().toLowerCase();
@@ -1371,20 +1386,41 @@
 	function boot() {
 		var page = document.body.getAttribute("data-page");
 		if (!page || !PAGES[page]) return;
-		var role = sessionStorage.getItem("brylla-role");
 		var admin = currentArea() === "admin";
-		if (!role) {
-			location.replace(admin ? "admin-login.html" : "instructor-login.html");
+		var loginPage = admin ? "admin-login" : "instructor-login";
+		var client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
+		if (!client) {
+			location.replace(loginPage);
 			return;
 		}
-		if (role === "student") {
-			location.replace("student-dashboard.html");
-			return;
-		}
-		if (admin && role !== "founder") {
-			location.replace("instructor-dashboard.html");
-			return;
-		}
+		client.auth.getSession().then(function (result) {
+			var session = result.data && result.data.session;
+			if (!session) {
+				sessionStorage.removeItem("brylla-role");
+				location.replace(loginPage);
+				return null;
+			}
+			return client.from("profiles").select("role").eq("id", session.user.id).maybeSingle();
+		}).then(function (profile) {
+			if (!profile) return;
+			var role = profile.data && profile.data.role;
+			if (role !== "instructor" && role !== "founder") {
+				sessionStorage.removeItem("brylla-role");
+				location.replace("login");
+				return;
+			}
+			if (admin && role !== "founder") {
+				sessionStorage.setItem("brylla-role", role);
+				location.replace("instructor-dashboard");
+				return;
+			}
+			sessionStorage.setItem("brylla-role", role);
+			openPage(page);
+		}).catch(function () {
+			location.replace(loginPage);
+		});
+	}
+	function openPage(page) {
 		var data = state();
 		document.body.innerHTML = shell(page, data);
 		bindMenu();
