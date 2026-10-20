@@ -134,11 +134,13 @@
 			button.setAttribute("aria-controls", PANEL_ID);
 			var badge = button.querySelector(".notify-badge");
 			if (state.unread > 0) {
+				var text = badgeText(state.unread);
 				if (!badge) {
-					badge = el("span", "notify-badge");
+					badge = el("span", "notify-badge", text);
 					button.appendChild(badge);
+				} else if (badge.textContent !== text) {
+					badge.textContent = text;
 				}
-				badge.textContent = badgeText(state.unread);
 			} else if (badge) {
 				badge.remove();
 			}
@@ -338,10 +340,17 @@
 		});
 	}
 
+	var scanning = false;
 	function scan() {
-		styles();
-		bells().forEach(enhance);
-		paintBadges();
+		if (scanning) return;
+		scanning = true;
+		try {
+			styles();
+			bells().forEach(enhance);
+			paintBadges();
+		} finally {
+			scanning = false;
+		}
 	}
 
 	function applyRows(rows) {
@@ -526,8 +535,12 @@
 			var user = result.data.session && result.data.session.user;
 			resetFor(user ? user.id : null);
 			client.auth.onAuthStateChange(function (event, session) {
-				if (event === "SIGNED_OUT") resetFor(null);
-				else if (session && session.user) resetFor(session.user.id);
+				// The callback runs while the auth lock is held. Wait until it is released
+				// before reading the session again, or the dashboard never gets the lock back.
+				window.setTimeout(function () {
+					if (event === "SIGNED_OUT") resetFor(null);
+					else if (session && session.user) resetFor(session.user.id);
+				}, 0);
 			});
 		}).catch(function () {
 			state.status = "error";
@@ -562,7 +575,13 @@
 	document.addEventListener("visibilitychange", function () {
 		if (document.visibilityState === "visible" && state.userId) refresh();
 	});
-	new MutationObserver(scan).observe(document.documentElement, { childList: true, subtree: true });
+	// scan() updates the bell. Ignore those updates, or each badge rewrite schedules another scan.
+	var domObserver = new MutationObserver(function () {
+		domObserver.disconnect();
+		try { scan(); }
+		finally { domObserver.observe(document.documentElement, { childList: true, subtree: true }); }
+	});
+	domObserver.observe(document.documentElement, { childList: true, subtree: true });
 
 	if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", boot);
 	else boot();
