@@ -21,6 +21,19 @@
 		cloak = null;
 	}
 
+	function storedSession() {
+		try {
+			return Object.keys(sessionStorage).some(function (key) {
+				return key.indexOf("sb-") === 0 && key.slice(-11) === "-auth-token" && sessionStorage.getItem(key);
+			});
+		} catch (error) {
+			return false;
+		}
+	}
+
+	// A saved login is enough to show the page. Account checks continue after it is visible.
+	if (guarded && storedSession()) reveal();
+
 	function read(key) {
 		try {
 			return JSON.parse(localStorage.getItem(key) || "null");
@@ -135,6 +148,7 @@
 			return null;
 		}
 		var session = (await client.auth.getSession()).data.session;
+		if (session) reveal();
 		var checked = session ? await client.auth.getUser() : null;
 		if (checked && checked.error && !checked.error.status) throw checked.error;
 		if (!session || !checked || checked.error || !checked.data.user) {
