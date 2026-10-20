@@ -120,7 +120,8 @@
 		.assignment-field > span { display: block; margin-bottom: var(--s2); font-size: 14px; font-weight: 500; }
 		.assignment-file { width: 100%; min-height: 44px; padding: var(--s2); border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; }
 		.assignment-description { width: 100%; min-height: 112px; resize: vertical; padding: var(--s3); border: 1px solid var(--border); border-radius: 8px; background: var(--surface); color: var(--text); font: inherit; }
-		.assignment-help { margin-top: var(--s1); color: var(--muted); font-size: 12px; }
+		.assignment-help, .assignment-chosen { margin-top: var(--s1); color: var(--muted); font-size: 12px; }
+		.assignment-chosen { color: var(--text); }
 		.assignment-status { min-height: 1.5em; margin: 0 0 var(--s3); color: #a1243a; font-size: 13px; }
 		.assignment-dialog-actions { display: flex; justify-content: flex-end; gap: var(--s2); }
 		:focus-visible { outline: 3px solid var(--blue-fg); outline-offset: 2px; }
@@ -205,9 +206,10 @@
 				<button class="assignment-close" type="button" id="assignment-close" aria-label="Close dialog">&times;</button>
 				</div>
 			<label class="assignment-field" for="assignment-file">
-				<span>Upload your file <span aria-hidden="true">*</span></span>
-				<input class="assignment-file" type="file" id="assignment-file" name="assignmentFile" accept=".jpg,.jpeg,.pdf,image/jpeg,application/pdf" required>
-				<span class="assignment-help">Accepted formats: JPG or PDF.</span>
+				<span>Upload your files <span aria-hidden="true">*</span></span>
+				<input class="assignment-file" type="file" id="assignment-file" name="assignmentFile" accept=".jpg,.jpeg,.pdf,image/jpeg,application/pdf" multiple required>
+				<span class="assignment-help">You can choose more than one file. Accepted formats: JPG or PDF, up to 10 MB each.</span>
+				<p class="assignment-chosen" id="assignment-chosen"></p>
 			</label>
 			<label class="assignment-field" for="assignment-description">
 				<span>Description</span>
@@ -216,7 +218,7 @@
 			<p class="assignment-status" id="assignment-status" role="status" aria-live="polite"></p>
 			<div class="assignment-dialog-actions">
 				<button class="btn" type="button" id="assignment-cancel">Cancel</button>
-				<button class="btn primary" type="submit">Submit assignment</button>
+				<button class="btn primary" type="submit" id="assignment-submit">Submit assignment</button>
 									</div>
 												</form>
 	</dialog>
@@ -328,7 +330,7 @@
 			return '<section class="module-assignment" aria-label="Assignment for ' + esc(module.title) + '">' +
 				'<div><strong>Assignment instructions</strong><p>Instructions for this module\'s assignment.</p></div>' +
 				'<div data-instructions-display="' + module.week + '">' + displayedInstructions + "</div>" + error +
-				'<button class="btn primary" type="button" data-a="assignment" data-module-title="' + esc(module.title) + '" aria-label="Submit assignment for ' + esc(module.title) + '">Submit assignment</button>' +
+				'<button class="btn primary" type="button" data-a="assignment" data-module-week="' + module.week + '" data-module-title="' + esc(module.title) + '" aria-label="Submit assignment for ' + esc(module.title) + '">Submit assignment</button>' +
 				"</section>";
 		}
 
@@ -354,11 +356,23 @@
 			$("locknote").hidden = enrolled;
 		}
 
-		function openAssignment(moduleTitle) {
+		function openAssignment(moduleTitle, week) {
 			assignmentForm.reset();
+			assignmentForm.dataset.week = String(week || "");
 			$("assignment-status").textContent = "";
+			$("assignment-chosen").textContent = "";
 			$("assignment-module-name").textContent = moduleTitle;
 			assignmentDialog.showModal();
+		}
+		function assignmentType(file) {
+			var name = String(file.name || "").toLowerCase();
+			if (name.endsWith(".pdf")) return "application/pdf";
+			if (name.endsWith(".jpg") || name.endsWith(".jpeg")) return "image/jpeg";
+			return "";
+		}
+		function assignmentSafeName(name, index) {
+			var base = String(name || "file").split(/[/\\]/).pop().replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 80);
+			return (index + 1) + "-" + (base || "file");
 		}
 
 		function renderMain() {
@@ -444,7 +458,7 @@
 				var index = ALL.indexOf(sel);
 				if (ALL[index + 1]) sel = ALL[index + 1];
 			} else if (button.dataset.a === "assignment") {
-				openAssignment(button.dataset.moduleTitle);
+				openAssignment(button.dataset.moduleTitle, button.dataset.moduleWeek);
 			} else if (button.dataset.t) {
 				tab = button.dataset.t;
 			}
@@ -453,9 +467,100 @@
 		});
 		$("assignment-close").addEventListener("click", function () { assignmentDialog.close(); });
 		$("assignment-cancel").addEventListener("click", function () { assignmentDialog.close(); });
+		$("assignment-file").addEventListener("change", function () {
+			var names = Array.prototype.map.call($("assignment-file").files, function (file) { return file.name; });
+			$("assignment-chosen").textContent = names.length ? names.join(", ") : "";
+		});
 		assignmentForm.addEventListener("submit", function (event) {
 			event.preventDefault();
-			$("assignment-status").textContent = "Online assignment submission is not connected yet. Your file has not been uploaded.";
+			var status = $("assignment-status");
+			var submit = $("assignment-submit");
+			var files = Array.prototype.slice.call($("assignment-file").files || []);
+			var week = Number(assignmentForm.dataset.week);
+			var note = $("assignment-description").value.trim().slice(0, 2000);
+			if (!week) {
+				status.textContent = "Choose the module assignment again, then submit.";
+				return;
+			}
+			if (!files.length) {
+				status.textContent = "Choose at least one file.";
+				return;
+			}
+			if (files.length > 8) {
+				status.textContent = "You can submit up to 8 files at once.";
+				return;
+			}
+			var invalid = files.filter(function (file) {
+				return !assignmentType(file) || file.size > 10 * 1024 * 1024;
+			});
+			if (invalid.length) {
+				status.textContent = "Each file must be a JPG or PDF no larger than 10 MB.";
+				return;
+			}
+			var client = window.BryllaAuth && BryllaAuth.client;
+			if (!client) {
+				status.textContent = "Sign in to submit this assignment.";
+				return;
+			}
+			submit.disabled = true;
+			status.textContent = "Submitting " + files.length + " file" + (files.length === 1 ? "" : "s") + "…";
+			var submissionId = "";
+			var uploaded = [];
+			client.auth.getSession().then(function (result) {
+				var session = result.data && result.data.session;
+				if (!session) throw new Error("Sign in to submit this assignment.");
+				return client.from("enrollments").select("status").eq("user_id", session.user.id).eq("course_id", "bookkeeping").eq("status", "active").maybeSingle().then(function (enrolment) {
+					if (enrolment.error || !enrolment.data) throw new Error("Enrol in Bookkeeping before submitting this assignment.");
+					var profile = BryllaStudent.loadProfile();
+					var studentName = profile && profile.name ? profile.name : (session.user.email || "Student");
+					return client.from("assignment_submissions").insert({
+						user_id: session.user.id,
+						course_id: "bookkeeping",
+						module_week: week,
+						student_name: String(studentName).slice(0, 120),
+						note: note
+					}).select("id").single().then(function (created) {
+						if (created.error || !created.data) throw new Error("The assignment could not be saved. Try again.");
+						submissionId = created.data.id;
+						return files.reduce(function (chain, file, index) {
+							return chain.then(function () {
+								var path = session.user.id + "/" + submissionId + "/" + assignmentSafeName(file.name, index);
+								return client.storage.from("assignment-files").upload(path, file, { contentType: assignmentType(file), upsert: false }).then(function (uploadedFile) {
+									if (uploadedFile.error) throw new Error(file.name + " could not be uploaded.");
+									uploaded.push({
+										submission_id: submissionId,
+										user_id: session.user.id,
+										storage_path: path,
+										file_name: file.name.slice(0, 180),
+										content_type: assignmentType(file),
+										size_bytes: file.size
+									});
+								});
+							});
+						}, Promise.resolve());
+					});
+				});
+			}).then(function () {
+				return client.from("assignment_files").insert(uploaded);
+			}).then(function (savedFiles) {
+				if (savedFiles.error) throw new Error("The submission could not be finished. Nothing was kept. Try again.");
+				status.textContent = "Submitted. Your instructor can see " + uploaded.length + " file" + (uploaded.length === 1 ? "" : "s") + ".";
+				submit.disabled = false;
+			}).catch(function (error) {
+				var cleanup = Promise.resolve();
+				if (uploaded.length) {
+					cleanup = client.storage.from("assignment-files").remove(uploaded.map(function (file) { return file.storage_path; }));
+				}
+				if (submissionId) {
+					cleanup = cleanup.then(function () {
+						return client.from("assignment_submissions").delete().eq("id", submissionId);
+					});
+				}
+				cleanup.then(function () {
+					status.textContent = error && error.message ? error.message : "The assignment could not be submitted. Try again.";
+					submit.disabled = false;
+				});
+			});
 		});
 
 		function showStudent() {

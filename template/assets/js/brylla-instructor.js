@@ -66,6 +66,7 @@
 		] },
 		{ label: "Courses", items: [
 			{ label: "All courses", href: "admin-courses.html", icon: "isax isax-teacher5", page: "admin-courses" },
+			{ label: "Add course", href: "add-course.html", icon: "isax isax-add-circle5", page: "add-course" },
 			{ label: "Course performance", href: "admin-performance.html", icon: "isax isax-book", page: "admin-performance" }
 		] },
 		{ label: "People", items: [
@@ -270,6 +271,14 @@
 		});
 		return title.charAt(0).toUpperCase() + title.slice(1);
 	}
+	function academyFooter() {
+		return '<footer class="academy-instructor-footer"><div class="container"><div class="academy-footer-row">' +
+			'<a class="academy-footer-brand" href="/"><span class="academy-footer-mark"><img src="assets/img/logo.png" alt=""></span>' +
+			'<span><strong>Brylla Academy</strong><span class="tagline">Practical professional skills taught for the remote world.</span></span></a>' +
+			'<nav class="academy-footer-links" aria-label="Footer navigation">' +
+			'<a href="/#courses">Courses</a><a href="/#stories">Student Stories</a><a href="/#toolkit">Career Toolkit</a><a href="/#faqs">FAQs</a><a href="contact-us">Contact</a>' +
+			'</nav></div><p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p></div></footer>';
+	}
 	function shell(page, data) {
 		var admin = currentArea() === "admin";
 		var home = admin ? "admin-dashboard.html" : "instructor-dashboard.html";
@@ -298,6 +307,7 @@
 			'<div class="app-profile"><button class="app-profile-button" type="button" id="profile-button" aria-expanded="false" aria-controls="profile-menu"><span class="app-avatar">' + avatar + "</span><span>" + esc(instructorName(data)) + '</span></button>' +
 			'<div class="app-profile-menu" id="profile-menu" hidden>' + profile + '<a href="index-4.html" data-logout="1">Logout</a></div></div></header>' +
 			'<main class="app-content" id="main"></main></div></div>' +
+			academyFooter() +
 			'<p class="instructor-toast" id="instructor-toast" role="status" aria-live="polite" hidden></p>' +
 			'<dialog class="instructor-confirm" id="instructor-confirm"><div class="card-body"><p id="instructor-confirm-text"></p><div class="d-flex gap-2"><button class="btn btn-light" type="button" value="cancel">Cancel</button><button class="btn btn-danger" type="button" value="ok">Delete</button></div></div></dialog>';
 	}
@@ -457,10 +467,35 @@
 		bindDashboard(root, data);
 	}
 	function gradeForm(row) {
+		var files = (row.files || []).map(function (file) {
+			if (!file.url) return "<li>" + esc(file.name || "File") + "</li>";
+			return '<li><a href="' + esc(file.url) + '" target="_blank" rel="noopener">' + esc(file.name || "File") + "</a></li>";
+		}).join("");
+		var note = row.note ? '<p class="mb-2">' + esc(row.note) + "</p>" : "";
+		var attached = files ? '<ul class="mb-2">' + files + "</ul>" : "";
 		return '<form class="border rounded p-3 mb-3" data-grade="' + esc(row.id) + '"><p class="mb-2">' + esc(row.student) + " · " + esc(row.title) + "</p>" +
-			'<label class="form-label" for="score-' + esc(row.id) + '">Score out of ' + esc(row.total) + '</label><input class="form-control mb-2" id="score-' + esc(row.id) + '" name="score" type="number" min="0" max="' + esc(row.total) + '">' +
-			'<label class="form-label" for="feed-' + esc(row.id) + '">Feedback</label><textarea class="form-control mb-2" id="feed-' + esc(row.id) + '" name="feedback" rows="2"></textarea>' +
+			note + attached +
+			'<label class="form-label" for="score-' + esc(row.id) + '">Score out of ' + esc(row.total) + '</label><input class="form-control mb-2" id="score-' + esc(row.id) + '" name="score" type="number" min="0" max="' + esc(row.total) + '" value="' + esc(row.score == null ? "" : row.score) + '">' +
+			'<label class="form-label" for="feed-' + esc(row.id) + '">Feedback</label><textarea class="form-control mb-2" id="feed-' + esc(row.id) + '" name="feedback" rows="2">' + esc(row.feedback || "") + "</textarea>" +
 			'<button class="btn btn-primary rounded-pill" type="submit">Save grade</button></form>';
+	}
+	function submissionFiles(row) {
+		var files = row.files || [];
+		if (!files.length) return "None";
+		return files.map(function (file) {
+			if (!file.url) return esc(file.name || "File");
+			return '<a href="' + esc(file.url) + '" target="_blank" rel="noopener">' + esc(file.name || "File") + "</a>";
+		}).join("<br>");
+	}
+	function submissionTable(data) {
+		var rows = data.submissions || [];
+		if (!rows.length) return '<div class="card mb-4"><div class="card-body"><h2 class="h5 fw-bold">Student submissions</h2><p class="mb-0">No assignments have been submitted yet.</p></div></div>';
+		return '<h2 class="h5 fw-bold mb-3">Student submissions</h2>' + table(
+			[{ label: "Student" }, { label: "Assignment" }, { label: "Submitted" }, { label: "Files" }, { label: "Note" }],
+			rows.map(function (row) {
+				return "<tr>" + cell("Student", esc(row.student)) + cell("Assignment", esc(row.title)) + cell("Submitted", formatDate(row.submittedAt)) + cell("Files", submissionFiles(row)) + cell("Note", esc(row.note || "None")) + "</tr>";
+			})
+		);
 	}
 	function questionForm(row) {
 		return '<form class="border rounded p-3 mb-3" data-question="' + esc(row.id) + '"><p class="mb-2">' + esc(row.student) + " · " + esc(row.text) + "</p>" +
@@ -859,6 +894,7 @@
 			list.sort(function (a, b) { return String(a[sortKey] || "").localeCompare(String(b[sortKey] || "")) * sortDir; });
 			var statuses = [["all", "All statuses"], ["draft", "Draft"], ["published", "Published"], ["pending", "Pending"]];
 			root.innerHTML = '<h1 class="h5 fw-bold">Assignments</h1>' +
+				submissionTable(data) +
 				'<div class="instructor-tools d-flex flex-wrap gap-2 mb-3"><label class="visually-hidden" for="as-search">Search assignments</label><input class="form-control" id="as-search" placeholder="Search assignments" value="' + esc(query) + '">' +
 				'<label class="visually-hidden" for="as-filter">Status</label><select class="form-select" id="as-filter">' + statuses.map(function (option) {
 					return '<option value="' + option[0] + '"' + (option[0] === statusFilter ? " selected" : "") + ">" + option[1] + "</option>";
@@ -1132,6 +1168,7 @@
 	function quickActions() {
 		return '<div class="card h-100"><div class="card-body"><h2 class="h5 fw-bold">Quick actions</h2><div class="d-flex flex-wrap gap-2">' +
 			'<a class="btn btn-primary rounded-pill" href="admin-transactions.html">View transactions</a>' +
+			'<a class="btn btn-primary rounded-pill" href="add-course.html">Add course</a>' +
 			'<a class="btn btn-light rounded-pill" href="admin-courses.html">Manage courses</a>' +
 			'<a class="btn btn-light rounded-pill" href="admin-instructors.html#add-instructor">Add instructor</a>' +
 			'<a class="btn btn-light rounded-pill" href="admin-reports.html">View reports</a></div></div></div>';
@@ -1151,7 +1188,7 @@
 			statCard("isax isax-coin-15", "bg-success-transparent", "Completed payments", "Unavailable", "admin-transactions.html", "", wide) +
 			statCard("isax isax-profile-2user5", "bg-info-transparent", "Total students", String(count.students), "admin-students.html", "", wide) +
 			statCard("isax isax-user", "bg-primary-transparent", "Active instructors", String(count.instructors), "admin-instructors.html", "", wide) +
-			'</div><div class="row"><div class="col-lg-7 mb-3">' + financeNotice() + '</div><div class="col-lg-5 mb-3">' + paymentStatusCard(data) +
+			'</div><div class="mb-3">' + submissionTable(data) + '</div><div class="row"><div class="col-lg-7 mb-3">' + financeNotice() + '</div><div class="col-lg-5 mb-3">' + paymentStatusCard(data) +
 			'</div></div><div class="row"><div class="col-lg-7 mb-3">' + activityCard(data) + '</div><div class="col-lg-5 mb-3">' + quickActions() + "</div></div>";
 		root.querySelectorAll("[data-range]").forEach(function (button) {
 			button.addEventListener("click", function () {
@@ -1420,6 +1457,56 @@
 			location.replace(loginPage);
 		});
 	}
+	function loadAssignmentSubmissions(localRows) {
+		var saved = {};
+		(localRows || []).forEach(function (row) { if (row && row.id) saved[row.id] = row; });
+		var client = staffClient();
+		if (!client) return Promise.resolve(localRows || []);
+		return client.rpc("staff_assignment_submissions").then(function (result) {
+			if (result.error || !Array.isArray(result.data)) return localRows || [];
+			var paths = [];
+			result.data.forEach(function (row) {
+				fileList(row).forEach(function (file) { if (file.storage_path) paths.push(file.storage_path); });
+			});
+			var signed = paths.length
+				? client.storage.from("assignment-files").createSignedUrls(paths, 60 * 60)
+				: Promise.resolve({ data: [] });
+			return signed.then(function (links) {
+				var urls = {};
+				(links.data || []).forEach(function (item) { if (item && item.path) urls[item.path] = item.signedUrl; });
+				return result.data.map(function (row) {
+					var previous = saved[row.id] || {};
+					var course = row.course_id === "bookkeeping" ? "Bookkeeping" : row.course_id;
+					return {
+						id: row.id,
+						remote: true,
+						assignmentId: row.course_id + "-w" + row.module_week,
+						student: row.student_name || "Student",
+						title: course + ", week " + row.module_week,
+						courseId: row.course_id,
+						moduleWeek: row.module_week,
+						note: row.note || "",
+						total: previous.total || 100,
+						score: previous.score == null || previous.score === "" ? null : previous.score,
+						feedback: previous.feedback || "",
+						submittedAt: row.created_at,
+						files: fileList(row).map(function (file) {
+							return { name: file.file_name, url: urls[file.storage_path] || "" };
+						})
+					};
+				});
+			});
+		}).catch(function () {
+			return localRows || [];
+		});
+	}
+	function fileList(row) {
+		var files = row.files;
+		if (typeof files === "string") {
+			try { files = JSON.parse(files); } catch (error) { files = []; }
+		}
+		return Array.isArray(files) ? files : [];
+	}
 	function openPage(page) {
 		var data = state();
 		document.body.innerHTML = shell(page, data);
@@ -1440,7 +1527,11 @@
 			document.getElementById("instructor-retry").addEventListener("click", function () { location.search = ""; });
 			return;
 		}
-		PAGES[page](root, data);
+		root.innerHTML = '<p class="mb-0">Loading submissions…</p>';
+		loadAssignmentSubmissions(data.submissions).then(function (rows) {
+			data.submissions = rows;
+			PAGES[page](root, data);
+		});
 		window.addEventListener("beforeunload", function (event) {
 			if (!dirty) return;
 			event.preventDefault();

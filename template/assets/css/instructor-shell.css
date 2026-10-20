@@ -196,6 +196,12 @@
 .instructor-app .badge.badge-soft-warning { color: #6d5406 !important; }
 .instructor-app .badge.bg-info,
 .instructor-app .text-bg-info { background-color: #0a6d86 !important; color: #fff !important; }
+.academy-instructor-footer .container { width: min(1140px, calc(100% - 32px)); margin: 0 auto; }
+.academy-footer-row { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+.academy-footer-brand { display: flex; align-items: center; gap: 13px; color: inherit; text-decoration: none; }
+.academy-footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+.academy-footer-links a { color: #d1e0ed; font-size: 14px; text-decoration: none; }
+.academy-footer-links a:hover { color: #13b8ad; }
 .academy-instructor-footer { padding: 35px 0; background: #041f3c; color: #d1e0ed; }
 .academy-instructor-footer .academy-footer-inner { display: flex; align-items: center; gap: 13px; }
 .academy-instructor-footer .academy-footer-mark {
@@ -254,7 +260,8 @@
 	.instructor-table td::before { content: attr(data-label); color: var(--brylla-muted); font-weight: 500; text-align: left; }
 	.instructor-table thead th { position: static; }
 	.instructor-bars { gap: 4px; }
-	.academy-instructor-footer .academy-footer-inner { align-items: flex-start; }
+	.academy-instructor-footer .academy-footer-inner,
+	.academy-footer-row { align-items: flex-start; flex-direction: column; }
 }
 
 body.instructor-app { background: #F7F9FC; color: #334155; }
