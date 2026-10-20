@@ -90,6 +90,7 @@
 		.module-assignment { align-items: stretch; flex-direction: column; }
 		.module-assignment-instructions { margin-top: var(--s2); padding: var(--s3); border-radius: 8px; background: var(--surface); color: var(--text); font-size: 13px; white-space: pre-wrap; overflow-wrap: anywhere; }
 		.module-assignment-empty { color: var(--muted); font-style: italic; }
+		.assignment-submitted { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--green-fg); font-size: 13px; font-weight: 500; }
 		.note { border-top: 1px solid var(--border); padding: 14px var(--s4); font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 		.video { aspect-ratio: 16/9; background: #0a2a47; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
 		.video video { width: 100%; height: 100%; display: block; background: #000; }
@@ -275,6 +276,7 @@
 		var ASSIGNMENT_KEY = "brylla-module-assignment-instructions";
 		var assignmentInstructions = {};
 		var assignmentStorageError = "";
+		var submittedWeeks = {};
 		try {
 			var savedInstructions = localStorage.getItem(ASSIGNMENT_KEY);
 			if (savedInstructions) {
@@ -327,10 +329,13 @@
 			var error = assignmentStorageError
 				? '<p class="status" role="status">' + esc(assignmentStorageError) + "</p>"
 				: "";
+			var action = submittedWeeks[String(module.week)]
+				? '<p class="assignment-submitted" role="status"><i class="ti ti-circle-check" aria-hidden="true"></i> Assignment already submitted</p>'
+				: '<button class="btn primary" type="button" data-a="assignment" data-module-week="' + module.week + '" data-module-title="' + esc(module.title) + '" aria-label="Submit assignment for ' + esc(module.title) + '">Submit assignment</button>';
 			return '<section class="module-assignment" aria-label="Assignment for ' + esc(module.title) + '">' +
 				'<div><strong>Assignment instructions</strong><p>Instructions for this module\'s assignment.</p></div>' +
 				'<div data-instructions-display="' + module.week + '">' + displayedInstructions + "</div>" + error +
-				'<button class="btn primary" type="button" data-a="assignment" data-module-week="' + module.week + '" data-module-title="' + esc(module.title) + '" aria-label="Submit assignment for ' + esc(module.title) + '">Submit assignment</button>' +
+				action +
 				"</section>";
 		}
 
@@ -357,12 +362,35 @@
 		}
 
 		function openAssignment(moduleTitle, week) {
+			if (submittedWeeks[String(week)]) return;
 			assignmentForm.reset();
 			assignmentForm.dataset.week = String(week || "");
 			$("assignment-status").textContent = "";
 			$("assignment-chosen").textContent = "";
+			$("assignment-file").disabled = false;
+			$("assignment-description").disabled = false;
+			$("assignment-submit").disabled = false;
 			$("assignment-module-name").textContent = moduleTitle;
 			assignmentDialog.showModal();
+		}
+		function rememberSubmission(week) {
+			submittedWeeks[String(week)] = true;
+		}
+		function loadSubmittedAssignments() {
+			var client = window.BryllaAuth && BryllaAuth.client;
+			if (!client) return Promise.resolve();
+			return client.auth.getSession().then(function (result) {
+				var session = result.data && result.data.session;
+				if (!session) {
+					submittedWeeks = {};
+					return;
+				}
+				return client.from("assignment_submissions").select("module_week").eq("user_id", session.user.id).eq("course_id", "bookkeeping").then(function (rows) {
+					var next = {};
+					(rows.data || []).forEach(function (row) { next[String(row.module_week)] = true; });
+					submittedWeeks = next;
+				});
+			}).catch(function () {});
 		}
 		function assignmentType(file) {
 			var name = String(file.name || "").toLowerCase();
@@ -482,6 +510,11 @@
 				status.textContent = "Choose the module assignment again, then submit.";
 				return;
 			}
+			if (submittedWeeks[String(week)]) {
+				status.textContent = "This assignment has already been submitted.";
+				submit.disabled = true;
+				return;
+			}
 			if (!files.length) {
 				status.textContent = "Choose at least one file.";
 				return;
@@ -511,15 +544,26 @@
 				if (!session) throw new Error("Sign in to submit this assignment.");
 				return client.from("enrollments").select("status").eq("user_id", session.user.id).eq("course_id", "bookkeeping").eq("status", "active").maybeSingle().then(function (enrolment) {
 					if (enrolment.error || !enrolment.data) throw new Error("Enrol in Bookkeeping before submitting this assignment.");
-					var profile = BryllaStudent.loadProfile();
-					var studentName = profile && profile.name ? profile.name : (session.user.email || "Student");
-					return client.from("assignment_submissions").insert({
+					return client.from("assignment_submissions").select("id").eq("user_id", session.user.id).eq("course_id", "bookkeeping").eq("module_week", week).maybeSingle().then(function (existing) {
+						if (existing.data) {
+							var duplicate = new Error("This assignment has already been submitted.");
+							duplicate.alreadySubmitted = true;
+							throw duplicate;
+						}
+						var profile = BryllaStudent.loadProfile();
+						var studentName = profile && profile.name ? profile.name : (session.user.email || "Student");
+						return client.from("assignment_submissions").insert({
 						user_id: session.user.id,
 						course_id: "bookkeeping",
 						module_week: week,
 						student_name: String(studentName).slice(0, 120),
 						note: note
 					}).select("id").single().then(function (created) {
+						if (created.error && (created.error.code === "23505" || /duplicate/i.test(created.error.message || ""))) {
+							var duplicate = new Error("This assignment has already been submitted.");
+							duplicate.alreadySubmitted = true;
+							throw duplicate;
+						}
 						if (created.error || !created.data) throw new Error("The assignment could not be saved. Try again.");
 						submissionId = created.data.id;
 						return files.reduce(function (chain, file, index) {
@@ -539,14 +583,27 @@
 							});
 						}, Promise.resolve());
 					});
+					});
 				});
 			}).then(function () {
 				return client.from("assignment_files").insert(uploaded);
 			}).then(function (savedFiles) {
 				if (savedFiles.error) throw new Error("The submission could not be finished. Nothing was kept. Try again.");
+				rememberSubmission(week);
+				render();
 				status.textContent = "Submitted. Your instructor can see " + uploaded.length + " file" + (uploaded.length === 1 ? "" : "s") + ".";
-				submit.disabled = false;
+				submit.disabled = true;
+				window.setTimeout(function () { assignmentDialog.close(); }, 900);
 			}).catch(function (error) {
+				if (error && error.alreadySubmitted) {
+					rememberSubmission(week);
+					render();
+					status.textContent = error.message;
+					submit.disabled = true;
+					$("assignment-file").disabled = true;
+					$("assignment-description").disabled = true;
+					return;
+				}
 				var cleanup = Promise.resolve();
 				if (uploaded.length) {
 					cleanup = client.storage.from("assignment-files").remove(uploaded.map(function (file) { return file.storage_path; }));
@@ -576,6 +633,8 @@
 			if (enrolled) BryllaStudent.startCourse();
 			if (!studentPicked) sel = null;
 			showStudent();
+			return loadSubmittedAssignments();
+		}).then(function () {
 			render();
 		});
 

@@ -28,6 +28,8 @@ create table if not exists public.assignment_files (
 
 create index if not exists assignment_submissions_course_idx
 	on public.assignment_submissions (course_id, module_week, created_at desc);
+create unique index if not exists assignment_submissions_one_per_module
+	on public.assignment_submissions (user_id, course_id, module_week);
 create index if not exists assignment_files_submission_idx
 	on public.assignment_files (submission_id);
 
