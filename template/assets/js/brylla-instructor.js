@@ -1183,6 +1183,7 @@
 		var hello = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 		root.innerHTML = '<div class="dash-head"><div><h1 class="h4 fw-bold">' + hello + ", " + esc(instructorName(data)) + '</h1><p class="mb-0">Academy overview. Financial totals appear only after a payment provider is connected.</p></div>' +
 			'<div class="d-flex flex-wrap gap-2" role="group" aria-label="Date range"><button class="btn btn-light" type="button" data-range="7">7 days</button><button class="btn btn-light" type="button" data-range="30">30 days</button><button class="btn btn-light" type="button" data-range="90">90 days</button></div></div>' +
+			'<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>' +
 			'<p id="range-note" class="mb-3" role="status">Payments are not connected for any date range.</p><div class="row">' +
 			statCard("isax isax-wallet-add5", "bg-purple-transparent", "Total revenue", "Unavailable", "admin-earnings.html", "", wide) +
 			statCard("isax isax-coin-15", "bg-success-transparent", "Completed payments", "Unavailable", "admin-transactions.html", "", wide) +
@@ -1194,6 +1195,21 @@
 			button.addEventListener("click", function () {
 				document.getElementById("range-note").textContent = button.getAttribute("data-range") + " days: payments are not connected, so revenue, receipts and refunds stay unavailable.";
 			});
+		});
+		paintInstructorInvite();
+	}
+	function paintInstructorInvite() {
+		var node = document.getElementById("instructor-invite-link");
+		var client = staffClient();
+		if (!node || !client) return;
+		client.rpc("founder_instructor_invite").then(function (result) {
+			if (!document.body.contains(node)) return;
+			if (result.error || !result.data) {
+				node.textContent = "The registration link is not available yet.";
+				return;
+			}
+			var url = "https://bryllaacademy.vercel.app/instructor-register?code=" + encodeURIComponent(result.data);
+			node.innerHTML = '<a href="' + esc(url) + '">' + esc(url) + "</a>";
 		});
 	}
 	function renderAdminCourses(root, data) {

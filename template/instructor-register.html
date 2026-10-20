@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge">
+		<meta name="viewport" content="width=device-width, initial-scale=1">
+		<meta name="description" content="Private instructor registration for Brylla Academy.">
+		<meta name="author" content="Brylla Academy">
+		<meta name="robots" content="noindex, nofollow">
+		<title>Instructor registration | Brylla Academy</title>
+		<link rel="icon" type="image/png" href="assets/img/logo.png">
+		<link rel="apple-touch-icon" href="assets/img/logo.png">
+		<link rel="preconnect" href="https://fonts.googleapis.com">
+		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+		<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+		<link rel="stylesheet" href="assets/css/iconsax.css">
+		<link rel="stylesheet" href="assets/css/style.css">
+		<style>
+			body.login-page {
+				--brylla-navy: #073b70;
+				--brylla-navy-deep: #062b52;
+				--brylla-teal: #13b8ad;
+				font-family: "Inter", "Segoe UI", Arial, sans-serif;
+				font-size: 14px;
+			}
+			.login-page h1 { font-family: "Inter", "Segoe UI", Arial, sans-serif; font-weight: 700; letter-spacing: -.035em; }
+			.login-page .login-content .login-wrap-bg { position: relative; right: auto; width: 100%; max-width: 100%; flex: 0 0 100%; background: #fff; }
+			.login-page .login-content > .row { margin-right: 0; margin-left: 0; }
+			.login-page .login-content .login-wrap-bg .login-wrapper { max-width: 680px; margin: 0 auto; }
+			.login-page .login-content .login-wrap-bg .login-wrapper .loginbox { width: 100%; padding: 20px 40px; }
+			.login-page .login-content .login-wrap-bg .login-header { justify-content: center !important; margin-bottom: 24px; }
+			.login-page .login-brand-window { width: 175px; height: 116px; position: relative; display: block; overflow: hidden; }
+			.login-page .login-brand-window img { position: absolute; top: 50%; left: 50%; width: 280px; max-width: none; height: 280px; transform: translate(-50%, -50%); }
+			.login-page .login-content .topic { margin-bottom: 12px; color: var(--brylla-navy-deep); }
+			.login-page .form-label { color: var(--brylla-navy-deep); font-weight: 600; }
+			.login-page .login-content .login-wrap-bg .form-control:focus { border-color: var(--brylla-teal); box-shadow: 0 0 0 .2rem rgba(19,184,173,.14); }
+			.login-page .link-2, .login-page .link-2:hover { color: var(--brylla-navy); }
+			.login-page .btn.btn-secondary { background: var(--brylla-navy); border-color: var(--brylla-navy); color: #fff; font-family: inherit; font-weight: 700; }
+			.login-page .btn.btn-secondary:hover, .login-page .btn.btn-secondary:focus { background: var(--brylla-navy-deep); border-color: var(--brylla-navy-deep); color: #fff; }
+			@media (max-width: 991.98px) {
+				.login-page .login-content .login-wrap-bg .login-wrapper .loginbox { padding: 20px 30px; }
+			}
+		</style>
+	</head>
+	<body class="login-page">
+		<div class="main-wrapper">
+			<div class="login-content">
+				<div class="row">
+					<div class="col-12 login-wrap-bg">
+						<div class="login-wrapper">
+							<div class="loginbox">
+								<div class="w-100">
+									<div class="d-flex align-items-center justify-content-between login-header">
+										<span class="login-brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></span>
+									</div>
+									<h1 class="fs-32 fw-bold topic">Instructor registration</h1>
+									<p class="text-muted mb-4">Create your instructor account. This page is only for people who received the private link.</p>
+									<form id="instructor-register-form" class="mb-3 pb-3">
+										<div class="mb-3">
+											<label class="form-label" for="register-name">Full name<span class="text-danger ms-1">*</span></label>
+											<input id="register-name" type="text" class="form-control form-control-lg" autocomplete="name" required>
+										</div>
+										<div class="mb-3">
+											<label class="form-label" for="register-email">Email<span class="text-danger ms-1">*</span></label>
+											<input id="register-email" type="email" class="form-control form-control-lg" autocomplete="username" required>
+										</div>
+										<div class="mb-3">
+											<label class="form-label" for="register-password">Password<span class="text-danger ms-1">*</span></label>
+											<input id="register-password" type="password" class="form-control form-control-lg" autocomplete="new-password" minlength="8" required>
+										</div>
+										<div class="mb-4">
+											<label class="form-label" for="register-confirm">Confirm password<span class="text-danger ms-1">*</span></label>
+											<input id="register-confirm" type="password" class="form-control form-control-lg" autocomplete="new-password" minlength="8" required>
+										</div>
+										<p id="register-error" class="text-danger mb-3" role="alert" hidden></p>
+										<p id="register-status" class="mb-3" role="status" hidden></p>
+										<div class="d-grid">
+											<button id="register-button" class="btn btn-secondary btn-lg" type="submit">Create instructor account</button>
+										</div>
+									</form>
+									<div class="fs-14 text-center">
+										<a href="instructor-login" class="link-2">Already registered? Instructor login</a>
+									</div>
+								</div>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+		<script src="assets/js/brylla-public-config.js"></script>
+		<script>
+			(function () {
+				var params = new URLSearchParams(window.location.search);
+				var code = (params.get("code") || "").trim();
+				var form = document.getElementById("instructor-register-form");
+				var errorEl = document.getElementById("register-error");
+				var statusEl = document.getElementById("register-status");
+				var button = document.getElementById("register-button");
+				var client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
+				function showError(message) {
+					errorEl.textContent = message;
+					errorEl.hidden = false;
+					statusEl.textContent = "";
+					statusEl.hidden = true;
+				}
+				if (!code) {
+					Array.prototype.forEach.call(form.elements, function (field) { field.disabled = true; });
+					showError("This registration link is incomplete. Ask the founder for the instructor link.");
+					return;
+				}
+				form.addEventListener("submit", async function (event) {
+					event.preventDefault();
+					errorEl.hidden = true;
+					var name = document.getElementById("register-name").value.trim();
+					var email = document.getElementById("register-email").value.trim();
+					var password = document.getElementById("register-password").value;
+					var confirm = document.getElementById("register-confirm").value;
+					if (name.length < 2) return showError("Enter your full name.");
+					if (password.length < 8) return showError("Use a password of at least 8 characters.");
+					if (password !== confirm) return showError("The passwords do not match.");
+					if (!client) return showError("Registration is not available right now. Try again later.");
+					button.disabled = true;
+					statusEl.hidden = false;
+					statusEl.textContent = "Creating your instructor account…";
+					var created = await client.rpc("register_instructor", {
+						p_name: name,
+						p_email: email,
+						p_password: password,
+						p_code: code
+					});
+					if (created.error) {
+						button.disabled = false;
+						statusEl.hidden = true;
+						return showError(created.error.message || "The account could not be created.");
+					}
+					var signedIn = await client.auth.signInWithPassword({ email: email, password: password });
+					if (signedIn.error) {
+						statusEl.textContent = "Account created. Sign in on the instructor login page.";
+						window.setTimeout(function () { window.location.replace("instructor-login"); }, 800);
+						return;
+					}
+					window.sessionStorage.setItem("brylla-role", "instructor");
+					window.location.replace("instructor-dashboard");
+				});
+			})();
+		</script>
+	</body>
+</html>
