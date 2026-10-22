@@ -61,8 +61,7 @@
 		{ label: "Business", items: [
 			{ label: "Business overview", href: "admin-dashboard.html", icon: "isax isax-grid-35", page: "admin-dashboard" },
 			{ label: "Analytics and reports", href: "admin-reports.html", icon: "isax isax-note-215", page: "admin-reports" },
-			{ label: "Financial management", href: "admin-earnings.html", icon: "isax isax-wallet-add5", page: "admin-earnings" },
-			{ label: "Transactions and refunds", href: "admin-transactions.html", icon: "isax isax-coin-15", page: "admin-transactions" }
+			{ label: "Financial management", href: "admin-earnings.html", icon: "isax isax-wallet-add5", page: "admin-earnings" }
 		] },
 		{ label: "Courses", items: [
 			{ label: "All courses", href: "admin-courses.html", icon: "isax isax-teacher5", page: "admin-courses" },
@@ -822,17 +821,20 @@
 				(list.length ? table(
 					[{ label: "Title", sort: "title" }, { label: "Course" }, { label: "Status", sort: "status" }, { label: "Sent" }, { label: "Actions" }],
 					list.map(function (item) {
-						var course = courseById(data, item.courseId);
-						var sent = item.deliverError ? "Not delivered" : (item.delivered != null ? "Sent to " + item.delivered + " students" : (item.status === "published" ? "Not delivered yet" : "Not sent"));
-						return "<tr>" + cell("Title", esc(item.title)) + cell("Course", esc(course ? course.title : "All courses")) + cell("Status", statusBadge(item.status)) + cell("Sent", sent) +
+						var audience = item.audience === "instructors" ? "Instructors" : item.audience === "both" ? "Students and instructors" : "Students";
+						var sent = item.delivered != null ? "Sent to " + item.delivered : "Published";
+						return "<tr>" + cell("Title", esc(item.title)) + cell("Course", esc(audience)) + cell("Status", statusBadge(item.status || "published")) + cell("Sent", sent) +
 							cell("Actions", '<button class="btn btn-light btn-sm" type="button" data-delete-announcement="' + esc(item.id) + '" aria-label="Delete ' + esc(item.title) + '" title="Delete"><i class="isax isax-trash" aria-hidden="true"></i></button>') + "</tr>";
 					})
 				) : empty(data.announcements.length ? "No announcements match." : "No announcements yet. Add one when you have something to tell a class.", data.announcements.length ? "" : '<a class="btn btn-primary rounded-pill mt-3" href="#add-announcement">Add announcement</a>')) +
 				'<div class="card mt-4" id="add-announcement"><div class="card-body"><h2 class="h5 fw-bold">Add announcement</h2><form id="announcement-form">' +
 				'<label class="form-label" for="ann-title">Title</label><input class="form-control mb-2" id="ann-title" required>' +
-				'<label class="form-label" for="ann-course">Audience</label><select class="form-select mb-2" id="ann-course">' + data.courses.map(function (course) { return '<option value="' + esc(course.id) + '">' + esc(course.title) + "</option>"; }).join("") + "</select>" +
-				'<label class="form-label" for="ann-status">Status</label><select class="form-select mb-2" id="ann-status"><option value="draft">Draft</option><option value="published">Published</option><option value="scheduled">Scheduled</option></select>' +
-				'<label class="form-label" for="ann-body">Message</label><textarea class="form-control mb-3" id="ann-body" rows="3" required></textarea><button class="btn btn-primary rounded-pill" type="submit">Save announcement</button></form></div></div>';
+				'<label class="form-label" for="ann-audience">Audience</label><select class="form-select mb-2" id="ann-audience">' +
+				(currentArea() === "admin"
+					? '<option value="students">Students</option><option value="instructors">Instructors</option><option value="both">Students and instructors</option>'
+					: '<option value="students">Students</option>') +
+				'</select>' +
+				'<label class="form-label" for="ann-body">Message</label><textarea class="form-control mb-3" id="ann-body" rows="3" required></textarea><button class="btn btn-primary rounded-pill" type="submit">Publish announcement</button></form></div></div>';
 			if (focusId) restoreField(focusId);
 			document.getElementById("ann-search").addEventListener("input", function (event) { query = event.target.value; focusId = "ann-search"; draw(); });
 			document.getElementById("ann-filter").addEventListener("change", function (event) { statusFilter = event.target.value; focusId = ""; draw(); });
@@ -857,20 +859,19 @@
 			});
 			document.getElementById("announcement-form").addEventListener("submit", function (event) {
 				event.preventDefault();
-				var item = { id: "ann-" + Date.now(), title: document.getElementById("ann-title").value.trim(), courseId: document.getElementById("ann-course").value, status: document.getElementById("ann-status").value, body: document.getElementById("ann-body").value.trim() };
-				data.announcements.push(item);
-				save(data);
-				if (item.status !== "published") {
-					toast("Announcement saved. Students are notified only when the status is Published.");
-					draw();
-					return;
-				}
-				toast("Sending the announcement to enrolled students…");
-				deliverNotice({ type: "announcement", title: item.title, message: item.body, courseId: item.courseId, destination: "student-dashboard", key: item.id.replace(/[^A-Za-z0-9]/g, "") }).then(function (result) {
-					item.delivered = result.ok ? result.count : null;
-					item.deliverError = result.ok ? "" : result.message;
+				var item = { id: "ann" + Date.now(), title: document.getElementById("ann-title").value.trim(), audience: document.getElementById("ann-audience").value, status: "published", body: document.getElementById("ann-body").value.trim() };
+				var current = staffClient();
+				if (!current) return;
+				toast("Publishing the announcement…");
+				current.rpc("post_audience_notice", { p_audience: item.audience, p_title: item.title, p_message: item.body, p_key: item.id }).then(function (result) {
+					if (result.error) {
+						toast(result.error.message || "The announcement could not be published.");
+						return;
+					}
+					item.delivered = result.data || 0;
+					data.announcements.push(item);
 					save(data);
-					toast(result.ok ? "Announcement sent to " + result.count + " students." : "Saved here, but students were not notified. " + result.message);
+					toast("Published to " + item.delivered + " people.");
 					draw();
 				});
 			});
@@ -1167,7 +1168,6 @@
 	}
 	function quickActions() {
 		return '<div class="card h-100"><div class="card-body"><h2 class="h5 fw-bold">Quick actions</h2><div class="d-flex flex-wrap gap-2">' +
-			'<a class="btn btn-primary rounded-pill" href="admin-transactions.html">View transactions</a>' +
 			'<a class="btn btn-primary rounded-pill" href="add-course.html">Add course</a>' +
 			'<a class="btn btn-light rounded-pill" href="admin-courses.html">Manage courses</a>' +
 			'<a class="btn btn-light rounded-pill" href="admin-instructors.html#add-instructor">Add instructor</a>' +
@@ -1186,7 +1186,7 @@
 			'<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>' +
 			'<p id="range-note" class="mb-3" role="status">Payments are not connected for any date range.</p><div class="row">' +
 			statCard("isax isax-wallet-add5", "bg-purple-transparent", "Total revenue", "Unavailable", "admin-earnings.html", "", wide) +
-			statCard("isax isax-coin-15", "bg-success-transparent", "Completed payments", "Unavailable", "admin-transactions.html", "", wide) +
+			statCard("isax isax-book", "bg-success-transparent", "Awaiting approval", "…", "admin-courses.html", "", wide) +
 			statCard("isax isax-profile-2user5", "bg-info-transparent", "Total students", String(count.students), "admin-students.html", "", wide) +
 			statCard("isax isax-user", "bg-primary-transparent", "Active instructors", String(count.instructors), "admin-instructors.html", "", wide) +
 			'</div><div class="mb-3">' + submissionTable(data) + '</div><div class="row"><div class="col-lg-7 mb-3">' + financeNotice() + '</div><div class="col-lg-5 mb-3">' + paymentStatusCard(data) +
@@ -1197,6 +1197,54 @@
 			});
 		});
 		paintInstructorInvite();
+		paintPendingCourses();
+	}
+	function paintPendingCourses() {
+		var current = staffClient();
+		if (!current) return;
+		current.rpc("founder_list_instructors").then(function (listed) {
+			if (listed.error || !listed.data) return;
+			document.querySelectorAll(".card-body span").forEach(function (label) {
+				if (label.textContent === "Active instructors") {
+					var value = label.parentElement.querySelector("h4");
+					if (value) value.textContent = String(listed.data.length);
+				}
+			});
+		});
+		current.rpc("founder_pending_courses").then(function (result) {
+			var rows = result.data || [];
+			document.querySelectorAll(".card-body span").forEach(function (label) {
+				if (label.textContent === "Awaiting approval") {
+					var value = label.parentElement.querySelector("h4");
+					if (value) value.textContent = String(rows.length);
+				}
+			});
+			var host = document.getElementById("pending-courses");
+			if (!host) {
+				var invite = document.getElementById("instructor-invite");
+				if (!invite) return;
+				host = document.createElement("div");
+				host.id = "pending-courses";
+				host.className = "card mb-3";
+				invite.insertAdjacentElement("afterend", host);
+			}
+			host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Courses waiting for approval</h2>' +
+				(rows.length ? rows.map(function (course) {
+					var link = course.visibility === "private" && course.share_code ? '<p class="mb-2">Private link: https://bryllaacademy.vercel.app/course-details?share=' + esc(course.share_code) + "</p>" : "";
+					return '<article class="border rounded-3 p-3 mb-2"><h3 class="h6 fw-bold">' + esc(course.title) + "</h3>" + link +
+						'<button class="btn btn-primary btn-sm rounded-pill me-2" type="button" data-approve="' + esc(course.id) + '">Approve</button>' +
+						'<button class="btn btn-light btn-sm rounded-pill" type="button" data-reject="' + esc(course.id) + '">Reject</button></article>';
+				}).join("") : '<p class="mb-0">No courses are waiting.</p>') + "</div>";
+			host.querySelectorAll("[data-approve],[data-reject]").forEach(function (button) {
+				button.addEventListener("click", function () {
+					var id = button.getAttribute("data-approve") || button.getAttribute("data-reject");
+					current.rpc("founder_review_course", { p_course: id, p_approve: button.hasAttribute("data-approve") }).then(function (review) {
+						if (review.error) toast(review.error.message || "The course could not be updated.");
+						else { toast(button.hasAttribute("data-approve") ? "Course approved." : "Course rejected."); paintPendingCourses(); }
+					});
+				});
+			});
+		});
 	}
 	function paintInstructorInvite() {
 		var node = document.getElementById("instructor-invite-link");
@@ -1221,16 +1269,23 @@
 			})
 		) : empty("No courses yet."));
 	}
-	function renderAdminPerformance(root, data) {
-		root.innerHTML = '<h1 class="h5 fw-bold">Course performance</h1>' + table(
-			[{ label: "Course" }, { label: "Students" }, { label: "Enrolments" }, { label: "Average progress" }, { label: "Rating" }],
-			data.courses.map(function (course) {
-				return "<tr>" + cell("Course", esc(course.title)) + cell("Students", String(studentCount(data, course.id))) +
-					cell("Enrolments", String(data.enrolments.filter(function (row) { return row.courseId === course.id; }).length)) +
-					cell("Average progress", rate(averageProgress(data, course.id))) +
-					cell("Rating", course.rating == null ? "No ratings yet" : rate(course.rating)) + "</tr>";
-			})
-		);
+	function renderAdminPerformance(root) {
+		root.innerHTML = '<h1 class="h5 fw-bold">Course performance</h1><p id="performance-status" role="status">Loading student progress…</p>';
+		var current = staffClient();
+		if (!current) return;
+		current.rpc("founder_course_performance").then(function (result) {
+			if (result.error) {
+				root.innerHTML = '<h1 class="h5 fw-bold">Course performance</h1>' + empty(result.error.message || "Student progress could not be loaded.");
+				return;
+			}
+			var rows = result.data || [];
+			root.innerHTML = '<h1 class="h5 fw-bold">Course performance</h1><p class="mb-3">Taken from each student\'s saved lesson progress.</p>' + (rows.length ? table(
+				[{ label: "Course" }, { label: "Students" }, { label: "Lessons recorded" }, { label: "Progress" }],
+				rows.map(function (row) {
+					return "<tr>" + cell("Course", esc(row.title)) + cell("Students", String(row.students)) + cell("Lessons recorded", String(row.lessons_recorded)) + cell("Progress", String(row.progress_percent) + "%") + "</tr>";
+				})
+			) : empty("No published courses yet."));
+		});
 	}
 	function renderAdminTransactions(root, data) {
 		var payments = data.payments || [];
@@ -1242,56 +1297,66 @@
 			})
 		) : financeNotice());
 	}
-	function renderAdminReports(root, data) {
-		var count = totals(data);
-		root.innerHTML = '<h1 class="h5 fw-bold">Analytics and reports</h1><div class="row">' +
-			statCard("isax isax-teacher5", "bg-primary-transparent", "Active courses", String(count.active), "admin-courses.html") +
-			statCard("isax isax-profile-2user5", "bg-info-transparent", "Total students", String(count.students), "admin-students.html") +
-			"</div>" + financeNotice();
+	function renderAdminReports(root) {
+		root.innerHTML = '<h1 class="h5 fw-bold">Analytics and reports</h1><p role="status">Loading courses and students…</p>';
+		var current = staffClient();
+		if (!current) return;
+		current.rpc("founder_academy_counts").then(function (result) {
+			var row = result.data && result.data[0];
+			if (result.error || !row) {
+				root.innerHTML = '<h1 class="h5 fw-bold">Analytics and reports</h1>' + empty("Course and student counts could not be loaded.");
+				return;
+			}
+			root.innerHTML = '<h1 class="h5 fw-bold">Analytics and reports</h1><div class="row">' +
+				statCard("isax isax-teacher5", "bg-primary-transparent", "Active courses", String(row.active_courses), "admin-courses.html") +
+				statCard("isax isax-profile-2user5", "bg-info-transparent", "Enrolled students", String(row.enrolled_students), "admin-students.html") +
+				statCard("isax isax-book", "bg-success-transparent", "Enrolments", String(row.enrolments), "admin-students.html") +
+				"</div>";
+		});
 	}
-	function renderAdminInstructors(root, data) {
-		function draw() {
-			var people = data.instructors || [];
-			root.innerHTML = '<h1 class="h5 fw-bold">Instructors</h1>' +
+	function renderAdminInstructors(root) {
+		var current = staffClient();
+		function draw(people) {
+			root.innerHTML = '<h1 class="h5 fw-bold">Instructors</h1><p class="mb-3">People who register with the private instructor link appear here, along with anyone you add.</p>' +
 				(people.length ? table(
-					[{ label: "Instructor" }, { label: "Email" }, { label: "Course" }, { label: "Status" }, { label: "Actions" }],
+					[{ label: "Instructor" }, { label: "Email" }, { label: "Joined" }],
 					people.map(function (person) {
-						var course = courseById(data, person.courseId);
-						var name = ((person.firstName || "") + " " + (person.lastName || "")).trim();
-						return "<tr>" + cell("Instructor", esc(name)) + cell("Email", esc(person.email || "Not set")) + cell("Course", esc(course ? course.title : "Not set")) + cell("Status", statusBadge(person.status || "active")) +
-							cell("Actions", '<button class="btn btn-light btn-sm" type="button" data-delete-instructor="' + esc(person.id) + '" aria-label="Remove ' + esc(name) + '" title="Remove"><i class="isax isax-trash" aria-hidden="true"></i></button>') + "</tr>";
+						return "<tr>" + cell("Instructor", esc(person.full_name || "Instructor")) + cell("Email", esc(person.email || "")) + cell("Joined", esc(formatDate(person.created_at))) + "</tr>";
 					})
-				) : empty("No instructors yet. Add one when a tutor joins a course.")) +
+				) : empty("No instructors yet.")) +
 				'<div class="card mt-4" id="add-instructor"><div class="card-body"><h2 class="h5 fw-bold">Add instructor</h2><form id="instructor-form">' +
-				'<label class="form-label" for="inst-first">First name</label><input class="form-control mb-2" id="inst-first" required>' +
-				'<label class="form-label" for="inst-last">Last name</label><input class="form-control mb-2" id="inst-last" required>' +
+				'<label class="form-label" for="inst-name">Full name</label><input class="form-control mb-2" id="inst-name" required>' +
 				'<label class="form-label" for="inst-email">Email</label><input class="form-control mb-2" id="inst-email" type="email" required>' +
-				'<label class="form-label" for="inst-course">Course</label><select class="form-select mb-3" id="inst-course">' + data.courses.map(function (course) {
-					return '<option value="' + esc(course.id) + '">' + esc(course.title) + "</option>";
-				}).join("") + '</select><button class="btn btn-primary rounded-pill" type="submit">Save instructor</button></form></div></div>';
-			root.querySelectorAll("[data-delete-instructor]").forEach(function (button) {
-				button.addEventListener("click", function () {
-					confirmAction("Remove this instructor?").then(function (ok) {
-						if (!ok) return;
-						data.instructors = data.instructors.filter(function (person) { return person.id !== button.getAttribute("data-delete-instructor"); });
-						save(data);
-						toast("Instructor removed.");
-						draw();
-					});
-				});
-			});
+				'<label class="form-label" for="inst-password">Temporary password</label><input class="form-control mb-3" id="inst-password" type="text" minlength="8" required>' +
+				'<button class="btn btn-primary rounded-pill" type="submit">Save instructor</button></form></div></div>';
 			document.getElementById("instructor-form").addEventListener("submit", function (event) {
 				event.preventDefault();
-				var first = document.getElementById("inst-first").value.trim();
-				var last = document.getElementById("inst-last").value.trim();
-				data.instructors.push({ id: "inst-" + Date.now(), firstName: first, lastName: last, email: document.getElementById("inst-email").value.trim(), courseId: document.getElementById("inst-course").value, status: "active" });
-				data.activity.unshift({ text: first + " " + last + " added as an instructor.", date: new Date().toISOString() });
-				save(data);
-				toast("Instructor saved.");
-				draw();
+				current.rpc("founder_create_instructor", {
+					p_name: document.getElementById("inst-name").value.trim(),
+					p_email: document.getElementById("inst-email").value.trim(),
+					p_password: document.getElementById("inst-password").value
+				}).then(function (result) {
+					if (result.error) {
+						toast(result.error.message || "The instructor could not be added.");
+						return;
+					}
+					toast("Instructor added.");
+					load();
+				});
 			});
 		}
-		draw();
+		function load() {
+			root.innerHTML = '<h1 class="h5 fw-bold">Instructors</h1><p role="status">Loading instructors…</p>';
+			if (!current) return;
+			current.rpc("founder_list_instructors").then(function (result) {
+				if (result.error) {
+					root.innerHTML = '<h1 class="h5 fw-bold">Instructors</h1>' + empty(result.error.message || "Instructors could not be loaded.");
+					return;
+				}
+				draw(result.data || []);
+			});
+		}
+		load();
 	}
 	function renderAdminEarnings(root) {
 		root.innerHTML = '<h1 class="h5 fw-bold">Financial management</h1>' + financeNotice();
@@ -1406,6 +1471,58 @@
 	function renderEmptyPage(root, title, message) {
 		root.innerHTML = '<h1 class="h5 fw-bold">' + esc(title) + "</h1>" + empty(message);
 	}
+	function renderNotifications(root) {
+		root.innerHTML = '<h1 class="h5 fw-bold">Notifications</h1><p role="status">Loading announcements…</p>';
+		var current = staffClient();
+		if (!current) return;
+		current.rpc("my_notifications").then(function (result) {
+			var rows = result.data || [];
+			if (result.error) {
+				root.innerHTML = '<h1 class="h5 fw-bold">Notifications</h1>' + empty(result.error.message || "Notifications could not be loaded.");
+				return;
+			}
+			root.innerHTML = '<h1 class="h5 fw-bold">Notifications</h1>' + (rows.length ? rows.map(function (row) {
+				return '<article class="card mb-3"><div class="card-body"><h2 class="h6 fw-bold">' + esc(row.title) + '</h2><p class="mb-1">' + esc(row.message) + '</p><p class="mb-0 text-muted">' + esc(formatDate(row.created_at)) + "</p></div></article>";
+			}).join("") : empty("No announcements yet."));
+		});
+	}
+	function renderPlatformSettings(root) {
+		var current = staffClient();
+		root.innerHTML = '<h1 class="h5 fw-bold">Platform settings</h1><p role="status">Loading academy settings…</p>';
+		if (!current) return;
+		current.rpc("founder_settings").then(function (result) {
+			if (result.error) {
+				root.innerHTML = '<h1 class="h5 fw-bold">Platform settings</h1>' + empty(result.error.message || "Settings could not be loaded.");
+				return;
+			}
+			var values = {};
+			(result.data || []).forEach(function (row) { values[row.key] = row.value; });
+			root.innerHTML = '<h1 class="h5 fw-bold">Platform settings</h1><form id="academy-settings" class="card"><div class="card-body">' +
+				'<label class="form-label" for="set-name">Academy name</label><input class="form-control mb-3" id="set-name" value="' + esc(values.academy_name || "") + '">' +
+				'<label class="form-label" for="set-email">Support email</label><input class="form-control mb-3" id="set-email" type="email" value="' + esc(values.support_email || "") + '">' +
+				'<label class="form-label" for="set-currency">Default currency</label><input class="form-control mb-3" id="set-currency" value="' + esc(values.default_currency || "GHS") + '">' +
+				'<label class="form-label" for="set-inflation">Conversion buffer (%)</label><input class="form-control mb-3" id="set-inflation" type="number" min="0" max="25" step="0.1" value="' + esc(values.inflation_percent || "3") + '">' +
+				'<p class="text-muted">When a visitor sees a price in another currency, this buffer is added so the converted price does not fall below the amount you set.</p>' +
+				'<button class="btn btn-primary rounded-pill" type="submit">Save settings</button></div></form>';
+			document.getElementById("academy-settings").addEventListener("submit", function (event) {
+				event.preventDefault();
+				var pairs = [
+					["academy_name", document.getElementById("set-name").value.trim()],
+					["support_email", document.getElementById("set-email").value.trim()],
+					["default_currency", document.getElementById("set-currency").value.trim().toUpperCase()],
+					["inflation_percent", document.getElementById("set-inflation").value.trim()]
+				];
+				pairs.reduce(function (chain, pair) {
+					return chain.then(function () {
+						return current.rpc("founder_save_setting", { p_key: pair[0], p_value: pair[1] });
+					});
+				}, Promise.resolve()).then(function (last) {
+					if (last && last.error) toast(last.error.message || "Settings could not be saved.");
+					else toast("Academy settings saved.");
+				});
+			});
+		});
+	}
 
 	var PAGES = {
 		dashboard: renderDashboard,
@@ -1421,7 +1538,7 @@
 		help: function (root) { renderEmptyPage(root, "Help", "Help articles will be added here. For now, use the menu to open courses, grading and students."); },
 		messages: renderMessages,
 		settings: function (root) { renderEmptyPage(root, "Settings", "Account settings will be connected later."); },
-		notifications: function (root) { renderEmptyPage(root, "Notifications", "No notifications yet."); },
+		notifications: renderNotifications,
 		"admin-dashboard": renderAdminDashboard,
 		"admin-earnings": renderAdminEarnings,
 		"admin-transactions": renderAdminTransactions,
@@ -1432,7 +1549,7 @@
 		"admin-instructors": renderAdminInstructors,
 		"admin-announcements": renderAnnouncements,
 		"admin-support": renderMessages,
-		"admin-settings": function (root) { renderEmptyPage(root, "Platform settings", "Academy settings will be connected later."); },
+		"admin-settings": renderPlatformSettings,
 		"admin-help": function (root) { renderEmptyPage(root, "Help", "Help for academy operations will be added here."); }
 	};
 

@@ -1180,6 +1180,35 @@
 			mainEl.append(section);
 		}
 
+		function renderShared() {
+			const section = el("section", "card");
+			section.hidden = true;
+			const heading = el("h2", null, "Your private courses");
+			const list = el("div");
+			section.append(heading, list);
+			const auth = window.BryllaAuth;
+			if (!auth || !auth.client || !auth.ready) return section;
+			auth.ready.then(function (state) {
+				if (!state || !state.user) return null;
+				return auth.client.from("course_access").select("courses(title, visibility, share_code)").eq("user_id", state.user.id);
+			}).then(function (result) {
+				if (!result || result.error || !result.data) return;
+				const rows = result.data.filter(function (row) {
+					return row.courses && row.courses.visibility === "private" && row.courses.share_code;
+				});
+				if (!rows.length) return;
+				rows.forEach(function (row) {
+					const link = el("a", null, row.courses.title);
+					link.href = "course-details.html?share=" + encodeURIComponent(row.courses.share_code);
+					const item = el("p", null);
+					item.append(link);
+					list.append(item);
+				});
+				section.hidden = false;
+			}).catch(function () {});
+			return section;
+		}
+
 		function render() {
 			const data = viewModel();
 			renderHeader(data);
@@ -1197,6 +1226,7 @@
 			}
 			mainEl.append(renderBanner(data));
 			if (data.payment.outstanding) mainEl.append(renderPayment(data));
+			mainEl.append(renderShared());
 			mainEl.append(renderContinue(data));
 			if (data.state !== "new" && data.stats) mainEl.append(renderStats(data));
 			mainEl.append(renderUpcoming(data));

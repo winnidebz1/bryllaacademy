@@ -127,7 +127,7 @@
 				<h1>Bookkeeping</h1>
 				<p class="lead">A six-week US bookkeeping program. Record transactions, work in QuickBooks Online and Xero, reconcile accounts, and close a client's books.</p>
 				<ul class="facts">
-					<li>Tuition GHS 950</li>
+					<li>Tuition <span data-price-amount="950" data-price-currency="GHS">GHS 950</span></li>
 					<li>6 weeks</li>
 					<li>18 recorded lessons</li>
 					<li>Next cohort: date to be announced</li>
@@ -222,5 +222,33 @@
 		</div>
 	</footer>
 	<script src="assets/js/bootstrap.bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-currency.js"></script>
+	<script>
+		(function () {
+			var code = new URLSearchParams(location.search).get("share");
+			if (!code || !window.BryllaPublic || !BryllaPublic.client) return;
+			var client = BryllaPublic.client();
+			client.rpc("open_shared_course", { p_code: code }).then(function (result) {
+				var course = result.data && result.data[0];
+				var title = document.querySelector(".detail-card h1");
+				if (!course || !title) return;
+				title.textContent = course.title;
+				var lead = document.querySelector(".detail-card .lead");
+				if (lead) lead.textContent = course.short_description || course.description || "";
+				var price = document.querySelector("[data-price-amount]");
+				if (price) {
+					price.setAttribute("data-price-amount", String(course.price_amount || 0));
+					price.setAttribute("data-price-currency", course.currency || "GHS");
+					price.textContent = (course.currency || "GHS") + " " + course.price_amount;
+					if (window.BryllaCurrency) BryllaCurrency.paint();
+				}
+			});
+			client.auth.getSession().then(function (session) {
+				if (session.data && session.data.session) client.rpc("claim_shared_course", { p_code: code });
+			});
+		})();
+	</script>
 </body>
 </html>

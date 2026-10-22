@@ -82,7 +82,7 @@
 										</div>
 									</form>
 									<div class="fs-14 text-center">
-										<a href="instructor-login" class="link-2">Already registered? Instructor login</a>
+										<a href="login" class="link-2">Already registered? Sign in</a>
 									</div>
 								</div>
 							</div>
@@ -141,7 +141,7 @@
 					var signedIn = await client.auth.signInWithPassword({ email: email, password: password });
 					if (signedIn.error) {
 						statusEl.textContent = "Account created. Sign in on the instructor login page.";
-						window.setTimeout(function () { window.location.replace("instructor-login"); }, 800);
+						window.setTimeout(function () { window.location.replace("login"); }, 800);
 						return;
 					}
 					window.sessionStorage.setItem("brylla-role", "instructor");

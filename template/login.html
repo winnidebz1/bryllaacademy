@@ -190,8 +190,12 @@
 						button.disabled = false;
 						return showError(result.error.status === 400 ? "That email and password don't match. Try again, or use Forgot Password." : result.error.message);
 					}
-					sessionStorage.setItem("brylla-role", "student");
-					location.replace(destination);
+					var profile = await client.from("profiles").select("role").eq("id", result.data.user.id).maybeSingle();
+					var role = profile.data && profile.data.role;
+					sessionStorage.setItem("brylla-role", role || "student");
+					if (role === "founder") location.replace("admin-dashboard");
+					else if (role === "instructor") location.replace("instructor-dashboard");
+					else location.replace(destination);
 				});
 			})();
 		</script>

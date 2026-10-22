@@ -62,6 +62,7 @@
 
 		function add(chosen) {
 			var problems = [];
+			var added = [];
 			Array.prototype.forEach.call(chosen, function (file) {
 				var ext = "." + file.name.split(".").pop().toLowerCase();
 				if (allowed.length && allowed.indexOf(ext) === -1) {
@@ -71,12 +72,14 @@
 				} else if (!files.some(function (kept) { return kept.name === file.name && kept.size === file.size; })) {
 					if (!input.multiple) files = [];
 					files.push(file);
+					added.push(file);
 				}
 			});
 			error.textContent = problems.join(" ");
 			error.hidden = !problems.length;
 			sync();
 			render();
+			if (added.length) section.dispatchEvent(new CustomEvent("brylla-files-added", { bubbles: true, detail: { files: added } }));
 		}
 
 		input.addEventListener("change", function () {

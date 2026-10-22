@@ -269,6 +269,9 @@ body.instructor-app { background: #F7F9FC; color: #334155; }
 .app-sidebar { width: 260px; background: #0C3157; color: #fff; flex-shrink: 0; position: sticky; top: 0; height: 100vh; overflow: auto; padding: 16px 12px; }
 .app-brand { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
 .app-brand img { height: 36px; width: auto; background: #fff; border-radius: 8px; padding: 4px; }
+body.instructor-app[data-area="admin"] .app-brand { justify-content: center; }
+body.instructor-app[data-area="admin"] .app-brand a { display: flex; justify-content: center; flex: 1; }
+body.instructor-app[data-area="admin"] .app-brand img { height: 84px; width: auto; }
 .app-nav-label { color: rgba(255,255,255,.55); font-size: 12px; margin: 16px 8px 6px; }
 .app-sidebar ul { list-style: none; margin: 0; padding: 0; }
 .app-sidebar a { display: flex; align-items: center; gap: 10px; color: rgba(255,255,255,.88); text-decoration: none; border-radius: 8px; padding: 8px 10px; font-size: 14px; }
