@@ -1181,23 +1181,77 @@
 		var wide = "col-md-6 col-xl-3";
 		var hour = new Date().getHours();
 		var hello = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-		root.innerHTML = '<div class="dash-head"><div><h1 class="h4 fw-bold">' + hello + ", " + esc(instructorName(data)) + '</h1><p class="mb-0">Academy overview. Financial totals appear only after a payment provider is connected.</p></div>' +
+		root.innerHTML = '<div class="dash-head"><div><h1 class="h4 fw-bold">' + hello + ", " + esc(instructorName(data)) + '</h1><p class="mb-0">Revenue is the total students paid before their course opened.</p></div>' +
 			'<div class="d-flex flex-wrap gap-2" role="group" aria-label="Date range"><button class="btn btn-light" type="button" data-range="7">7 days</button><button class="btn btn-light" type="button" data-range="30">30 days</button><button class="btn btn-light" type="button" data-range="90">90 days</button></div></div>' +
 			'<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>' +
-			'<p id="range-note" class="mb-3" role="status">Payments are not connected for any date range.</p><div class="row">' +
-			statCard("isax isax-wallet-add5", "bg-purple-transparent", "Total revenue", "Unavailable", "admin-earnings.html", "", wide) +
+			'<p id="range-note" class="mb-3" role="status">Loading student payments…</p><div class="row">' +
+			statCard("isax isax-wallet-add5", "bg-purple-transparent", "Total revenue", "…", "admin-earnings.html", "", wide) +
 			statCard("isax isax-book", "bg-success-transparent", "Awaiting approval", "…", "admin-courses.html", "", wide) +
 			statCard("isax isax-profile-2user5", "bg-info-transparent", "Total students", String(count.students), "admin-students.html", "", wide) +
 			statCard("isax isax-user", "bg-primary-transparent", "Active instructors", String(count.instructors), "admin-instructors.html", "", wide) +
-			'</div><div class="mb-3">' + submissionTable(data) + '</div><div class="row"><div class="col-lg-7 mb-3">' + financeNotice() + '</div><div class="col-lg-5 mb-3">' + paymentStatusCard(data) +
-			'</div></div><div class="row"><div class="col-lg-7 mb-3">' + activityCard(data) + '</div><div class="col-lg-5 mb-3">' + quickActions() + "</div></div>";
+			'</div><div class="mb-3">' + submissionTable(data) + '</div><div class="row"><div class="col-lg-7 mb-3"><div class="card h-100"><div class="card-body" id="finance-panel"><p role="status">Loading student payments…</p></div></div></div><div class="col-lg-5 mb-3"><div class="card h-100"><div class="card-body" id="payment-status"><h2 class="h5 fw-bold">Payment status</h2><p role="status">Loading payments…</p></div></div></div></div><div class="row"><div class="col-lg-7 mb-3">' + activityCard(data) + '</div><div class="col-lg-5 mb-3">' + quickActions() + "</div></div>";
 		root.querySelectorAll("[data-range]").forEach(function (button) {
 			button.addEventListener("click", function () {
-				document.getElementById("range-note").textContent = button.getAttribute("data-range") + " days: payments are not connected, so revenue, receipts and refunds stay unavailable.";
+				paintFinance(Number(button.getAttribute("data-range")));
 			});
 		});
 		paintInstructorInvite();
 		paintPendingCourses();
+		paintFinance(90);
+	}
+	function formatMinor(amount, currency) {
+		var major = Number(amount) / 100;
+		var code = currency || "GHS";
+		try {
+			return new Intl.NumberFormat(undefined, { style: "currency", currency: code }).format(major);
+		} catch (error) {
+			return code + " " + (isFinite(major) ? major.toFixed(2) : "0.00");
+		}
+	}
+	function revenueLabel(rows) {
+		var totals = {};
+		rows.forEach(function (row) {
+			var code = row.currency || "GHS";
+			totals[code] = (totals[code] || 0) + Number(row.amount_minor || 0);
+		});
+		var parts = Object.keys(totals).map(function (code) { return formatMinor(totals[code], code); });
+		return parts.length ? parts.join(" · ") : "GHS 0.00";
+	}
+	function paymentRowsHtml(rows) {
+		if (!rows.length) return '<p class="mb-0">No student payments in this period. A payment is recorded when a student pays, before the course opens.</p>';
+		return table(
+			[{ label: "Student" }, { label: "Course" }, { label: "Amount" }, { label: "Paid" }, { label: "Enrolment" }],
+			rows.map(function (row) {
+				return "<tr>" + cell("Student", esc(row.student_name || row.email || "")) + cell("Course", esc(row.course_title || "")) + cell("Amount", esc(formatMinor(row.amount_minor, row.currency))) + cell("Paid", esc(formatDate(row.paid_at))) + cell("Enrolment", esc(row.enrollment_status || "not enrolled")) + "</tr>";
+			})
+		);
+	}
+	function paintFinance(days) {
+		var current = staffClient();
+		var panel = document.getElementById("finance-panel");
+		if (!current) return;
+		current.rpc("founder_payment_records", { p_days: days }).then(function (result) {
+			var rows = result.error ? [] : (result.data || []);
+			var note = document.getElementById("range-note");
+			if (note) {
+				note.textContent = result.error
+					? (result.error.message || "Payments could not be loaded.")
+					: (days > 0 ? days + " days: " : "All time: ") + rows.length + " payment" + (rows.length === 1 ? "" : "s") + " from students before their course opened.";
+			}
+			document.querySelectorAll(".card-body span").forEach(function (label) {
+				if (label.textContent === "Total revenue") {
+					var value = label.parentElement.querySelector("h4");
+					if (value) value.textContent = result.error ? "Unavailable" : revenueLabel(rows);
+				}
+			});
+			if (panel) {
+				panel.innerHTML = '<h2 class="h5 fw-bold">Student payments</h2><p>These are payments students made before their enrolment opened.</p>' + (result.error ? empty(result.error.message || "Payments could not be loaded.") : paymentRowsHtml(rows));
+			}
+			var status = document.getElementById("payment-status");
+			if (status) {
+				status.innerHTML = '<h2 class="h5 fw-bold">Payment status</h2><p class="mb-2">Paid ' + rows.length + "</p><p class=\"mb-0\">Amounts come from confirmed payments, not from course prices.</p>";
+			}
+		});
 	}
 	function paintPendingCourses() {
 		var current = staffClient();
@@ -1359,7 +1413,8 @@
 		load();
 	}
 	function renderAdminEarnings(root) {
-		root.innerHTML = '<h1 class="h5 fw-bold">Financial management</h1>' + financeNotice();
+		root.innerHTML = '<h1 class="h5 fw-bold">Financial management</h1><p>Payments students made before a course opened.</p><div class="card"><div class="card-body" id="finance-panel"><p role="status">Loading student payments…</p></div></div>';
+		paintFinance(0);
 	}
 	function renderAnalytics(root, data) {
 		var count = totals(data);
@@ -1466,6 +1521,26 @@
 			});
 		});
 		checkSession();
+		paintContactMessages(root);
+	}
+	function paintContactMessages(root) {
+		var current = staffClient();
+		if (!current) return;
+		var card = document.createElement("div");
+		card.className = "card mb-3";
+		card.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Contact page</h2><p role="status">Loading messages…</p></div>';
+		var heading = root.querySelector("h1");
+		if (heading) heading.insertAdjacentElement("afterend", card);
+		current.rpc("founder_contact_messages").then(function (result) {
+			if (result.error) {
+				card.remove();
+				return;
+			}
+			var rows = result.data || [];
+			card.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Contact page</h2>' + (rows.length ? rows.map(function (row) {
+				return '<article class="border rounded-3 p-3 mb-2"><h3 class="h6 fw-bold">' + esc(row.subject || "Message") + "</h3><p class=\"mb-1\">" + esc(row.message) + '</p><p class="mb-0 text-muted">' + esc(row.sender_name) + " · " + esc(row.email) + (row.phone ? " · " + esc(row.phone) : "") + " · " + esc(formatDate(row.created_at)) + "</p></article>";
+			}).join("") : '<p class="mb-0">No messages from the contact page yet.</p>') + "</div>";
+		});
 	}
 
 	function renderEmptyPage(root, title, message) {

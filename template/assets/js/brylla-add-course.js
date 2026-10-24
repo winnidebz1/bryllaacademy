@@ -167,6 +167,52 @@
 			renderFiles(result.data || []);
 		});
 	}
+	function renderVideoLinks(rows) {
+		var list = $("video-link-list");
+		if (!list) return;
+		list.innerHTML = "";
+		(rows || []).forEach(function (link) {
+			var item = document.createElement("li");
+			item.textContent = link.title;
+			var remove = document.createElement("button");
+			remove.type = "button";
+			remove.className = "material-remove";
+			remove.textContent = "Remove";
+			remove.addEventListener("click", function () {
+				client.from("course_video_links").delete().eq("id", link.id).then(function () { loadVideoLinks(); });
+			});
+			item.appendChild(remove);
+			list.appendChild(item);
+		});
+	}
+	function loadVideoLinks() {
+		if (!courseId) return Promise.resolve();
+		return client.from("course_video_links").select("id,title,video_url,position").eq("course_id", courseId).order("position").then(function (result) {
+			renderVideoLinks(result.data || []);
+		});
+	}
+	function nextPosition(table) {
+		return client.from(table).select("position").eq("course_id", courseId).order("position", { ascending: false }).limit(1).then(function (result) {
+			var row = result.data && result.data[0];
+			var last = row ? Number(row.position) : 0;
+			return isFinite(last) ? last + 1 : 1;
+		});
+	}
+	function saveVideoLink(title, url) {
+		return ensureDraft().then(function () {
+			return nextPosition("course_video_links");
+		}).then(function (position) {
+			return client.from("course_video_links").insert({
+				course_id: courseId,
+				title: title.slice(0, 160),
+				video_url: url.slice(0, 500),
+				position: position
+			});
+		}).then(function (saved) {
+			if (saved.error) throw new Error(saved.error.message || "The video link could not be saved.");
+			return loadVideoLinks();
+		});
+	}
 
 	function loadCourse() {
 		return client.from("courses").select("title,level,visibility,short_description,description,intro_video_url,currency,price_amount,share_code,approval_status").eq("id", courseId).maybeSingle().then(function (result) {
@@ -230,49 +276,122 @@
 		});
 	}
 
+	function formStatus(id, message, isError) {
+		var node = $(id);
+		if (!node) return;
+		node.textContent = message || "";
+		node.style.color = isError ? "#a12622" : "#078d87";
+	}
+	function hideModal(id) {
+		var modalEl = document.getElementById(id);
+		if (modalEl && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modalEl).hide();
+	}
 	function bindTopics() {
-		var form = document.querySelector("#add-topic form");
-		if (!form) return;
+		var form = $("topic-form");
+		if (!form || form.dataset.bound) return;
+		form.dataset.bound = "1";
 		form.addEventListener("submit", function (event) {
 			event.preventDefault();
-			var title = form.querySelector("input").value.trim();
+			var title = $("topic-name").value.trim();
 			if (!title) return;
+			if (!client) {
+				formStatus("topic-form-status", "Sign in as an instructor or founder to save a topic.", true);
+				return;
+			}
+			formStatus("topic-form-status", "Saving topic…");
 			ensureDraft().then(function () {
-				return client.from("course_topics").insert({ course_id: courseId, title: title.slice(0, 160), position: Date.now() });
+				return nextPosition("course_topics");
+			}).then(function (position) {
+				return client.from("course_topics").insert({ course_id: courseId, title: title.slice(0, 160), position: position });
 			}).then(function (saved) {
-				if (saved.error) throw new Error(saved.error.message);
+				if (saved.error) throw new Error(saved.error.message || "The topic could not be saved.");
 				form.reset();
-				var modal = window.bootstrap && bootstrap.Modal.getInstance(document.getElementById("add-topic"));
-				if (modal) modal.hide();
+				formStatus("topic-form-status", "");
+				hideModal("add-topic");
 				return loadTopics();
-			}).catch(function (error) { show(error.message, true); });
+			}).catch(function (error) {
+				formStatus("topic-form-status", error.message || "The topic could not be saved.", true);
+			});
 		});
 	}
 
 	function bindFaqs() {
-		var form = document.querySelector("#add-faq form");
-		if (!form) return;
+		var form = $("faq-form");
+		if (!form || form.dataset.bound) return;
+		form.dataset.bound = "1";
 		form.addEventListener("submit", function (event) {
 			event.preventDefault();
 			var question = $("faq-question").value.trim();
 			var answer = $("faq-answer").value.trim();
 			if (!question || !answer) return;
+			if (!client) {
+				formStatus("faq-form-status", "Sign in as an instructor or founder to save a question.", true);
+				return;
+			}
+			var enabled = $("flexRadioDefault6") ? $("flexRadioDefault6").checked : true;
+			formStatus("faq-form-status", "Saving question…");
 			ensureDraft().then(function () {
+				return nextPosition("course_faqs");
+			}).then(function (position) {
 				return client.from("course_faqs").insert({
 					course_id: courseId,
 					question: question.slice(0, 200),
 					answer: answer.slice(0, 2000),
-					enabled: true,
-					position: Date.now()
+					enabled: enabled,
+					position: position
 				});
 			}).then(function (saved) {
-				if (saved.error) throw new Error(saved.error.message);
+				if (saved.error) throw new Error(saved.error.message || "The question could not be saved.");
 				form.reset();
-				var modal = window.bootstrap && bootstrap.Modal.getInstance(document.getElementById("add-faq"));
-				if (modal) modal.hide();
+				formStatus("faq-form-status", "");
+				hideModal("add-faq");
 				return loadFaqs();
-			}).catch(function (error) { show(error.message, true); });
+			}).catch(function (error) {
+				formStatus("faq-form-status", error.message || "The question could not be saved.", true);
+			});
 		});
+	}
+	function bindVideoLinks() {
+		var form = $("video-link-form");
+		if (form && !form.dataset.bound) {
+			form.dataset.bound = "1";
+			form.addEventListener("submit", function (event) {
+				event.preventDefault();
+				var title = $("video-link-title").value.trim();
+				var url = $("video-link-url").value.trim();
+				if (!title || !url) return;
+				if (!client) {
+					formStatus("video-link-status", "Sign in as an instructor or founder to save a video link.", true);
+					return;
+				}
+				formStatus("video-link-status", "Saving video link…");
+				saveVideoLink(title, url).then(function () {
+					form.reset();
+					formStatus("video-link-status", "Saved. This lesson plays from the link on the course page.");
+				}).catch(function (error) {
+					formStatus("video-link-status", error.message || "The video link could not be saved.", true);
+				});
+			});
+		}
+		var lesson = $("lesson-form");
+		if (lesson && !lesson.dataset.bound) {
+			lesson.dataset.bound = "1";
+			lesson.addEventListener("submit", function (event) {
+				event.preventDefault();
+				var title = lesson.querySelector("input[type=text]").value.trim();
+				var url = $("lesson-video-link").value.trim();
+				if (!title) return;
+				if (!url) {
+					formStatus("course-save-status", "Add a video link for this lesson.", true);
+					return;
+				}
+				saveVideoLink(title, url).then(function () {
+					lesson.reset();
+					hideModal("add-lesson");
+					show("Lesson video link saved.");
+				}).catch(function (error) { show(error.message, true); });
+			});
+		}
 	}
 
 	function bindSave() {
@@ -333,14 +452,16 @@
 		draw();
 	}
 
+	bindTopics();
+	bindFaqs();
+	bindVideoLinks();
+
 	requireStaff().then(function () {
 		return ensureDraft();
 	}).then(function () {
-		return Promise.all([loadCourse(), loadTopics(), loadFaqs(), loadFiles()]);
+		return Promise.all([loadCourse(), loadTopics(), loadFaqs(), loadFiles(), loadVideoLinks()]);
 	}).then(function () {
 		bindUploads();
-		bindTopics();
-		bindFaqs();
 		bindSave();
 		previewPrice();
 	}).catch(function (error) {

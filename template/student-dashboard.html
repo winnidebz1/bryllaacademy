@@ -1190,16 +1190,16 @@
 			if (!auth || !auth.client || !auth.ready) return section;
 			auth.ready.then(function (state) {
 				if (!state || !state.user) return null;
-				return auth.client.from("course_access").select("courses(title, visibility, share_code)").eq("user_id", state.user.id);
+				return auth.client.from("course_access").select("course_id, courses(title, visibility)").eq("user_id", state.user.id);
 			}).then(function (result) {
 				if (!result || result.error || !result.data) return;
 				const rows = result.data.filter(function (row) {
-					return row.courses && row.courses.visibility === "private" && row.courses.share_code;
+					return row.courses && row.courses.visibility === "private" && row.course_id;
 				});
 				if (!rows.length) return;
 				rows.forEach(function (row) {
 					const link = el("a", null, row.courses.title);
-					link.href = "course-details.html?share=" + encodeURIComponent(row.courses.share_code);
+					link.href = "course-watch.html?course=" + encodeURIComponent(row.course_id);
 					const item = el("p", null);
 					item.append(link);
 					list.append(item);

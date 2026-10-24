@@ -93,7 +93,7 @@
 		.assignment-submitted { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--green-fg); font-size: 13px; font-weight: 500; }
 		.note { border-top: 1px solid var(--border); padding: 14px var(--s4); font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 		.video { aspect-ratio: 16/9; background: #0a2a47; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
-		.video video { width: 100%; height: 100%; display: block; background: #000; }
+		.video iframe, .video video { width: 100%; height: 100%; border: 0; display: block; background: #000; }
 		.video .msg { color: #fff; text-align: center; padding: var(--s4); display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
 		.video .msg i { font-size: 36px; }
 		.video .msg small { color: #dbe7fb; font-size: 13px; }
@@ -248,6 +248,7 @@
 		};
 		var PRICE = "GHS 950";
 		var ENROL_URL = "checkout.html?course=bookkeeping";
+		var courseKey = new URLSearchParams(location.search).get("course") || "bookkeeping";
 
 		var $ = function (id) { return document.getElementById(id); };
 		var esc = function (value) {
@@ -410,7 +411,7 @@
 			var last = sel === ALL[ALL.length - 1];
 			var video;
 			if (can && sel.kind === "lesson") {
-				video = '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><small>This lesson\'s video will play here when it is added.</small></div>';
+				video = embedVideo(sel.videoUrl) || '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><small>This lesson\'s video will play here when a link is added.</small></div>';
 			} else if (can && sel.kind === "live") {
 				video = '<div class="msg"><i class="ti ti-broadcast" aria-hidden="true"></i><strong>' + esc(sel.title) + '</strong><small>Live session. Mark attended after you join.</small></div>';
 			} else {
@@ -627,13 +628,71 @@
 			$("avatar").setAttribute("aria-label", "Settings, " + studentName);
 		}
 		showStudent();
+		function embedVideo(url) {
+			var value = String(url || "").trim();
+			var youtube = value.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
+			if (youtube) return '<iframe src="https://www.youtube.com/embed/' + encodeURIComponent(youtube[1]) + '?autoplay=1&rel=0" title="Lesson video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+			var vimeo = value.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+			if (vimeo) return '<iframe src="https://player.vimeo.com/video/' + vimeo[1] + '?autoplay=1" title="Lesson video" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>';
+			if (/^https?:\/\//i.test(value)) return '<video controls autoplay playsinline src="' + esc(value) + '"></video>';
+			return "";
+		}
+		function applyLessonLinks(rows) {
+			var links = (rows || []).slice();
+			if (courseKey !== "bookkeeping") {
+				ALL = links.map(function (link, index) {
+					return { id: "link-" + link.id, kind: "lesson", week: 1, topic: "Lessons", n: index + 1, title: link.title, min: 0, preview: false, summary: link.title, videoUrl: link.video_url };
+				});
+				if (!ALL.some(function (item) { return item === sel; })) sel = ALL[0] || null;
+				return;
+			}
+			ALL.forEach(function (item) {
+				if (item.kind !== "lesson") return;
+				var match = -1;
+				for (var i = 0; i < links.length; i += 1) {
+					if (String(links[i].title || "").trim().toLowerCase() === item.title.toLowerCase()) { match = i; break; }
+				}
+				if (match >= 0) item.videoUrl = links.splice(match, 1)[0].video_url;
+			});
+			ALL.forEach(function (item) {
+				if (item.kind === "lesson" && !item.videoUrl && links.length) item.videoUrl = links.shift().video_url;
+			});
+		}
+		function loadLessonLinks() {
+			var client = window.BryllaAuth && BryllaAuth.client;
+			if (!client) return Promise.resolve();
+			var links = client.from("course_video_links").select("id,title,video_url,position").eq("course_id", courseKey).order("position");
+			if (courseKey === "bookkeeping") {
+				return links.then(function (result) {
+					if (!result.error) applyLessonLinks(result.data || []);
+				});
+			}
+			return client.auth.getSession().then(function (session) {
+				var user = session.data.session && session.data.session.user;
+				if (!user) {
+					return links.then(function (result) {
+						if (!result.error) applyLessonLinks(result.data || []);
+					});
+				}
+				return Promise.all([
+					client.from("enrollments").select("status").eq("user_id", user.id).eq("course_id", courseKey).eq("status", "active").maybeSingle(),
+					client.from("course_access").select("course_id").eq("user_id", user.id).eq("course_id", courseKey).maybeSingle(),
+					links
+				]).then(function (parts) {
+					enrolled = Boolean((parts[0].data) || (parts[1].data));
+					if (!parts[2].error) applyLessonLinks(parts[2].data || []);
+				});
+			});
+		}
 		render();
 		if (window.BryllaAuth) BryllaAuth.ready.then(function () {
-			enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
-			if (enrolled) BryllaStudent.startCourse();
+			if (courseKey === "bookkeeping") {
+				enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
+				if (enrolled) BryllaStudent.startCourse();
+			}
 			if (!studentPicked) sel = null;
 			showStudent();
-			return loadSubmittedAssignments();
+			return Promise.all([loadSubmittedAssignments(), loadLessonLinks()]);
 		}).then(function () {
 			render();
 		});
