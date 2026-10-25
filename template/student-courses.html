@@ -1,6 +1,7 @@
 <!DOCTYPE html> 
 <html lang="en">
 	<head>
+	<script src="assets/js/brylla-errors.js"></script>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="See every course you are enrolled in at Brylla Academy and what to do next.">
@@ -10,7 +11,7 @@
 	<link rel="apple-touch-icon" href="assets/img/logo.png">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
 	<style>
 		:root {
@@ -33,7 +34,7 @@
 			--color-danger: #b42318;
 			--color-hover: #f4f8fb;
 			--color-focus: #073b70;
-			--font: Inter, "Segoe UI", Arial, sans-serif;
+			--font: Raleway, "Segoe UI", Arial, sans-serif;
 			--radius-card: 12px;
 			--radius-control: 8px;
 			--radius-pill: 999px;
@@ -67,7 +68,7 @@
 		.menu-toggle.is-open .icon-close { display: block; }
 		.brand-mark { position: relative; width: 84px; height: 44px; flex: 0 0 84px; overflow: hidden; display: block; }
 		.brand-mark img { position: absolute; width: 107px; height: 107px; max-width: none; top: calc(50% + 4px); left: 50%; transform: translate(-50%, -50%); }
-		.header-avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--color-banner-muted, #d6e4f2); color: var(--color-primary); font-size: 13px; font-weight: 500; }
+		.header-avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--color-banner-muted, #d6e4f2); color: var(--color-primary); font-size: 13px; font-weight: 500; text-decoration: none; }
 		.notify-button { position: relative; }
 		.notify-badge { position: absolute; top: 4px; right: 2px; min-width: 16px; height: 16px; padding: 0 4px; border-radius: var(--radius-pill); background: var(--color-accent-text); color: #fff; font-size: 11px; font-weight: 500; line-height: 16px; text-align: center; }
 		.scrim { position: fixed; z-index: 80; top: var(--header-height); right: 0; bottom: 0; left: 0; background: rgba(0,0,0,.35); opacity: 0; visibility: hidden; transition: opacity var(--motion) ease, visibility 0s linear var(--motion); }
@@ -146,7 +147,7 @@
 			.scrim, .drawer { top: calc(52px + env(safe-area-inset-top)); }
 			.drawer { width: min(80vw, 320px); padding: 0 0 env(safe-area-inset-bottom); }
 			.drawer-profile { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--color-border); }
-			.drawer-avatar { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; background: #d6e4f2; color: var(--color-primary); font-weight: 500; }
+			.drawer-avatar { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; background: #d6e4f2; color: var(--color-primary); font-weight: 500; text-decoration: none; }
 			.drawer-scroll { flex: 1; overflow: auto; padding: 8px; }
 			.nav-label { display: none; }
 			.nav-mobile-only { display: list-item; }
@@ -166,6 +167,12 @@
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
 	<script src="assets/js/brylla-auth.js" data-guard="student"></script>
+	<style>
+		@media (min-width: 768px) {
+			body:has(> .site-footer) { min-height: 100vh; display: flex; flex-direction: column; }
+			body:has(> .site-footer) > .site-footer { margin-top: auto; }
+		}
+	</style>
 	</head>
 	<body>
 	<script id="courses-data" type="application/json">
@@ -174,7 +181,7 @@
 		"notifications": 0,
 		"assignmentsDue": 0,
 		"openingSoon": 3,
-		"browseUrl": "index-4.html#courses",
+		"browseUrl": "/#courses",
 		"courses": [
 			{
 				"id": "bookkeeping",
@@ -182,7 +189,7 @@
 				"icon": "ti-calculator",
 				"weeksTotal": 6,
 				"nextLesson": "Week 1, What a US bookkeeper does",
-				"enrollUrl": "checkout.html?course=bookkeeping",
+				"enrollUrl": "checkout.html?course=bookkeeping&purpose=enrolment",
 				"continueUrl": "course-watch.html"
 			},
 			{
@@ -192,7 +199,7 @@
 				"status": "upcoming",
 				"startLabel": "Coming soon",
 				"enrollUrl": "checkout.html?course=digital-marketing",
-				"detailsUrl": "course-details.html"
+				"detailsUrl": "/#courses"
 			},
 			{
 				"id": "project-management",
@@ -201,16 +208,16 @@
 				"status": "upcoming",
 				"startLabel": "Coming soon",
 				"enrollUrl": "checkout.html?course=project-management",
-				"detailsUrl": "course-details.html"
+				"detailsUrl": "/#courses"
 			},
 			{
-				"id": "remote-support-foundation",
-				"title": "Remote Support Foundation",
-				"icon": "ti-headset",
+				"id": "podcast-management",
+				"title": "Podcast Management",
+				"icon": "ti-microphone",
 				"status": "upcoming",
 				"startLabel": "Coming soon",
-				"enrollUrl": "checkout.html?course=remote-support-foundation",
-				"detailsUrl": "course-details.html"
+				"enrollUrl": "/#courses",
+				"detailsUrl": "/#courses"
 			}
 		]
 	}
@@ -228,11 +235,10 @@
 					<span><strong>Brylla Academy</strong><span>Practical professional skills taught for the remote world.</span></span>
 				</a>
 				<nav class="footer-links" aria-label="Footer navigation">
-					<a href="index-4.html#courses">Courses</a>
-					<a href="index-4.html#stories">Student Stories</a>
-					<a href="index-4.html#toolkit">Career Toolkit</a>
-					<a href="index-4.html#faqs">FAQs</a>
-					<a href="index-4.html#contact">Contact</a>
+					<a href="/#courses">Courses</a>
+					<a href="/#services">Professional Services</a>
+					<a href="/#toolkit">Free Resource</a>
+					<a href="contact-us">Contact Us</a>
 					<a href="login.html">Student Login</a>
 							</nav>
 						</div>
@@ -281,7 +287,6 @@
 				{ label: "Quizes", href: "student-quiz.html", icon: "assignments" }
 			] },
 			{ label: "Account", items: [
-				{ label: "Settings", href: "student-settings.html", icon: "settings" },
 				{ label: "Help", href: "index-4.html#faqs", icon: "help", mobileOnly: true },
 				{ label: "Sign out", href: "index-4.html", icon: "signout", tone: "danger" }
 			] }
@@ -372,16 +377,19 @@
 			notify.setAttribute("aria-label", data.notifications ? "Notifications, " + data.notifications + " unread" : "Notifications, no unread");
 			notify.append(icon("bell"));
 			if (data.notifications > 0) notify.append(el("span", "notify-badge", data.notifications > 99 ? "99+" : String(data.notifications)));
-			const avatar = el("span", "header-avatar", data.student.initials);
-			avatar.setAttribute("role", "img");
-			avatar.setAttribute("aria-label", data.student.name);
+			const avatar = el("a", "header-avatar", data.student.initials);
+			avatar.href = "student-profile.html";
+			avatar.setAttribute("aria-label", "Profile, " + data.student.name);
 			end.append(notify, avatar);
 			headerEl.append(start, end);
 		}
 		function renderNav() {
 			navEl.replaceChildren();
 			const profile = el("div", "drawer-profile");
-			profile.append(el("span", "drawer-avatar", data.student.initials));
+			const drawerAvatar = el("a", "drawer-avatar", data.student.initials);
+			drawerAvatar.href = "student-profile.html";
+			drawerAvatar.setAttribute("aria-label", "Profile, " + data.student.name);
+			profile.append(drawerAvatar);
 			const copy = el("div");
 			copy.append(el("p", "drawer-name", data.student.name), el("p", "drawer-email", data.student.email));
 			profile.append(copy);

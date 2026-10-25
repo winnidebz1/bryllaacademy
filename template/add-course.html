@@ -2,6 +2,7 @@
 <html lang="en">
 
 <head>
+	<script src="assets/js/brylla-errors.js"></script>
 
 	<!-- Meta Tags -->
 	<meta charset="utf-8">
@@ -50,7 +51,7 @@
 
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 	<!-- Header and footer match the homepage (index-4.html) -->
 	<style>
 		.site-header, .site-footer {
@@ -59,7 +60,7 @@
 			--teal: #13b8ad;
 			--teal-dark: #078d87;
 			--line: #e3ebf2;
-			font-family: Inter, "Segoe UI", Arial, sans-serif;
+			font-family: Raleway, "Segoe UI", Arial, sans-serif;
 			font-size: 14px;
 			line-height: 1.65;
 		}
@@ -197,7 +198,7 @@
 											<span class="tickmark"><i class="fa-solid fa-check"></i></span>
 										</span>
 										<div class="step-section">
-											<p>Curriculam</p>
+											<p>Curriculum</p>
 										</div>
 									</div>
 								</li>
@@ -245,7 +246,7 @@
 											<select class="select form-control" id="course-level">
 												<option>Select</option>
 												<option>Beginner</option>
-												<option>Intermediate</option>
+												<option>Ralewaymediate</option>
 												<option>Advanced</option>
 												<option>Expert</option>
 											</select>
@@ -435,9 +436,9 @@
 										</div>
 									</div>
 								</div>
-								<div>
-									<div id="topic-list"></div><p id="topic-empty" class="text-muted">No topics yet. Add a topic for this curriculum.</p>
-<div class="add-form-btn widget-next-btn submit-btn">
+								<div id="topic-list"></div>
+								<p id="topic-empty" class="text-muted">No topics yet. Add a topic, then add the modules inside it.</p>
+								<div class="add-form-btn widget-next-btn submit-btn">
 									<div class="btn-left">
 										<a href="javascript:void(0);" class="btn btn-light main-btn prev_btns"><i
 												class="isax isax-arrow-left-2 me-1"></i>Prev</a>
@@ -463,8 +464,10 @@
 									</div>
 								</div>
 								<div class="pb-3 border-bottom mb-3">
-									<div id="faq-list"></div><p id="faq-empty" class="text-muted">No questions yet. Add a question for this course.</p>
-<div class="add-form-btn widget-next-btn submit-btn">
+									<div id="faq-list"></div>
+									<p id="faq-empty" class="text-muted">No questions yet. Add a question for this course.</p>
+								</div>
+								<div class="add-form-btn widget-next-btn submit-btn">
 									<div class="btn-left">
 										<a href="javascript:void(0);" class="btn btn-light main-btn prev_btns"><i
 												class="isax isax-arrow-left-2 me-1"></i>Prev</a>
@@ -590,6 +593,41 @@
 		</div>
 	</div>
 	<!-- /Add topic -->
+
+	<!-- Add module -->
+	<div class="modal fade" id="add-module">
+		<div class="modal-dialog modal-dialog-centered">
+			<div class="modal-content">
+				<div class="modal-header">
+					<h5>Add module</h5>
+					<button type="button" class="btn-close custom-btn-close" data-bs-dismiss="modal" aria-label="Close">
+						<i class="isax isax-close-circle5"></i>
+					</button>
+				</div>
+				<form id="module-form">
+					<div class="modal-body">
+						<p class="text-muted mb-3">This module is added under <strong id="module-topic-label">this topic</strong>.</p>
+						<input type="hidden" id="module-topic">
+						<div class="input-block mb-3">
+							<label class="form-label" for="module-name">Module name<span class="text-danger ms-1">*</span></label>
+							<input type="text" class="form-control" id="module-name" maxlength="160" required>
+						</div>
+						<div class="input-block">
+							<label class="form-label" for="module-url">Video link</label>
+							<input type="url" class="form-control" id="module-url" maxlength="500" placeholder="https://">
+							<p class="mb-0 mt-2 text-muted">Optional. A YouTube, Vimeo, or file link plays on the lesson page.</p>
+						</div>
+						<p id="module-form-status" class="mb-0 mt-2" role="status"></p>
+					</div>
+					<div class="modal-footer">
+						<button type="button" class="btn me-2 btn-light" data-bs-dismiss="modal">Cancel</button>
+						<button type="submit" class="btn btn-secondary">Add module</button>
+					</div>
+				</form>
+			</div>
+		</div>
+	</div>
+	<!-- /Add module -->
 
 	<!-- Add lesson -->
 	<div class="modal fade" id="add-lesson">
@@ -745,10 +783,9 @@
 				</a>
 				<nav class="footer-links" aria-label="Footer navigation">
 					<a href="/#courses">Courses</a>
-					<a href="/#stories">Student Stories</a>
-					<a href="/#toolkit">Career Toolkit</a>
-					<a href="/#faqs">FAQs</a>
-					<a href="contact-us">Contact</a>
+					<a href="/#services">Professional Services</a>
+					<a href="/#toolkit">Free Resource</a>
+					<a href="contact-us">Contact Us</a>
 				</nav>
 			</div>
 			<p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p>

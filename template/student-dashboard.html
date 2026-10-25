@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+	<script src="assets/js/brylla-errors.js"></script>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="See what to do next in your Brylla Academy course.">
@@ -10,7 +11,7 @@
 	<link rel="apple-touch-icon" href="assets/img/logo.png">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500&display=swap" rel="stylesheet">
 	<style>
 		:root {
 			--color-primary: #073b70;
@@ -41,7 +42,7 @@
 			--color-warning-text: #7a4510;
 			--color-scrim: rgba(0, 0, 0, 0.35);
 			--color-focus: #073b70;
-			--font: Inter, "Segoe UI", Arial, sans-serif;
+			--font: Raleway, "Segoe UI", Arial, sans-serif;
 			--radius-card: 12px;
 			--radius-control: 8px;
 			--radius-pill: 999px;
@@ -188,6 +189,7 @@
 			color: var(--color-banner);
 			font-size: 13px;
 			font-weight: 500;
+			text-decoration: none;
 		}
 
 		.scrim {
@@ -288,7 +290,7 @@
 			overflow: hidden;
 			padding: 20px 22px;
 			border-radius: var(--radius-card);
-			background: var(--color-banner);
+			background: linear-gradient(10.93deg, #392C7D 16.22%, #6850E3 120.13%);
 			color: var(--color-banner-text);
 		}
 		.banner::before, .banner::after {
@@ -513,7 +515,7 @@
 		.schedule-link { display: inline-flex; min-height: 44px; align-items: center; margin-top: 4px; color: var(--color-accent-text); font-size: 14px; font-weight: 500; }
 		.drawer-signout { margin-top: 8px; padding-top: 8px; border-top: 1px solid var(--color-border); }
 		.drawer-profile { align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--color-border); }
-		.drawer-avatar { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-size: 14px; font-weight: 500; }
+		.drawer-avatar { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-size: 14px; font-weight: 500; text-decoration: none; }
 		.drawer-profile-copy { min-width: 0; }
 		.drawer-name { font-size: 15px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 		.drawer-email { color: var(--color-muted); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -608,7 +610,13 @@
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
 	<script src="assets/js/brylla-auth.js" data-guard="student"></script>
-</head>
+	<style>
+		@media (min-width: 768px) {
+			body:has(> .site-footer) { min-height: 100vh; display: flex; flex-direction: column; }
+			body:has(> .site-footer) > .site-footer { margin-top: auto; }
+		}
+	</style>
+	</head>
 <body>
 	<script id="dashboard-data" type="application/json">
 	{
@@ -625,7 +633,7 @@
 			"weekCurrent": 0,
 			"weeksTotal": 0,
 			"catalogWeeks": 6,
-			"priceLabel": "GHS 950",
+			"priceLabel": "GHS 600",
 			"watchUrl": "course-watch.html",
 			"certificateUrl": "student-certificates.html"
 		},
@@ -687,7 +695,6 @@
 			{
 				"label": "Account",
 				"items": [
-					{ "label": "Settings", "href": "student-settings", "icon": "settings" },
 					{ "label": "Help", "href": "/#faqs", "icon": "help", "mobileOnly": true },
 					{ "label": "Sign out", "href": "login", "icon": "signout", "tone": "danger" }
 				]
@@ -710,10 +717,9 @@
 				</a>
 				<nav class="footer-links" aria-label="Footer navigation">
 					<a href="/#courses">Courses</a>
-					<a href="/#stories">Student Stories</a>
-					<a href="/#toolkit">Career Toolkit</a>
-					<a href="/#faqs">FAQs</a>
-					<a href="contact-us">Contact</a>
+					<a href="/#services">Professional Services</a>
+					<a href="/#toolkit">Free Resource</a>
+					<a href="contact-us">Contact Us</a>
 					<a href="login">Student Login</a>
 				</nav>
 			</div>
@@ -918,9 +924,9 @@
 			notify.setAttribute("aria-label", notificationLabel(unread));
 			notify.append(icon("bell"));
 			if (unread > 0) notify.append(el("span", "notify-badge", badgeText(unread)));
-			const avatar = el("span", "header-avatar", data.student.initials);
-			avatar.setAttribute("role", "img");
-			avatar.setAttribute("aria-label", data.student.name);
+			const avatar = el("a", "header-avatar", data.student.initials);
+			avatar.href = "student-profile.html";
+			avatar.setAttribute("aria-label", "Profile, " + data.student.name);
 			end.append(notify, avatar);
 			headerEl.append(start, end);
 		}
@@ -928,7 +934,10 @@
 		function renderNav(data) {
 			navEl.replaceChildren();
 			const profile = el("div", "drawer-profile");
-			profile.append(el("span", "drawer-avatar", data.student.initials));
+			const drawerAvatar = el("a", "drawer-avatar", data.student.initials);
+			drawerAvatar.href = "student-profile.html";
+			drawerAvatar.setAttribute("aria-label", "Profile, " + data.student.name);
+			profile.append(drawerAvatar);
 			const profileCopy = el("div", "drawer-profile-copy");
 			profileCopy.append(el("p", "drawer-name", data.student.name), el("p", "drawer-email", data.student.email));
 			profile.append(profileCopy);
@@ -1009,8 +1018,8 @@
 			let meta = data.lesson.minutesLeft + " min left, " + data.lesson.percentComplete + "% of course complete";
 			const record = window.BryllaStudent ? BryllaStudent.courseRecord("bookkeeping") : { enrolled: false };
 			const started = window.BryllaStudent ? BryllaStudent.summary().started : false;
-			let action = record.enrolled ? (started ? "Resume lesson" : "Start course") : "Enrol";
-			let href = record.enrolled ? data.course.watchUrl : "checkout.html?course=bookkeeping";
+			let action = record.enrolled ? (started ? "Resume lesson" : "Start course") : "Pay course fee";
+			let href = record.enrolled ? data.course.watchUrl : "checkout.html?course=bookkeeping&purpose=enrolment";
 			let showCheck = false;
 			if (data.state === "new") {
 				title = "Start your first lesson";

@@ -4,6 +4,7 @@
 	var client = null;
 	var userId = "";
 	var courseId = "";
+	var staffRole = "";
 
 	function $(id) { return document.getElementById(id); }
 	function show(message, isError) {
@@ -31,14 +32,18 @@
 			userId = session.user.id;
 			return client.from("profiles").select("role").eq("id", userId).maybeSingle();
 		}).then(function (profile) {
-			var role = profile.data && profile.data.role;
-			if (role !== "instructor" && role !== "founder") throw new Error("Only an instructor or the founder can add a course.");
+			staffRole = profile.data && profile.data.role;
+			if (staffRole !== "instructor" && staffRole !== "founder") throw new Error("Only an instructor or the founder can add a course.");
 		});
 	}
 
-	function ensureDraft() {
-		courseId = sessionStorage.getItem(DRAFT_KEY) || "";
-		if (courseId) return Promise.resolve(courseId);
+	function draftIsUsable(course) {
+		if (!course || course.status !== "draft") return false;
+		if (staffRole === "founder") return true;
+		return course.created_by === userId;
+	}
+
+	function createDraft() {
 		courseId = slug(field("course-title"));
 		return client.from("courses").insert({
 			id: courseId,
@@ -55,6 +60,20 @@
 			if (created.error) throw new Error(created.error.message || "The course draft could not be saved.");
 			sessionStorage.setItem(DRAFT_KEY, courseId);
 			return courseId;
+		});
+	}
+
+	function ensureDraft() {
+		var stored = sessionStorage.getItem(DRAFT_KEY) || "";
+		if (!stored) return createDraft();
+		return client.from("courses").select("id,status,created_by").eq("id", stored).maybeSingle().then(function (result) {
+			if (result.error) throw new Error(result.error.message || "The course draft could not be opened.");
+			if (draftIsUsable(result.data)) {
+				courseId = result.data.id;
+				return courseId;
+			}
+			sessionStorage.removeItem(DRAFT_KEY);
+			return createDraft();
 		});
 	}
 
@@ -99,12 +118,55 @@
 		list.innerHTML = "";
 		(rows || []).forEach(function (topic) {
 			var item = document.createElement("div");
-			item.className = "d-flex align-items-center justify-content-between bg-white p-2 border rounded-3 mb-2";
-			item.innerHTML = "<p class=\"fw-medium mb-0\"></p><button class=\"btn btn-light btn-sm\" type=\"button\">Remove</button>";
-			item.querySelector("p").textContent = topic.title;
-			item.querySelector("button").addEventListener("click", function () {
+			item.className = "bg-white p-3 border rounded-3 mb-3";
+			var head = document.createElement("div");
+			head.className = "d-flex align-items-center justify-content-between gap-2";
+			var title = document.createElement("p");
+			title.className = "fw-medium mb-0";
+			title.textContent = topic.title;
+			var removeTopic = document.createElement("button");
+			removeTopic.type = "button";
+			removeTopic.className = "btn btn-light btn-sm";
+			removeTopic.textContent = "Remove";
+			removeTopic.addEventListener("click", function () {
 				client.from("course_topics").delete().eq("id", topic.id).then(function () { loadTopics(); });
 			});
+			head.appendChild(title);
+			head.appendChild(removeTopic);
+			var modules = document.createElement("ul");
+			modules.className = "list-unstyled mb-2 mt-2";
+			(topic.modules || []).forEach(function (module) {
+				var row = document.createElement("li");
+				row.className = "d-flex align-items-center justify-content-between gap-2 border rounded-2 px-2 py-1 mb-1";
+				var name = document.createElement("span");
+				name.textContent = module.title;
+				var removeModule = document.createElement("button");
+				removeModule.type = "button";
+				removeModule.className = "btn btn-light btn-sm";
+				removeModule.textContent = "Remove";
+				removeModule.addEventListener("click", function () {
+					client.from("course_modules").delete().eq("id", module.id).then(function () { loadTopics(); });
+				});
+				row.appendChild(name);
+				row.appendChild(removeModule);
+				modules.appendChild(row);
+			});
+			var addModule = document.createElement("button");
+			addModule.type = "button";
+			addModule.className = "btn btn-sm add-edit-btn";
+			addModule.textContent = "Add module";
+			addModule.addEventListener("click", function () {
+				var topicField = $("module-topic");
+				var label = $("module-topic-label");
+				if (topicField) topicField.value = topic.id;
+				if (label) label.textContent = topic.title;
+				formStatus("module-form-status", "");
+				var modal = document.getElementById("add-module");
+				if (modal && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modal).show();
+			});
+			item.appendChild(head);
+			item.appendChild(modules);
+			item.appendChild(addModule);
 			list.appendChild(item);
 		});
 		if (empty) empty.hidden = rows && rows.length > 0;
@@ -153,8 +215,16 @@
 	}
 
 	function loadTopics() {
-		return client.from("course_topics").select("id,title,position").eq("course_id", courseId).order("position").then(function (result) {
-			renderTopics(result.data || []);
+		return Promise.all([
+			client.from("course_topics").select("id,title,position").eq("course_id", courseId).order("position"),
+			client.from("course_modules").select("id,topic_id,title,video_url,position").eq("course_id", courseId).order("position")
+		]).then(function (parts) {
+			var topics = parts[0].data || [];
+			var modules = parts[1].error ? [] : (parts[1].data || []);
+			topics.forEach(function (topic) {
+				topic.modules = modules.filter(function (module) { return module.topic_id === topic.id; });
+			});
+			renderTopics(topics);
 		});
 	}
 	function loadFaqs() {
@@ -315,6 +385,49 @@
 		});
 	}
 
+	function bindModules() {
+		var form = $("module-form");
+		if (!form || form.dataset.bound) return;
+		form.dataset.bound = "1";
+		form.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var title = $("module-name").value.trim();
+			var url = $("module-url").value.trim();
+			var topicId = $("module-topic").value;
+			if (!title || !topicId) return;
+			if (url && !/^https?:\/\//i.test(url)) {
+				formStatus("module-form-status", "The video link needs to start with http:// or https://.", true);
+				return;
+			}
+			if (!client) {
+				formStatus("module-form-status", "Sign in as an instructor or founder to save a module.", true);
+				return;
+			}
+			formStatus("module-form-status", "Saving module…");
+			ensureDraft().then(function () {
+				return client.from("course_modules").select("position").eq("topic_id", topicId).order("position", { ascending: false }).limit(1);
+			}).then(function (result) {
+				if (result.error) throw new Error(result.error.message || "The module could not be saved.");
+				var last = result.data && result.data[0] ? Number(result.data[0].position) : 0;
+				return client.from("course_modules").insert({
+					course_id: courseId,
+					topic_id: topicId,
+					title: title.slice(0, 160),
+					video_url: url.slice(0, 500),
+					position: isFinite(last) ? last + 1 : 1
+				});
+			}).then(function (saved) {
+				if (saved.error) throw new Error(saved.error.message || "The module could not be saved.");
+				form.reset();
+				formStatus("module-form-status", "");
+				hideModal("add-module");
+				return loadTopics();
+			}).catch(function (error) {
+				formStatus("module-form-status", error.message || "The module could not be saved.", true);
+			});
+		});
+	}
+
 	function bindFaqs() {
 		var form = $("faq-form");
 		if (!form || form.dataset.bound) return;
@@ -453,6 +566,7 @@
 	}
 
 	bindTopics();
+	bindModules();
 	bindFaqs();
 	bindVideoLinks();
 

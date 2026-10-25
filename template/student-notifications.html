@@ -1,6 +1,7 @@
 <!DOCTYPE html> 
 <html lang="en">
 	<head>
+	<script src="assets/js/brylla-errors.js"></script>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="Read your Brylla Academy notifications.">
@@ -10,7 +11,7 @@
 	<link rel="apple-touch-icon" href="assets/img/logo.png">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500&display=swap" rel="stylesheet">
 	<style>
 		:root {
 			--color-primary: #073b70;
@@ -27,7 +28,7 @@
 			--color-danger: #9a3412;
 			--color-scrim: rgba(0, 0, 0, 0.35);
 			--color-focus: #073b70;
-			--font: Inter, "Segoe UI", Arial, sans-serif;
+			--font: Raleway, "Segoe UI", Arial, sans-serif;
 			--radius-card: 12px;
 			--radius-control: 8px;
 			--radius-pill: 999px;
@@ -61,7 +62,7 @@
 		.brand { display: flex; align-items: center; text-decoration: none; }
 		.brand-mark { position: relative; width: 84px; height: 44px; flex: 0 0 84px; overflow: hidden; display: block; }
 		.brand-mark img { position: absolute; width: 107px; height: 107px; max-width: none; top: calc(50% + 4px); left: 50%; transform: translate(-50%, -50%); }
-		.header-avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-size: 13px; font-weight: 500; }
+		.header-avatar { width: 36px; height: 36px; display: grid; place-items: center; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-size: 13px; font-weight: 500; text-decoration: none; }
 		.scrim { position: fixed; z-index: 80; top: var(--header-height); right: 0; bottom: 0; left: 0; background: var(--color-scrim); opacity: 0; visibility: hidden; transition: opacity var(--motion) ease, visibility 0s linear var(--motion); }
 		.scrim.is-open { opacity: 1; visibility: visible; transition: opacity var(--motion) ease; }
 		.drawer { position: fixed; z-index: 90; top: var(--header-height); bottom: 0; left: 0; width: var(--drawer-width); padding: 8px; overflow: auto; background: #fff; border-right: 1px solid var(--color-border); opacity: 0; visibility: hidden; transform: translateX(-100%); transition: transform var(--motion) ease, opacity var(--motion) ease, visibility 0s linear var(--motion); }
@@ -108,7 +109,7 @@
 			.scrim { top: calc(52px + env(safe-area-inset-top)); background: rgba(0, 0, 0, 0.4); }
 			.drawer { top: calc(52px + env(safe-area-inset-top)); display: flex; flex-direction: column; width: min(80vw, 320px); padding: 0; }
 			.drawer-profile { display: flex; align-items: center; gap: 12px; padding: 16px; border-bottom: 1px solid var(--color-border); }
-			.drawer-avatar { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-weight: 500; }
+			.drawer-avatar { width: 40px; height: 40px; display: grid; place-items: center; flex: 0 0 40px; border-radius: 50%; background: var(--color-banner-muted); color: var(--color-banner); font-weight: 500; text-decoration: none; }
 			.drawer-name { font-weight: 500; }
 			.drawer-email { color: var(--color-muted); font-size: 13px; }
 			.drawer-scroll { flex: 1; overflow: auto; padding: 8px; }
@@ -125,6 +126,12 @@
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
 	<script src="assets/js/brylla-auth.js" data-guard="student"></script>
+	<style>
+		@media (min-width: 768px) {
+			body:has(> .site-footer) { min-height: 100vh; display: flex; flex-direction: column; }
+			body:has(> .site-footer) > .site-footer { margin-top: auto; }
+		}
+	</style>
 	</head>
 	<body>
 	<a class="skip-link" href="#main">Skip to main content</a>
@@ -145,11 +152,10 @@
 					<span><strong>Brylla Academy</strong><span>Practical professional skills taught for the remote world.</span></span>
 				</a>
 				<nav class="footer-links" aria-label="Footer navigation">
-					<a href="index-4.html#courses">Courses</a>
-					<a href="index-4.html#stories">Student Stories</a>
-					<a href="index-4.html#toolkit">Career Toolkit</a>
-					<a href="index-4.html#faqs">FAQs</a>
-					<a href="index-4.html#contact">Contact</a>
+					<a href="/#courses">Courses</a>
+					<a href="/#services">Professional Services</a>
+					<a href="/#toolkit">Free Resource</a>
+					<a href="contact-us">Contact Us</a>
 					<a href="login.html">Student Login</a>
 							</nav>
 			</div>
@@ -185,7 +191,6 @@
 				{ label: "Quizes", href: "student-quiz.html", icon: "assignments" }
 			] },
 			{ label: "Account", items: [
-				{ label: "Settings", href: "student-settings.html", icon: "settings" },
 				{ label: "Help", href: "index-4.html#faqs", icon: "help", mobileOnly: true },
 				{ label: "Sign out", href: "index-4.html", icon: "signout", tone: "danger" }
 			] }
@@ -250,8 +255,9 @@
 			notify.setAttribute("aria-haspopup", "dialog");
 			notify.setAttribute("aria-label", "Notifications");
 			notify.append(icon("bell"));
-			const avatar = el("span", "header-avatar", initials(student.name));
-			avatar.setAttribute("aria-hidden", "true");
+			const avatar = el("a", "header-avatar", initials(student.name));
+			avatar.href = "student-profile.html";
+			avatar.setAttribute("aria-label", "Profile, " + student.name);
 			const end = el("div", "header-end");
 			end.append(notify, avatar);
 			headerEl.append(start, end);
@@ -259,7 +265,10 @@
 		function renderNav() {
 			navEl.replaceChildren();
 			const profile = el("div", "drawer-profile");
-			profile.append(el("span", "drawer-avatar", initials(student.name)));
+			const drawerAvatar = el("a", "drawer-avatar", initials(student.name));
+			drawerAvatar.href = "student-profile.html";
+			drawerAvatar.setAttribute("aria-label", "Profile, " + student.name);
+			profile.append(drawerAvatar);
 			const copy = document.createElement("div");
 			copy.append(el("p", "drawer-name", student.name), el("p", "drawer-email", student.email));
 			profile.append(copy);

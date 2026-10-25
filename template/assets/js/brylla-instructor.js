@@ -16,7 +16,7 @@
 	var SOURCE = {
 		instructor: { firstName: "", lastName: "", email: "", phone: "", bio: "", photo: "", qualifications: [], experience: [] },
 		courses: [
-			{ id: "bookkeeping", title: "Bookkeeping", status: "published", price: 950, lessons: 18, image: "", modules: BOOKKEEPING_MODULES },
+			{ id: "bookkeeping", title: "Bookkeeping", status: "published", price: 600, lessons: 18, image: "", modules: BOOKKEEPING_MODULES },
 			{ id: "remote-support", title: "Remote support", status: "draft", price: null, lessons: 0, image: "", modules: [] },
 			{ id: "digital-marketing", title: "Digital marketing", status: "draft", price: null, lessons: 0, image: "", modules: [] },
 			{ id: "project-management", title: "Project management", status: "draft", price: null, lessons: 0, image: "", modules: [] }
@@ -52,7 +52,6 @@
 		] },
 		{ label: "Account", items: [
 			{ label: "My profile", href: "instructor-profile.html", icon: "isax isax-user", page: "profile" },
-			{ label: "Settings", href: "instructor-settings.html", icon: "isax isax-setting-25", page: "settings" },
 			{ label: "Help", href: "instructor-help.html", icon: "isax isax-messages-35", page: "help" },
 			{ label: "Logout", href: "index-4.html", icon: "isax isax-logout5", page: "logout", danger: true }
 		] }
@@ -77,6 +76,7 @@
 			{ label: "Support", href: "admin-support.html", icon: "isax isax-messages-35", page: "admin-support" }
 		] },
 		{ label: "Account", items: [
+			{ label: "My profile", href: "admin-profile.html", icon: "isax isax-user", page: "profile" },
 			{ label: "Platform settings", href: "admin-settings.html", icon: "isax isax-setting-25", page: "admin-settings" },
 			{ label: "Help", href: "admin-help.html", icon: "isax isax-messages-35", page: "admin-help" },
 			{ label: "Logout", href: "index-4.html", icon: "isax isax-logout5", page: "logout", danger: true }
@@ -159,6 +159,10 @@
 		var name = (data.instructor.firstName + " " + data.instructor.lastName).trim();
 		if (name) return name;
 		return currentArea() === "admin" ? "Founder" : "Instructor";
+	}
+	function welcomeName(data) {
+		var first = instructorName(data).split(/\s+/).filter(Boolean)[0];
+		return first || "there";
 	}
 	function initials(data) {
 		var name = instructorName(data);
@@ -275,7 +279,7 @@
 			'<a class="academy-footer-brand" href="/"><span class="academy-footer-mark"><img src="assets/img/logo.png" alt=""></span>' +
 			'<span><strong>Brylla Academy</strong><span class="tagline">Practical professional skills taught for the remote world.</span></span></a>' +
 			'<nav class="academy-footer-links" aria-label="Footer navigation">' +
-			'<a href="/#courses">Courses</a><a href="/#stories">Student Stories</a><a href="/#toolkit">Career Toolkit</a><a href="/#faqs">FAQs</a><a href="contact-us">Contact</a>' +
+			'<a href="/#courses">Courses</a><a href="/#services">Professional Services</a><a href="/#toolkit">Free Resource</a><a href="contact-us">Contact Us</a>' +
 			'</nav></div><p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p></div></footer>';
 	}
 	function shell(page, data) {
@@ -291,9 +295,7 @@
 			}).join("") + "</ul>";
 		}).join("");
 		var notes = admin ? "admin-announcements.html" : "instructor-notifications.html";
-		var profile = admin
-			? '<a href="admin-settings.html">Platform settings</a>'
-			: '<a href="instructor-profile.html">My profile</a><a href="instructor-settings.html">Settings</a>';
+		var profileHref = admin ? "admin-profile.html" : "instructor-profile.html";
 		return '<a class="instructor-skip" href="#main">Skip to main content</a>' +
 			'<div class="app-shell"><aside class="app-sidebar" id="app-sidebar"><div class="app-brand"><a href="' + home + '" aria-label="Brylla Academy"><img src="assets/img/logo.png" alt="Brylla Academy"></a>' +
 			'<button class="app-icon" type="button" id="sidebar-collapse" aria-label="Collapse sidebar"><i class="isax isax-arrow-left-2" aria-hidden="true"></i></button></div>' +
@@ -303,8 +305,7 @@
 			'<p class="app-title" id="app-title">' + esc(pageTitle(page)) + '</p>' +
 			'<label class="visually-hidden" for="app-search">Search this page</label><input class="app-search" id="app-search" type="search" placeholder="Search">' +
 			'<a class="app-icon" href="' + notes + '" aria-label="Notifications"><i class="isax isax-notification" aria-hidden="true"></i></a>' +
-			'<div class="app-profile"><button class="app-profile-button" type="button" id="profile-button" aria-expanded="false" aria-controls="profile-menu"><span class="app-avatar">' + avatar + "</span><span>" + esc(instructorName(data)) + '</span></button>' +
-			'<div class="app-profile-menu" id="profile-menu" hidden>' + profile + '<a href="index-4.html" data-logout="1">Logout</a></div></div></header>' +
+			'<a class="app-profile-button" href="' + profileHref + '"><span class="app-avatar">' + avatar + "</span><span>" + esc(instructorName(data)) + "</span></a></header>" +
 			'<main class="app-content" id="main"></main></div></div>' +
 			academyFooter() +
 			'<p class="instructor-toast" id="instructor-toast" role="status" aria-live="polite" hidden></p>' +
@@ -313,14 +314,7 @@
 	function bindMenu() {
 		var sidebar = document.getElementById("app-sidebar");
 		var scrim = document.getElementById("app-scrim");
-		var profileButton = document.getElementById("profile-button");
-		var profileMenu = document.getElementById("profile-menu");
 		var search = document.getElementById("app-search");
-		function closeProfile(restore) {
-			profileMenu.hidden = true;
-			profileButton.setAttribute("aria-expanded", "false");
-			if (restore) profileButton.focus();
-		}
 		document.getElementById("sidebar-open").addEventListener("click", function () {
 			sidebar.classList.add("is-open");
 			scrim.hidden = false;
@@ -337,18 +331,8 @@
 			sidebar.classList.remove("is-open");
 			scrim.hidden = true;
 		});
-		profileButton.addEventListener("click", function () {
-			var open = profileMenu.hidden;
-			profileMenu.hidden = !open;
-			profileButton.setAttribute("aria-expanded", open ? "true" : "false");
-		});
-		document.addEventListener("click", function (event) {
-			if (profileMenu.hidden) return;
-			if (!profileMenu.contains(event.target) && event.target !== profileButton && !profileButton.contains(event.target)) closeProfile(false);
-		});
 		document.addEventListener("keydown", function (event) {
 			if (event.key === "Escape") {
-				if (!profileMenu.hidden) closeProfile(true);
 				sidebar.classList.remove("is-open");
 				scrim.hidden = true;
 			}
@@ -378,11 +362,6 @@
 			}
 			if (dirty && !window.confirm("You have unsaved changes. Leave this page?")) event.preventDefault();
 			else dirty = false;
-		});
-		profileMenu.addEventListener("click", function (event) {
-			var link = event.target.closest("[data-logout]");
-			if (!link) return;
-			endStaffSession(event);
 		});
 		search.addEventListener("input", function () {
 			var query = search.value.trim().toLowerCase();
@@ -428,12 +407,10 @@
 			return left.localeCompare(right) * courseSortDir;
 		});
 		var statusOptions = [["all", "All statuses"], ["published", "Published"], ["pending", "Pending"], ["draft", "Draft"], ["completed", "Completed"]];
-		var hour = new Date().getHours();
-		var hello = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
 		var drafts = data.courses.filter(function (item) { return item.status === "draft"; });
 		var scored = data.enrolments.filter(function (row) { return row.progress != null; });
 		var completion = scored.length ? Math.round(scored.reduce(function (sum, row) { return sum + Number(row.progress); }, 0) / scored.length) : null;
-		root.innerHTML = '<div class="dash-head"><div><h1 class="h4 fw-bold">' + hello + ", " + esc(instructorName(data)) + '</h1><p class="mb-0">Your courses, students and grading for today.</p></div>' +
+		root.innerHTML = '<div class="dash-head"><div><h1 class="welcome-badge">Welcome, ' + esc(welcomeName(data)) + '</h1><p class="mb-0">Your courses, students and grading for today.</p></div>' +
 			'<div class="d-flex flex-wrap gap-2"><a class="btn btn-primary rounded-pill" href="add-course.html">Create course</a><a class="btn btn-light rounded-pill" href="instructor-assignment.html">Review submissions</a></div></div>' +
 			'<div class="row">' +
 			statCard("isax isax-teacher5", "bg-primary-transparent", "My courses", String(count.courses), "#my-courses", "all") +
@@ -965,7 +942,58 @@
 		draw();
 	}
 
+	function enrolmentLabel(status) {
+		if (status === "active") return "Enrolled";
+		if (status === "pending_setup") return "Setting up account";
+		return status || "Enrolled";
+	}
+	function loadFounderEnrolments() {
+		var current = staffClient();
+		if (!current) return Promise.resolve({ error: { message: "Sign in to see enrolments." }, data: [] });
+		return current.rpc("founder_enrolments").then(function (result) {
+			return { error: result.error, data: result.data || [] };
+		});
+	}
+	function watchEnrolments(onChange) {
+		watchEnrolments.redraw = onChange;
+		var current = staffClient();
+		if (!current || watchEnrolments.channel) return;
+		watchEnrolments.channel = current.channel("founder-enrolments").on("postgres_changes", {
+			event: "*",
+			schema: "public",
+			table: "enrollments"
+		}, function () {
+			if (watchEnrolments.redraw) watchEnrolments.redraw();
+		}).subscribe();
+	}
+	function recentEnrolmentCard(rows, error) {
+		var body = error
+			? empty(error.message || "Enrolments could not be loaded.")
+			: (rows.length ? table(
+				[{ label: "Student" }, { label: "Course" }, { label: "Enrolled" }, { label: "Status" }],
+				rows.map(function (row) {
+					return "<tr>" + cell("Student", esc(row.student_name || row.email || "")) + cell("Course", esc(row.course_title || "")) + cell("Enrolled", esc(formatDate(row.enrolled_at))) + cell("Status", esc(enrolmentLabel(row.status))) + "</tr>";
+				})
+			) : empty("No students have enrolled yet."));
+		return '<div class="card mb-3" id="recent-enrolments"><div class="card-body"><h2 class="h5 fw-bold">Recent enrolments</h2><p class="mb-3">This list updates when a student enrols.</p>' + body + "</div></div>";
+	}
+	function paintLiveEnrolments() {
+		var value = document.querySelector("[data-live-students]");
+		var host = document.getElementById("recent-enrolments");
+		if (!value && !host) return;
+		loadFounderEnrolments().then(function (result) {
+			var rows = result.data || [];
+			var people = {};
+			rows.forEach(function (row) { people[(row.email || row.id || "").toLowerCase()] = true; });
+			if (value && document.body.contains(value)) value.textContent = result.error ? "Unavailable" : String(Object.keys(people).length);
+			if (host && document.body.contains(host)) host.outerHTML = recentEnrolmentCard(rows, result.error);
+		});
+	}
 	function renderStudents(root, data) {
+		if (currentArea() === "admin") {
+			renderAdminStudents(root);
+			return;
+		}
 		var filter = "all";
 		var query = "";
 		var openId = "";
@@ -1019,6 +1047,24 @@
 			});
 		}
 		draw();
+	}
+
+	function renderAdminStudents(root) {
+		function draw(rows, error) {
+			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><p class="mb-3">Everyone who has enrolled, including students still setting up their account. This list updates when someone enrols.</p>' +
+				(error ? empty(error.message || "Students could not be loaded.") : (rows.length ? table(
+					[{ label: "Student" }, { label: "Email" }, { label: "Course" }, { label: "Enrolled" }, { label: "Status" }],
+					rows.map(function (row) {
+						return "<tr>" + cell("Student", esc(row.student_name || row.email || "")) + cell("Email", esc(row.email || "")) + cell("Course", esc(row.course_title || "")) + cell("Enrolled", esc(formatDate(row.enrolled_at))) + cell("Status", esc(enrolmentLabel(row.status))) + "</tr>";
+					})
+				) : empty("No students have enrolled yet.")));
+		}
+		root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><p role="status">Loading enrolments…</p>';
+		function refresh() {
+			loadFounderEnrolments().then(function (result) { draw(result.data || [], result.error); });
+		}
+		watchEnrolments(refresh);
+		refresh();
 	}
 
 	function renderQuiz(root, data) {
@@ -1179,15 +1225,14 @@
 	function renderAdminDashboard(root, data) {
 		var count = totals(data);
 		var wide = "col-md-6 col-xl-3";
-		var hour = new Date().getHours();
-		var hello = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
-		root.innerHTML = '<div class="dash-head"><div><h1 class="h4 fw-bold">' + hello + ", " + esc(instructorName(data)) + '</h1><p class="mb-0">Revenue is the total students paid before their course opened.</p></div>' +
+		root.innerHTML = '<div class="dash-head"><div><h1 class="welcome-badge">Welcome, ' + esc(welcomeName(data)) + '</h1><p class="mb-0">Revenue is the total students paid before their course opened.</p></div>' +
 			'<div class="d-flex flex-wrap gap-2" role="group" aria-label="Date range"><button class="btn btn-light" type="button" data-range="7">7 days</button><button class="btn btn-light" type="button" data-range="30">30 days</button><button class="btn btn-light" type="button" data-range="90">90 days</button></div></div>' +
 			'<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>' +
-			'<p id="range-note" class="mb-3" role="status">Loading student payments…</p><div class="row">' +
+			'<p id="range-note" class="mb-3" role="status">Loading student payments…</p>' +
+			'<div class="card mb-3" id="recent-enrolments"><div class="card-body"><h2 class="h5 fw-bold">Recent enrolments</h2><p role="status">Loading enrolments…</p></div></div><div class="row">' +
 			statCard("isax isax-wallet-add5", "bg-purple-transparent", "Total revenue", "…", "admin-earnings.html", "", wide) +
 			statCard("isax isax-book", "bg-success-transparent", "Awaiting approval", "…", "admin-courses.html", "", wide) +
-			statCard("isax isax-profile-2user5", "bg-info-transparent", "Total students", String(count.students), "admin-students.html", "", wide) +
+			statCard("isax isax-profile-2user5", "bg-info-transparent", "Total students", "…", "admin-students.html", "", wide) +
 			statCard("isax isax-user", "bg-primary-transparent", "Active instructors", String(count.instructors), "admin-instructors.html", "", wide) +
 			'</div><div class="mb-3">' + submissionTable(data) + '</div><div class="row"><div class="col-lg-7 mb-3"><div class="card h-100"><div class="card-body" id="finance-panel"><p role="status">Loading student payments…</p></div></div></div><div class="col-lg-5 mb-3"><div class="card h-100"><div class="card-body" id="payment-status"><h2 class="h5 fw-bold">Payment status</h2><p role="status">Loading payments…</p></div></div></div></div><div class="row"><div class="col-lg-7 mb-3">' + activityCard(data) + '</div><div class="col-lg-5 mb-3">' + quickActions() + "</div></div>";
 		root.querySelectorAll("[data-range]").forEach(function (button) {
@@ -1195,9 +1240,17 @@
 				paintFinance(Number(button.getAttribute("data-range")));
 			});
 		});
+		root.querySelectorAll(".card-body span").forEach(function (label) {
+			if (label.textContent === "Total students") {
+				var value = label.parentElement.querySelector("h4");
+				if (value) value.setAttribute("data-live-students", "");
+			}
+		});
 		paintInstructorInvite();
 		paintPendingCourses();
 		paintFinance(90);
+		watchEnrolments(paintLiveEnrolments);
+		paintLiveEnrolments();
 	}
 	function formatMinor(amount, currency) {
 		var major = Number(amount) / 100;

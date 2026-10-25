@@ -1,6 +1,7 @@
 <!DOCTYPE html> 
 <html lang="en">
 	<head>
+	<script src="assets/js/brylla-errors.js"></script>
 	
 		<!-- Meta Tags -->
 		<meta charset="utf-8">
@@ -18,7 +19,7 @@
 		<link rel="apple-touch-icon" href="assets/img/logo.png">
 		<link rel="preconnect" href="https://fonts.googleapis.com">
 		<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-		<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+		<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
         
 		<!-- Bootstrap CSS -->
 		<link rel="stylesheet" href="assets/css/bootstrap.min.css">
@@ -51,10 +52,10 @@
 				--brylla-navy-deep: #062b52;
 				--brylla-teal: #13b8ad;
 				--brylla-orange: #f28a3c;
-				font-family: "Inter", "Segoe UI", Arial, sans-serif;
+				font-family: "Raleway", "Segoe UI", Arial, sans-serif;
 				font-size: 14px;
 			}
-			.register-page h1, .register-page h2, .register-page h3 { font-family: "Inter", "Segoe UI", Arial, sans-serif; font-weight: 700; letter-spacing: -.035em; }
+			.register-page h1, .register-page h2, .register-page h3 { font-family: "Raleway", "Segoe UI", Arial, sans-serif; font-weight: 700; letter-spacing: -.035em; }
 			.register-page .login-content .login-wrap-bg { background: #fff; }
 			.register-page .login-content .login-wrap-bg { position: relative; right: auto; width: 100%; max-width: 100%; flex: 0 0 100%; }
 			.register-page .login-content > .row { margin-right: 0; margin-left: 0; }
@@ -105,7 +106,7 @@
                                         <a href="/" class="link-1">Back to Home</a>
                                     </div>
                                     <h1 class="fs-32 fw-bold topic">Sign up</h1>
-                                    <p class="small text-muted mb-3" role="status">Choose your course and pay first. You set a password only after Paystack confirms the payment.</p>
+                                    <p class="small text-muted mb-3" role="status">Bookkeeping costs GHS 600 in total. Pay the GHS 50 registration fee now. The remaining GHS 550 covers enrolment in the course. You set a password only after Paystack confirms the registration payment.</p>
                                     <form id="signup-form" class="mb-3 pb-3" action="checkout" method="get" novalidate>
                                         <div class="mb-3 position-relative">
                                             <label class="form-label" for="signup-name">Full Name<span class="text-danger ms-1">*</span></label>
@@ -124,7 +125,7 @@
                                         <div class="mb-3">
                                             <label class="form-label" for="signup-course">Course<span class="text-danger ms-1">*</span></label>
                                             <select id="signup-course" name="course" class="form-select form-select-lg" required>
-                                                <option value="bookkeeping">Bookkeeping — GHS 950</option>
+                                                <option value="bookkeeping">Bookkeeping — registration fee GHS 50</option>
                                             </select>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-4">
@@ -188,7 +189,7 @@
 				const email = document.getElementById("signup-email").value.trim();
 				sessionStorage.setItem("bryllaPendingName", name);
 				sessionStorage.setItem("bryllaPendingEmail", email);
-				window.location.assign("checkout?course=" + encodeURIComponent(courseField.value));
+				window.location.assign("checkout?course=" + encodeURIComponent(courseField.value) + "&purpose=registration");
 			});
 		</script>
 		

@@ -1,6 +1,7 @@
 <!DOCTYPE html> 
 <html lang="en">
 	<head>
+	<script src="assets/js/brylla-errors.js"></script>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	<meta name="description" content="Watch your Brylla Academy bookkeeping lessons.">
@@ -9,7 +10,7 @@
 	<link rel="icon" type="image/png" href="assets/img/logo.png">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500&display=swap" rel="stylesheet">
 	<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3/dist/tabler-icons.min.css">
 	<style>
 		:root {
@@ -33,7 +34,7 @@
 			--header: 54px;
 		}
 		* { box-sizing: border-box; }
-		body { margin: 0; background: var(--bg); color: var(--text); font: 400 16px/1.5 Inter, system-ui, "Segoe UI", sans-serif; }
+		body { margin: 0; background: var(--bg); color: var(--text); font: 400 16px/1.5 Raleway, system-ui, "Segoe UI", sans-serif; }
 		a { color: var(--link); }
 		h1, h2, p { margin: 0; }
 		button, a { font-family: inherit; }
@@ -168,7 +169,7 @@
 								</div>
 			<div class="head-right">
 				<a class="icon-btn" data-student-notifications href="student-notifications.html" aria-label="Notifications, no unread"><i class="ti ti-bell" aria-hidden="true"></i></a>
-				<a class="avatar" id="avatar" href="student-settings.html"></a>
+				<a class="avatar" id="avatar" href="student-profile.html" aria-label="Profile"></a>
 					</div>
 				</div>
 			</header>
@@ -180,7 +181,7 @@
 		<a href="student-courses.html"><i class="ti ti-school" aria-hidden="true"></i>My courses</a>
 		<a href="student-quiz.html"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Quizes</a>
 		<p class="grp">Account</p>
-		<a href="student-settings.html"><i class="ti ti-settings" aria-hidden="true"></i>Settings</a>
+		<a href="student-profile.html"><i class="ti ti-user" aria-hidden="true"></i>Profile</a>
 		<a class="out" href="index-4.html"><i class="ti ti-logout" aria-hidden="true"></i>Sign out</a>
 							</nav>
 
@@ -246,9 +247,10 @@
 			w6l2: "Clean up a real set of books that has fallen behind.",
 			w6l3: "Find bookkeeping work, write applications, and use AI with care."
 		};
-		var PRICE = "GHS 950";
-		var ENROL_URL = "checkout.html?course=bookkeeping";
+		var PRICE = "GHS 600";
+		var ENROL_URL = "register.html?course=bookkeeping";
 		var courseKey = new URLSearchParams(location.search).get("course") || "bookkeeping";
+		var courseTitle = courseKey === "bookkeeping" ? "Bookkeeping" : "Course";
 
 		var $ = function (id) { return document.getElementById(id); };
 		var esc = function (value) {
@@ -316,7 +318,7 @@
 			var finished = isDone(item, sets);
 			var icon = finished ? "ti-circle-check" : current ? "ti-player-play-filled" : locked ? "ti-lock" : "ti-circle";
 			var color = finished && !current ? ' style="color:var(--green-fg)"' : "";
-			var extra = '<span class="m">' + (item.kind === "live" ? "Live" : item.min + " min") + "</span>";
+			var extra = item.min ? '<span class="m">' + (item.kind === "live" ? "Live" : item.min + " min") + "</span>" : "";
 			var inner = '<i class="ti ' + icon + '"' + color + ' aria-hidden="true"></i><span class="nm">' + esc(item.kind === "live" ? "Live: " + item.title : item.title) + "</span>" + extra;
 			if (locked) return '<div class="lr lock">' + inner + "</div>";
 			return '<button class="lr' + (current ? " cur" : "") + '" type="button" data-id="' + esc(item.id) + '"' + (current ? ' aria-current="true"' : "") + ">" + inner + "</button>";
@@ -340,24 +342,40 @@
 				"</section>";
 		}
 
+		function sidebarGroups() {
+			if (courseKey === "bookkeeping") {
+				return BryllaStudent.modules.map(function (module) {
+					return { week: module.week, label: "Week " + module.week, title: module.title, assignment: true };
+				});
+			}
+			var groups = [];
+			var seen = {};
+			ALL.forEach(function (item) {
+				if (seen[item.week]) return;
+				seen[item.week] = true;
+				groups.push({ week: item.week, label: item.topic || "Topic", title: item.topic || "Topic", assignment: false });
+			});
+			return groups;
+		}
 		function renderSide() {
 			var summary = BryllaStudent.summary();
 			var sets = progressSets();
-			var pct = enrolled ? summary.percentComplete : 0;
-			var doneCount = enrolled ? summary.lessonsDone : 0;
-			var total = BryllaStudent.lessons.length;
-			$("ctitle").textContent = "Bookkeeping";
+			var lessonItems = ALL.filter(function (item) { return item.kind === "lesson"; });
+			var total = courseKey === "bookkeeping" ? BryllaStudent.lessons.length : lessonItems.length;
+			var doneCount = courseKey === "bookkeeping" ? (enrolled ? summary.lessonsDone : 0) : lessonItems.filter(function (item) { return sets.done[item.id]; }).length;
+			var pct = courseKey === "bookkeeping" ? (enrolled ? summary.percentComplete : 0) : (total ? Math.round(doneCount / total * 100) : 0);
+			$("ctitle").textContent = courseTitle;
 			$("pfill").style.width = pct + "%";
 			$("pbar").setAttribute("aria-valuenow", String(pct));
 			$("plabel").textContent = pct + "% complete, " + doneCount + " of " + total + " lessons";
-			$("weeks").innerHTML = BryllaStudent.modules.map(function (module) {
+			$("weeks").innerHTML = sidebarGroups().map(function (module) {
 				var lessons = ALL.filter(function (item) { return item.week === module.week && item.kind === "lesson"; });
 				var rows = ALL.filter(function (item) { return item.week === module.week; });
 				var finished = lessons.filter(function (item) { return sets.done[item.id]; }).length;
 				var open = rows.indexOf(sel) !== -1;
 				var status = finished === lessons.length && finished > 0 ? "Done" : finished + " of " + lessons.length;
-				var assignment = moduleAssignment(module);
-				return '<details' + (open ? " open" : "") + '><summary><span class="t">Week ' + module.week + '</span><span class="s">' + status + '</span><i class="ti ti-chevron-down chev" aria-hidden="true"></i></summary><div class="lessons">' + rows.map(function (item) { return lessonRow(item, sets); }).join("") + assignment + "</div></details>";
+				var assignment = module.assignment ? moduleAssignment(module) : "";
+				return '<details' + (open ? " open" : "") + '><summary><span class="t">' + esc(module.label) + '</span><span class="s">' + status + '</span><i class="ti ti-chevron-down chev" aria-hidden="true"></i></summary><div class="lessons">' + rows.map(function (item) { return lessonRow(item, sets); }).join("") + assignment + "</div></details>";
 			}).join("");
 			$("locknote").hidden = enrolled;
 		}
@@ -637,6 +655,25 @@
 			if (/^https?:\/\//i.test(value)) return '<video controls autoplay playsinline src="' + esc(value) + '"></video>';
 			return "";
 		}
+		function applyCurriculum(topics, modules, links) {
+			if (courseKey !== "bookkeeping" && modules && modules.length) {
+				var topicName = {};
+				var topicOrder = {};
+				(topics || []).forEach(function (topic, index) {
+					topicName[topic.id] = topic.title;
+					topicOrder[topic.id] = index + 1;
+				});
+				var counts = {};
+				ALL = modules.map(function (module) {
+					var week = topicOrder[module.topic_id] || 1;
+					counts[week] = (counts[week] || 0) + 1;
+					return { id: "mod-" + module.id, kind: "lesson", week: week, topic: topicName[module.topic_id] || "Lessons", n: counts[week], title: module.title, min: 0, preview: false, summary: module.title, videoUrl: module.video_url || "" };
+				});
+				if (!ALL.some(function (item) { return item === sel; })) sel = ALL[0] || null;
+				return;
+			}
+			applyLessonLinks(links);
+		}
 		function applyLessonLinks(rows) {
 			var links = (rows || []).slice();
 			if (courseKey !== "bookkeeping") {
@@ -661,26 +698,34 @@
 		function loadLessonLinks() {
 			var client = window.BryllaAuth && BryllaAuth.client;
 			if (!client) return Promise.resolve();
-			var links = client.from("course_video_links").select("id,title,video_url,position").eq("course_id", courseKey).order("position");
+			function linksQuery() {
+				return client.from("course_video_links").select("id,title,video_url,position").eq("course_id", courseKey).order("position");
+			}
+			function curriculumQuery() {
+				return Promise.all([
+					client.from("courses").select("title").eq("id", courseKey).maybeSingle(),
+					client.from("course_topics").select("id,title,position").eq("course_id", courseKey).order("position"),
+					client.from("course_modules").select("id,topic_id,title,video_url,position").eq("course_id", courseKey).order("position"),
+					linksQuery()
+				]).then(function (parts) {
+					if (parts[0].data && parts[0].data.title) courseTitle = parts[0].data.title;
+					applyCurriculum(parts[1].data || [], parts[2].error ? [] : (parts[2].data || []), parts[3].error ? [] : (parts[3].data || []));
+				});
+			}
 			if (courseKey === "bookkeeping") {
-				return links.then(function (result) {
+				return linksQuery().then(function (result) {
 					if (!result.error) applyLessonLinks(result.data || []);
 				});
 			}
 			return client.auth.getSession().then(function (session) {
 				var user = session.data.session && session.data.session.user;
-				if (!user) {
-					return links.then(function (result) {
-						if (!result.error) applyLessonLinks(result.data || []);
-					});
-				}
+				if (!user) return curriculumQuery();
 				return Promise.all([
 					client.from("enrollments").select("status").eq("user_id", user.id).eq("course_id", courseKey).eq("status", "active").maybeSingle(),
 					client.from("course_access").select("course_id").eq("user_id", user.id).eq("course_id", courseKey).maybeSingle(),
-					links
+					curriculumQuery()
 				]).then(function (parts) {
 					enrolled = Boolean((parts[0].data) || (parts[1].data));
-					if (!parts[2].error) applyLessonLinks(parts[2].data || []);
 				});
 			});
 		}

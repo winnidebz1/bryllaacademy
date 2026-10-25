@@ -51,7 +51,7 @@
 			".note-bell{position:relative;width:40px;height:40px;display:inline-grid;place-items:center;padding:0;border:1px solid #d5e2ee;border-radius:10px;background:#fff;color:#122d49;cursor:pointer}",
 			".note-bell:hover,.icon-button.notify-button:hover{background:#f4f8fb}",
 			".notify-badge{position:absolute;top:2px;right:0;min-width:16px;height:16px;padding:0 4px;border-radius:999px;background:#b42318;color:#fff;font-size:10px;font-weight:600;line-height:16px;text-align:center}",
-			".note-panel{position:fixed;z-index:1200;display:flex;flex-direction:column;width:min(380px,calc(100vw - 16px));max-height:min(480px,70vh);overflow:hidden;border:1px solid #e3ebf2;border-radius:14px;background:#fff;color:#122d49;box-shadow:0 16px 40px rgba(7,59,112,.16);font-family:Inter,Segoe UI,Arial,sans-serif}",
+			".note-panel{position:fixed;z-index:1200;display:flex;flex-direction:column;width:min(380px,calc(100vw - 16px));max-height:min(480px,70vh);overflow:hidden;border:1px solid #e3ebf2;border-radius:14px;background:#fff;color:#122d49;box-shadow:0 16px 40px rgba(7,59,112,.16);font-family:Raleway,Segoe UI,Arial,sans-serif}",
 			".note-panel[hidden]{display:none}",
 			".note-head{display:flex;align-items:center;gap:10px;padding:14px 14px 10px;border-bottom:1px solid #e3ebf2}",
 			".note-head-icon{width:32px;height:32px;display:grid;place-items:center;flex:0 0 32px;border-radius:9px;background:#e7eef6;color:#073b70}",

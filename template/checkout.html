@@ -1,14 +1,15 @@
 <!DOCTYPE html> 
 <html lang="en">
 	<head>
+	<script src="assets/js/brylla-errors.js"></script>
 		<meta charset="utf-8">
 		<meta name="viewport" content="width=device-width, initial-scale=1">
 	<title>Checkout | Brylla Academy</title>
 	<link rel="icon" type="image/png" href="assets/img/logo.png">
 	<link rel="preconnect" href="https://fonts.googleapis.com">
-	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
 	<style>
-		body { margin: 0; font-family: Inter, "Segoe UI", Arial, sans-serif; background: #f4f8fb; color: #122d49; }
+		body { margin: 0; font-family: Raleway, "Segoe UI", Arial, sans-serif; background: #f4f8fb; color: #122d49; }
 		main { max-width: 560px; margin: 0 auto; padding: 32px 16px 64px; }
 		img { width: 120px; }
 		h1 { font-size: 1.6rem; }
@@ -30,7 +31,7 @@
 		<div class="summary">
 			<p id="course-title"></p>
 			<p class="price" id="course-price"></p>
-			<p>The amount charged is the price stored for this course. It is not taken from this page.</p>
+			<p id="course-note"></p>
 		</div>
 		<form id="checkout-form">
 			<label for="checkout-name">Full name</label>
@@ -46,10 +47,16 @@
 	<script src="assets/js/brylla-checkout.js"></script>
 	<script>
 		var catalog = {
-			bookkeeping: { title: "Bookkeeping", price: "GHS 950", open: true }
+			bookkeeping: {
+				title: "Bookkeeping",
+				registration: "GHS 50",
+				enrolment: "GHS 550",
+				open: true
+			}
 		};
 		var params = new URLSearchParams(location.search);
 		var courseId = params.get("course") || "bookkeeping";
+		var purpose = params.get("purpose") === "enrolment" ? "enrolment" : "registration";
 		var course = catalog[courseId];
 		var statusBox = document.getElementById("checkout-status");
 		var form = document.getElementById("checkout-form");
@@ -58,11 +65,18 @@
 		if (!course || !course.open) {
 			document.getElementById("course-title").textContent = "This course is not open for payment.";
 			document.getElementById("course-price").textContent = "";
+			document.getElementById("course-note").textContent = "";
 			form.hidden = true;
+		} else if (purpose === "enrolment") {
+			document.getElementById("course-title").textContent = course.title + " course fee";
+			document.getElementById("course-price").textContent = course.enrolment;
+			document.getElementById("course-copy").textContent = "This payment enrols you in the course. Pay it after the registration fee.";
+			document.getElementById("course-note").textContent = "Paystack charges the course fee stored for this course.";
 		} else {
-			document.getElementById("course-title").textContent = course.title;
-			document.getElementById("course-price").textContent = course.price;
-			document.getElementById("course-copy").textContent = "Pay first. You will choose a password only after the payment is verified.";
+			document.getElementById("course-title").textContent = course.title + " registration";
+			document.getElementById("course-price").textContent = course.registration;
+			document.getElementById("course-copy").textContent = "Pay the registration fee first. You choose a password only after Paystack confirms it. The course fee of " + course.enrolment + " is paid later to enrol.";
+			document.getElementById("course-note").textContent = "Paystack charges the registration fee stored for this course.";
 		}
 		form.addEventListener("submit", function (event) {
 			event.preventDefault();
@@ -77,6 +91,7 @@
 			}
 			window.BryllaCheckout.post("create-checkout", {
 				courseId: courseId,
+				purpose: purpose,
 				fullName: document.getElementById("checkout-name").value.trim(),
 				email: document.getElementById("checkout-email").value.trim()
 			}).then(function (result) {

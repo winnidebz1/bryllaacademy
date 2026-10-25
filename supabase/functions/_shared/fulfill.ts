@@ -57,22 +57,25 @@ export async function fulfil(supabase: SupabaseClient, reference: string) {
 			currency: transaction.currency,
 			verified_at: new Date().toISOString(),
 		}, { onConflict: "paystack_reference" });
-		await supabase.from("enrollments").upsert({
-			order_id: order.id,
-			course_id: order.course_id,
-			email: order.email,
-			user_id: order.user_id,
-			status: order.user_id ? "active" : "pending_setup",
-		}, { onConflict: "order_id" });
+		if (order.purpose !== "registration") {
+			await supabase.from("enrollments").upsert({
+				order_id: order.id,
+				course_id: order.course_id,
+				email: order.email,
+				user_id: order.user_id,
+				status: order.user_id ? "active" : "pending_setup",
+			}, { onConflict: "order_id" });
+		}
 	}
 	const setup = await sendSetupEmail(supabase, order);
 	return { ok: true, code: decision.code, email: setup.status, setupUrl: setup.link, kind: setup.kind };
 }
 
-async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; email: string; full_name: string; course_id: string; user_id: string | null }) {
+async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; email: string; full_name: string; course_id: string; user_id: string | null; purpose?: string | null }) {
 	const site = Deno.env.get("SITE_URL") || "https://bryllaacademy.vercel.app";
 	const { data: course } = await supabase.from("courses").select("title").eq("id", order.course_id).maybeSingle();
 	const courseTitle = course?.title ?? "your course";
+	const purpose = order.purpose === "registration" ? "registration" : "enrolment";
 	let link = site ? site + "/set-password" : "";
 	let kind = "invite";
 	const invite = await supabase.auth.admin.generateLink({
@@ -112,8 +115,10 @@ async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; ema
 			body: JSON.stringify({
 				from,
 				to: order.email,
-				subject: kind === "invite" ? "Set your Brylla Academy password" : "Your Brylla Academy course is ready",
-				html: emailHtml(order.full_name, courseTitle, link, kind),
+				subject: purpose === "registration"
+					? "Your Brylla Academy registration is confirmed"
+					: (kind === "invite" ? "Set your Brylla Academy password" : "Your Brylla Academy course is ready"),
+				html: emailHtml(order.full_name, courseTitle, link, kind, purpose),
 			}),
 		});
 		responseOk = response.ok;
@@ -136,12 +141,18 @@ async function linkUser(supabase: SupabaseClient, order: { id: string; full_name
 	await supabase.from("profiles").upsert({ id: userId, full_name: order.full_name });
 }
 
-function emailHtml(name: string, course: string, link: string, kind: string): string {
-	const step = kind === "invite"
-		? "Payment is confirmed. Use the button to choose your password. The link can be used once."
-		: "Payment is confirmed and this email already has an account. Sign in to open the course. Your password was not changed.";
+function emailHtml(name: string, course: string, link: string, kind: string, purpose = "enrolment"): string {
+	const registration = purpose === "registration";
+	const step = registration
+		? (kind === "invite"
+			? "Your registration fee is confirmed. Use the button to choose your password. The course fee is paid separately when you enrol."
+			: "Your registration fee is confirmed and this email already has an account. Sign in, then pay the course fee to enrol.")
+		: (kind === "invite"
+			? "Payment is confirmed. Use the button to choose your password. The link can be used once."
+			: "Payment is confirmed and this email already has an account. Sign in to open the course. Your password was not changed.");
 	const label = kind === "invite" ? "Set your password" : "Sign in";
-	return `<div style="font-family:Arial,sans-serif;color:#122d49;max-width:520px"><p>Hello ${escapeHtml(name)},</p><p>${escapeHtml(course)} is ready.</p><p>${step}</p><p><a href="${escapeHtml(link)}" style="background:#073b70;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px">${label}</a></p><p>Brylla Academy</p></div>`;
+	const lead = registration ? escapeHtml(course) + " registration is confirmed." : escapeHtml(course) + " is ready.";
+	return `<div style="font-family:Arial,sans-serif;color:#122d49;max-width:520px"><p>Hello ${escapeHtml(name)},</p><p>${lead}</p><p>${step}</p><p><a href="${escapeHtml(link)}" style="background:#073b70;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px">${label}</a></p><p>Brylla Academy</p></div>`;
 }
 
 function escapeHtml(value: string): string {
