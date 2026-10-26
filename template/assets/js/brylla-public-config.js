@@ -1,6 +1,6 @@
 window.BryllaPublic = {
-	supabaseUrl: "https://pfcnbenzpezttqtsvvom.supabase.co",
-	supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InBmY25iZW56cGV6dHRxdHN2dm9tIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE4NDIyOTEsImV4cCI6MjEwNzQxODI5MX0.Pg3BuW8mqek4nxHkoVKi93oUHT6UfI28wsDAbkhrWX4",
+	supabaseUrl: "https://cwsuxwafjuwxbbhssito.supabase.co",
+	supabaseAnonKey: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN3c3V4d2FmanV3eGJiaHNzaXRvIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTMwNDE2OTYsImV4cCI6MjEwODYxNzY5Nn0.hJQt5NScgzf0yR1GdcqiiyJ4_AzMNUWcfetcf5lo27c",
 	client: function () {
 		if (!window.supabase || !window.BryllaPublic.supabaseUrl || !window.BryllaPublic.supabaseAnonKey) return null;
 		// A saved login used to survive closing the browser. Drop those copies.
