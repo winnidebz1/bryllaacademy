@@ -94,6 +94,7 @@
 		.assignment-submitted { display: flex; align-items: center; gap: 6px; margin: 0; color: var(--green-fg); font-size: 13px; font-weight: 500; }
 		.note { border-top: 1px solid var(--border); padding: 14px var(--s4); font-size: 13px; color: var(--muted); display: flex; align-items: center; gap: 8px; }
 		.video { aspect-ratio: 16/9; background: #0a2a47; border-radius: 14px; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+		.video.guide { aspect-ratio: auto; height: min(70vh, 520px); background: #fff; }
 		.video iframe, .video video { width: 100%; height: 100%; border: 0; display: block; background: #000; }
 		.video .msg { color: #fff; text-align: center; padding: var(--s4); display: flex; flex-direction: column; align-items: center; gap: var(--s2); }
 		.video .msg i { font-size: 36px; }
@@ -267,6 +268,19 @@
 			});
 			ALL.push({ id: "w" + module.week + "live", kind: "live", week: module.week, topic: module.title, n: 0, title: module.live, min: 60, preview: false, summary: "A live session with your instructor." });
 		});
+		if (courseKey === "bookkeeping") {
+			ALL.unshift(
+				{ id: "welcome", kind: "guide", week: 0, topic: "Start here", n: 1, title: "Welcome to Brylla Academy", min: 0, preview: false, summary: "A welcome from Brylla Academy.", videoUrl: "", pageUrl: "" },
+				{ id: "platform-tutorial", kind: "guide", week: 0, topic: "Start here", n: 2, title: "How to use the learning platform", min: 0, preview: false, summary: "A short guide to lessons, assignments, and progress.", videoUrl: "", pageUrl: "platform-tutorial.html" }
+			);
+		}
+		var COURSE_OPENS_AT = Date.parse("2027-01-04T00:00:00Z");
+		function lessonsOpen() { return Date.now() >= COURSE_OPENS_AT; }
+		function itemLocked(item) {
+			if (!enrolled) return true;
+			if (item.kind === "guide") return false;
+			return courseKey === "bookkeeping" && !lessonsOpen();
+		}
 
 		var enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
 		if (enrolled) BryllaStudent.startCourse();
@@ -313,7 +327,7 @@
 		}
 
 		function lessonRow(item, sets) {
-			var locked = !enrolled;
+			var locked = itemLocked(item);
 			var current = item === sel && enrolled;
 			var finished = isDone(item, sets);
 			var icon = finished ? "ti-circle-check" : current ? "ti-player-play-filled" : locked ? "ti-lock" : "ti-circle";
@@ -344,9 +358,9 @@
 
 		function sidebarGroups() {
 			if (courseKey === "bookkeeping") {
-				return BryllaStudent.modules.map(function (module) {
+				return [{ week: 0, label: "Start here", title: "Welcome", assignment: false }].concat(BryllaStudent.modules.map(function (module) {
 					return { week: module.week, label: "Week " + module.week, title: module.title, assignment: true };
-				});
+				}));
 			}
 			var groups = [];
 			var seen = {};
@@ -369,15 +383,24 @@
 			$("pbar").setAttribute("aria-valuenow", String(pct));
 			$("plabel").textContent = pct + "% complete, " + doneCount + " of " + total + " lessons";
 			$("weeks").innerHTML = sidebarGroups().map(function (module) {
-				var lessons = ALL.filter(function (item) { return item.week === module.week && item.kind === "lesson"; });
 				var rows = ALL.filter(function (item) { return item.week === module.week; });
-				var finished = lessons.filter(function (item) { return sets.done[item.id]; }).length;
+				var countable = rows.filter(function (item) { return item.kind !== "live"; });
+				var finished = countable.filter(function (item) { return sets.done[item.id]; }).length;
 				var open = rows.indexOf(sel) !== -1;
-				var status = finished === lessons.length && finished > 0 ? "Done" : finished + " of " + lessons.length;
+				var status = finished === countable.length && finished > 0 ? "Done" : finished + " of " + countable.length;
 				var assignment = module.assignment ? moduleAssignment(module) : "";
 				return '<details' + (open ? " open" : "") + '><summary><span class="t">' + esc(module.label) + '</span><span class="s">' + status + '</span><i class="ti ti-chevron-down chev" aria-hidden="true"></i></summary><div class="lessons">' + rows.map(function (item) { return lessonRow(item, sets); }).join("") + assignment + "</div></details>";
 			}).join("");
-			$("locknote").hidden = enrolled;
+			var lockNote = $("locknote");
+			if (!enrolled) {
+				lockNote.hidden = false;
+				lockNote.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i> Other lessons unlock after you enrol';
+			} else if (courseKey === "bookkeeping" && !lessonsOpen()) {
+				lockNote.hidden = false;
+				lockNote.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i> Week 1 lessons open on 4 January 2027';
+			} else {
+				lockNote.hidden = true;
+			}
 		}
 
 		function openAssignment(moduleTitle, week) {
@@ -425,31 +448,40 @@
 		function renderMain() {
 			var sets = progressSets();
 			var summary = BryllaStudent.summary();
-			var can = enrolled;
-			var last = sel === ALL[ALL.length - 1];
+			var can = enrolled && !itemLocked(sel);
+			var nextItem = ALL[ALL.indexOf(sel) + 1];
+			var videoClass = sel.kind === "guide" && sel.pageUrl ? "video guide" : "video";
 			var video;
-			if (can && sel.kind === "lesson") {
+			if (can && sel.kind === "guide") {
+				video = embedVideo(sel.videoUrl) || (sel.pageUrl
+					? '<iframe src="' + esc(sel.pageUrl) + '" title="' + esc(sel.title) + '"></iframe>'
+					: '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><strong>Welcome video</strong><small>A welcome from Brylla Academy will play here. It will be added before the course opens on 4 January 2027.</small></div>');
+			} else if (can && sel.kind === "lesson") {
 				video = embedVideo(sel.videoUrl) || '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><small>This lesson\'s video will play here when a link is added.</small></div>';
 			} else if (can && sel.kind === "live") {
 				video = '<div class="msg"><i class="ti ti-broadcast" aria-hidden="true"></i><strong>' + esc(sel.title) + '</strong><small>Live session. Mark attended after you join.</small></div>';
+			} else if (enrolled) {
+				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>Lessons open on 4 January 2027</strong><small>Registering keeps your place. Week 1 does not open before the course start date.</small></div>';
 			} else {
 				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>Enrol to start learning</strong><small>Course lessons unlock after you enrol.</small></div>';
 			}
 			var head = can
-				? "<h1>" + esc(sel.title) + "</h1><p class=\"sub\">Week " + sel.week + (sel.kind === "live" ? ", live session" : ", lesson " + sel.n) + "</p>"
+				? "<h1>" + esc(sel.title) + "</h1><p class=\"sub\">" + (sel.week ? "Week " + sel.week + (sel.kind === "live" ? ", live session" : ", lesson " + sel.n) : "Start here") + "</p>"
 				: "<h1>Study Materials</h1><p class=\"sub\">Bookkeeping course resources</p>";
 			var actions = "";
-			if (enrolled && sel.kind === "lesson") {
+			if (enrolled && sel.kind === "guide") {
+				if (nextItem && !itemLocked(nextItem)) actions += '<button class="btn primary" type="button" data-a="next">Next <i class="ti ti-arrow-right" aria-hidden="true"></i></button>';
+			} else if (enrolled && sel.kind === "lesson" && !itemLocked(sel)) {
 				var finished = Boolean(sets.done[sel.id]);
 				var currentId = summary.lessonId;
 				if (finished) actions += '<button class="btn" type="button" disabled aria-pressed="true"><i class="ti ti-circle-check" aria-hidden="true"></i>Completed</button>';
 				else if (sel.id !== currentId) actions += '<button class="btn" type="button" disabled>Finish the current lesson first</button>';
 				else actions += '<button class="btn" type="button" data-a="done"><i class="ti ti-circle-check" aria-hidden="true"></i>Mark complete</button>';
-				if (!last) actions += '<button class="btn primary" type="button" data-a="next">Next lesson <i class="ti ti-arrow-right" aria-hidden="true"></i></button>';
-			} else if (enrolled && sel.kind === "live") {
+				if (nextItem && !itemLocked(nextItem)) actions += '<button class="btn primary" type="button" data-a="next">Next lesson <i class="ti ti-arrow-right" aria-hidden="true"></i></button>';
+			} else if (enrolled && sel.kind === "live" && !itemLocked(sel)) {
 				if (sets.attended[sel.id]) actions += '<button class="btn" type="button" disabled>Attendance saved</button>';
 				else actions += '<button class="btn" type="button" data-a="attend"><i class="ti ti-circle-check" aria-hidden="true"></i>Mark attended</button>';
-				if (!last) actions += '<button class="btn primary" type="button" data-a="next">Next lesson <i class="ti ti-arrow-right" aria-hidden="true"></i></button>';
+				if (nextItem && !itemLocked(nextItem)) actions += '<button class="btn primary" type="button" data-a="next">Next lesson <i class="ti ti-arrow-right" aria-hidden="true"></i></button>';
 			} else {
 				actions = '<a class="btn primary" href="#study-materials">View here</a>';
 			}
@@ -469,7 +501,7 @@
 				: "";
 			var materials = '<section class="panel" id="study-materials"><h2>Study Materials</h2><p>Study materials will be available here.</p></section>';
 			var status = statusText ? '<p class="status" role="status">' + esc(statusText) + "</p>" : "";
-			$("main").innerHTML = '<div class="video">' + video + "</div><div>" + head + '</div><div class="actions">' + actions + "</div>" + status + tabs + materials;
+			$("main").innerHTML = '<div class="' + videoClass + '">' + video + "</div><div>" + head + '</div><div class="actions">' + actions + "</div>" + status + tabs + materials;
 			var note = $("note");
 			if (note) {
 				try { note.value = localStorage.getItem("note:" + sel.id) || ""; } catch (error) { note.value = ""; }
@@ -480,8 +512,8 @@
 		}
 
 		function render() {
-			if (!sel) {
-				sel = enrolled ? itemById(BryllaStudent.summary().lessonId) || ALL[0] : ALL[0];
+			if (!sel || (enrolled && itemLocked(sel))) {
+				sel = enrolled && lessonsOpen() ? (itemById(BryllaStudent.summary().lessonId) || ALL[0]) : (itemById("welcome") || ALL[0]);
 			}
 			renderSide();
 			renderMain();
@@ -492,7 +524,7 @@
 			if (!button || !$("main").contains(button) && !$("weeks").contains(button)) return;
 			if (button.dataset.id) {
 				var nextItem = itemById(button.dataset.id);
-				if (!nextItem || !enrolled) return;
+				if (!nextItem || itemLocked(nextItem)) return;
 				sel = nextItem;
 			} else if (button.dataset.a === "done") {
 				var saved = BryllaStudent.completeLesson(sel.id);
@@ -503,7 +535,7 @@
 				statusText = "Attendance saved. " + attended.attendancePercent + "% of live sessions attended.";
 			} else if (button.dataset.a === "next") {
 				var index = ALL.indexOf(sel);
-				if (ALL[index + 1]) sel = ALL[index + 1];
+				if (ALL[index + 1] && !itemLocked(ALL[index + 1])) sel = ALL[index + 1];
 			} else if (button.dataset.a === "assignment") {
 				openAssignment(button.dataset.moduleTitle, button.dataset.moduleWeek);
 			} else if (button.dataset.t) {

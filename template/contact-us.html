@@ -151,7 +151,7 @@
 				<div class="contact-points">
 					<article>
 						<h2>Email</h2>
-						<p><a href="mailto:hello@bryllaacademy.com">hello@bryllaacademy.com</a></p>
+						<p><a href="mailto:admin@bryllagroup.org">admin@bryllagroup.org</a></p>
 					</article>
 					<article>
 						<h2>Students</h2>
@@ -187,6 +187,8 @@
 					<a href="/#services">Professional Services</a>
 					<a href="/#toolkit">Free Resource</a>
 					<a href="contact-us" aria-current="page">Contact Us</a>
+					<a href="terms-and-conditions">Terms and Conditions</a>
+					<a href="mailto:admin@bryllagroup.org">admin@bryllagroup.org</a>
 				</nav>
 			</div>
 			<p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p>
@@ -218,7 +220,7 @@
 				event.preventDefault();
 				var client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
 				if (!client) {
-					status.textContent = "The message could not be sent. Email hello@bryllaacademy.com instead.";
+					status.textContent = "The message could not be sent. Email admin@bryllagroup.org instead.";
 					status.className = "form-status is-error";
 					return;
 				}
@@ -232,7 +234,7 @@
 					message: document.getElementById("contact-message").value.trim()
 				}).then(function (result) {
 					if (result.error) {
-						status.textContent = "The message could not be sent. Email hello@bryllaacademy.com instead.";
+						status.textContent = "The message could not be sent. Email admin@bryllagroup.org instead.";
 						status.className = "form-status is-error";
 						return;
 					}

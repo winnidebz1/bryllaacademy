@@ -5,5 +5,11 @@
     "href": "assets/resources/linkedin-profile-optimization-guide.html",
     "download": "Brylla-Academy-LinkedIn-Profile-Optimization-Guide.html",
     "icon": "linkedin"
+  },
+  {
+    "title": "Remote Work Starter Toolkit",
+    "description": "Guides and checklists to help you prepare for remote work. This toolkit will be added when it is ready.",
+    "ready": false,
+    "icon": "file"
   }
 ]

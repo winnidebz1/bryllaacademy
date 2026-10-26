@@ -4,7 +4,7 @@
 	<script src="assets/js/brylla-errors.js"></script>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Build practical, career-focused skills with Brylla Academy. Learn at your own pace with recorded lessons, real assignments, instructor feedback, and career resources.">
+	<meta name="description" content="Build practical, career-focused skills with Brylla Academy. Learn with recorded lessons, practical assignments, instructor feedback, career resources, and mentorship.">
 	<meta name="theme-color" content="#073b70">
 	<title>Brylla Academy | Digital skills for virtual work</title>
 	<link rel="icon" type="image/png" href="assets/img/logo.png">
@@ -94,8 +94,9 @@
 		.hero-art:before { right: -17%; bottom: -42%; width: 82%; height: 94%; background: rgba(19,184,173,.25); }
 		.hero-art:after { top: 7%; left: 8%; width: 44%; height: 44%; border: 1px solid rgba(7,59,112,.12); }
 		.hero-person { position: absolute; inset: 0; z-index: 1; display: block; width: 100%; height: 100%; max-width: none; max-height: none; object-fit: cover; object-position: 55% 54%; }
-		.feature-grid { position: absolute; z-index: 2; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 22px; }
-		.hero-highlight { box-sizing: border-box; min-width: 0; min-height: 96px; display: flex; align-items: center; gap: 12px; padding: 18px 20px; border: 1px solid #e2eaf0; border-radius: 14px; background: #fff; box-shadow: 0 10px 26px rgba(7,59,112,.09); color: var(--navy); font-size: 14px; font-weight: 650; }
+		.hero-copy { line-height: 1.6; }
+		.feature-grid { position: absolute; z-index: 2; right: 0; bottom: 0; left: 0; display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; }
+		.hero-highlight { box-sizing: border-box; min-width: 0; min-height: 88px; display: flex; align-items: center; gap: 10px; padding: 14px 12px; border: 1px solid #e2eaf0; border-radius: 14px; background: #fff; box-shadow: 0 10px 26px rgba(7,59,112,.09); color: var(--navy); font-size: 13px; font-weight: 650; line-height: 1.35; }
 		.hero-highlight i { color: var(--teal-dark); font-size: 18px; }
 		.hero-highlight:nth-child(even) i { color: var(--orange); }
 		.section { padding: 82px 0; }
@@ -107,12 +108,14 @@
 		.section-heading .eyebrow { justify-content: center; }
 		.section-heading h2 { margin: 14px 0 12px; color: var(--navy-deep); font-size: clamp(2rem, 3.5vw, 2.8rem); font-weight: 700; letter-spacing: -.04em; line-height: 1.18; }
 		.section-heading p { margin: 0; color: var(--muted); }
-		.benefit-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; }
-		.benefit-item { display: flex; min-height: 180px; flex-direction: column; justify-content: space-between; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
-		.benefit-icon { display: inline-grid; width: 46px; height: 46px; place-items: center; margin-bottom: 18px; border-radius: 12px; background: #e5f8f6; color: var(--teal-dark); font-size: 20px; }
+		.benefit-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 14px; }
+		.benefit-item { display: flex; min-height: 0; flex-direction: column; justify-content: flex-start; gap: 14px; padding: 22px; border: 1px solid var(--line); border-radius: 14px; background: #fff; }
+		.benefit-item .benefit-icon { display: inline-grid; width: 46px; height: 46px; place-items: center; margin-bottom: 0; border-radius: 12px; background: #e5f8f6; color: var(--teal-dark); font-size: 20px; }
 		.benefit-item:nth-child(2) .benefit-icon { background: #fff0e5; color: #c96a22; }
 		.benefit-item:nth-child(3) .benefit-icon { background: #edf3ff; color: #2d5de9; }
 		.benefit-item:nth-child(4) .benefit-icon { background: #edf9f3; color: #1a8b68; }
+		.benefit-item:nth-child(5) .benefit-icon { background: #f3eefe; color: #5b3cc4; }
+		.resource-note { display: inline-flex; margin-top: 16px; color: #53677a; font-size: 14px; font-weight: 700; }
 		.benefit-item p { margin: 0; color: #304c67; font-size: 14px; font-weight: 700; line-height: 1.5; }
 		.course-grid { display: flex; flex-direction: column; gap: var(--space-4); }
 		.audit-grid, .toolkit-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; }
@@ -253,12 +256,12 @@
 		:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 
 		@media (min-width: 768px) and (max-width: 1199.98px) {
-			.hero { padding-top: 28px; }
-			.hero-stage { min-height: 630px; }
-			.hero-content { width: 50%; padding-top: 30px; }
-			.feature-visual { top: 0; right: 0; width: 46%; height: 410px; }
-			.feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
-			.hero-highlight { min-height: 90px; }
+			.hero { padding: 28px 0 36px; }
+			.hero-stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(240px, .95fr); grid-template-rows: auto auto; gap: 16px 22px; align-items: start; }
+			.hero-content { grid-column: 1; grid-row: 1; width: auto; padding-top: 4px; }
+			.feature-visual { position: relative; top: auto; right: auto; grid-column: 2; grid-row: 1 / span 2; width: auto; height: 100%; min-height: 240px; align-self: stretch; }
+			.feature-grid { position: relative; right: auto; bottom: auto; left: auto; grid-column: 1; grid-row: 2; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 0; }
+			.hero-highlight { min-height: 72px; }
 			.audit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 			.coming-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 		}
@@ -289,10 +292,12 @@
 			.nav-links { align-items: stretch; flex-direction: column; gap: 0; }
 			.nav-links li { border-top: 1px solid var(--line); }
 			.nav-links a { display: block; padding: 9px 3px; }
-			.hero { padding: 24px 0 38px; }
+			.hero { padding: 24px 0 32px; }
 			.hero:before { display: none; }
-			.hero-stage { min-height: 0; display: flex; flex-direction: column; gap: 22px; }
-			.hero-content { width: 100%; padding: 0; }
+			.hero-stage { min-height: 0; display: flex; flex-direction: column; gap: 16px; }
+			.hero-content { order: 1; width: 100%; padding: 0; }
+			.feature-grid { order: 2; }
+			.feature-visual { order: 3; }
 			.hero h1 { font-size: clamp(calc(2.45rem - 5px), calc(11vw - 5px), calc(3.45rem - 5px)); }
 			.hero-copy { font-size: 14px; }
 			.course-search { min-height: 56px; }
@@ -365,10 +370,10 @@
 				<div class="hero-stage">
 					<div class="hero-content">
 						<h1>Learn a Professional<br> Skill Today!</h1>
-						<p class="hero-copy">Brylla Academy teaches practical, career-focused skills through<br> recorded lessons, realistic assignments and instructor feedback.</p>
+						<p class="hero-copy">Brylla Academy teaches practical, career-focused skills through recorded lessons, practical assignments, instructor feedback, career resources, and mentorship.</p>
 						<div class="hero-actions">
 							<a class="btn btn-brand" href="#courses">Explore Courses <i class="fa-solid fa-arrow-right ms-2" aria-hidden="true"></i></a>
-							<a class="btn btn-outline-brand" href="register?course=bookkeeping">Register</a>
+							<a class="btn btn-outline-brand" href="https://docs.google.com/forms/d/e/1FAIpQLSdBQiS4nzSfxvZUSlLkfTS3pdqq5V0aa_NIbk83wGmzDRjnng/viewform">Register</a>
 						</div>
 					</div>
 					<div class="feature-visual">
@@ -377,9 +382,10 @@
 					</div>
 					<div class="feature-grid" aria-label="Learning benefits">
 						<div class="hero-highlight"><i class="fa-solid fa-circle-play" aria-hidden="true"></i><span>Recorded lessons</span></div>
-						<div class="hero-highlight"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>Ralewayactive assignments</span></div>
+						<div class="hero-highlight"><i class="fa-solid fa-list-check" aria-hidden="true"></i><span>Practical assignments</span></div>
 						<div class="hero-highlight"><i class="fa-solid fa-comments" aria-hidden="true"></i><span>Instructor feedback</span></div>
 						<div class="hero-highlight"><i class="fa-solid fa-briefcase" aria-hidden="true"></i><span>Career resources</span></div>
+						<div class="hero-highlight"><i class="fa-solid fa-user-group" aria-hidden="true"></i><span>Mentorship</span></div>
 					</div>
 				</div>
 			</div>
@@ -401,11 +407,15 @@
 					</div>
 					<div class="benefit-item">
 						<span class="benefit-icon" aria-hidden="true"><i class="fa-solid fa-clipboard-check"></i></span>
-						<p>Assignments and<br>instructor feedback.</p>
+						<p>Practical assignments and instructor feedback.</p>
 					</div>
 					<div class="benefit-item">
 						<span class="benefit-icon" aria-hidden="true"><i class="fa-solid fa-briefcase"></i></span>
-						<p>Certificates, tracking tools, and career support to get job-ready.</p>
+						<p>Career resources to help you prepare for professional opportunities.</p>
+					</div>
+					<div class="benefit-item">
+						<span class="benefit-icon" aria-hidden="true"><i class="fa-solid fa-user-group"></i></span>
+						<p>Mentorship during the course, including a dedicated mentorship week.</p>
 					</div>
 				</div>
 			</div>
@@ -423,7 +433,7 @@
 								<p class="tuition-label">Open Now</p>
 							</div>
 							<h3 id="bookkeeping-title">Bookkeeping</h3>
-							<p class="featured-course-copy">A six-week US bookkeeping program. Record transactions, work in QuickBooks Online and Xero, reconcile accounts, and close a client's books.</p>
+							<p class="featured-course-copy">US bookkeeping training over six weeks, with about eight weeks of learning and support. Record transactions, work in QuickBooks Online and Xero, reconcile accounts, and close a client's books.</p>
 							<ul class="course-list">
 								<li><i class="fa-solid fa-check" aria-hidden="true"></i><span>Debits, credits, and the chart of accounts</span></li>
 								<li><i class="fa-solid fa-check" aria-hidden="true"></i><span>QuickBooks Online, payables, and reconciliations</span></li>
@@ -439,9 +449,9 @@
 							</ul>
 							<p class="course-meta"><i class="fa-solid fa-check" aria-hidden="true"></i><span>Includes bookkeeping training and mentorship.</span></p>
 							<p class="fee-note">Pay the <span data-price-amount="50" data-price-currency="GHS">GHS 50</span> registration fee first. The remaining <span data-price-amount="550" data-price-currency="GHS">GHS 550</span> covers enrolment in the course.</p>
-							<p class="course-meta"><i class="fa-regular fa-clock" aria-hidden="true"></i><span>6 weeks</span></p>
-							<p class="course-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Next cohort starts <strong>Date to be announced</strong></span></p>
-							<a class="btn btn-brand enroll-button" href="register?course=bookkeeping">Register</a>
+							<p class="course-meta"><i class="fa-regular fa-clock" aria-hidden="true"></i><span>6 weeks of training, about 8 weeks with support</span></p>
+							<p class="course-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Next cohort starts <strong>4 January 2027</strong></span></p>
+							<a class="btn btn-brand enroll-button" href="https://docs.google.com/forms/d/e/1FAIpQLSdBQiS4nzSfxvZUSlLkfTS3pdqq5V0aa_NIbk83wGmzDRjnng/viewform">Register</a>
 							<a class="course-syllabus-link" href="course-details">View more</a>
 						</div>
 					</article>
@@ -479,7 +489,7 @@
 						<h3 id="course-syllabus-title">Bookkeeping syllabus</h3>
 						<button class="course-dialog-close" type="button" data-dialog-close aria-label="Close syllabus"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 					</div>
-					<p class="syllabus-intro">Six modules, one each week. Every module has three recorded lessons of 45 minutes, one live session of up to an hour, an assignment, and a quiz.</p>
+					<p class="syllabus-intro">The bookkeeping training lasts six weeks. The full learning and support period is about eight weeks. Lessons open on 4 January 2027. Registering does not open Week 1 early. Weeks 1 to 6 each have recorded lessons and a practical assignment.</p>
 					<div class="syllabus-module">
 						<h4>Week 1: Bookkeeping foundations</h4>
 						<ul class="syllabus-list">
@@ -542,7 +552,21 @@
 							<li>Final test covering all modules</li>
 						</ul>
 					</div>
-					<p class="syllabus-note">Each assignment builds the same client's first-quarter books. In week 6, students correct earlier work, close March, prepare the financial statements, write a summary to the owner, and present the results. A certificate is awarded with an overall score of 70% or more and a submitted capstone.</p>
+					<div class="syllabus-module">
+						<h4>Week 7: Catch-up</h4>
+						<ul class="syllabus-list">
+							<li>Time to finish outstanding assignments from weeks 1 to 6</li>
+							<li>No new lessons are added this week</li>
+						</ul>
+					</div>
+					<div class="syllabus-module">
+						<h4>Week 8: Mentorship</h4>
+						<ul class="syllabus-list">
+							<li>Mentorship on the bookkeeping work and professional readiness</li>
+							<li>Guidance on applying the skills. Mentorship does not guarantee employment, clients, or income</li>
+						</ul>
+					</div>
+					<p class="syllabus-note">Each assignment builds the same client's first-quarter books. Students close the books in week 6, use week 7 to catch up on outstanding assignments, and use week 8 for mentorship. A certificate is awarded with an overall score of 70% or more and a submitted capstone. Course materials and recorded lessons stay available through the course and for one month after it ends.</p>
 				</div>
 			</dialog>
 			<dialog class="course-dialog" id="course-notify-dialog" aria-labelledby="course-notify-title">
@@ -619,15 +643,15 @@
 			<div class="container">
 				<div class="section-heading">
 					<h2 id="reviews-title">Professional Services</h2>
-					<p>These services can be purchased without enrolling in a course.<br> Enquire about a service, or place an order, and Brylla Academy will follow up.</p>
+					<p>These services can be purchased without enrolling in a course. Use Order to go to the Selar page for that service.</p>
 				</div>
 				<div class="audit-grid services-grid">
-					<article class="audit-card" id="linkedin-optimization"><span class="toolkit-icon"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></span><h3>Done-for-You LinkedIn Profile Optimization</h3><p>A service for professionals and freelancers who want to improve their LinkedIn profiles, communicate their value more clearly, and position themselves for career or business opportunities.</p><div class="audit-price"><a class="btn btn-brand" href="contact-us?service=linkedin-optimization">Enquire or order</a></div></article>
-					<article class="audit-card" id="upwork-optimization"><span class="toolkit-icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span><h3>Done-for-You Upwork Profile Optimization</h3><p>A service for freelancers who want a professionally optimized Upwork profile that clearly communicates their skills, experience, and value to potential clients.</p><div class="audit-price"><a class="btn btn-outline-brand" href="contact-us?service=upwork-optimization">Enquire or order</a></div></article>
+					<article class="audit-card" id="linkedin-optimization"><span class="toolkit-icon"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></span><h3>Done-for-You LinkedIn Profile Optimization</h3><p>A service for professionals and freelancers who want to improve their LinkedIn profiles, communicate their value more clearly, and position themselves for career or business opportunities.</p><div class="audit-price"><a class="btn btn-brand" data-service-order="linkedin" href="contact-us?service=linkedin-optimization">Order</a></div></article>
+					<article class="audit-card" id="upwork-optimization"><span class="toolkit-icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span><h3>Done-for-You Upwork Profile Optimization</h3><p>A service for freelancers who want a professionally optimized Upwork profile that clearly communicates their skills, experience, and value to potential clients.</p><div class="audit-price"><a class="btn btn-outline-brand" data-service-order="upwork" href="contact-us?service=upwork-optimization">Order</a></div></article>
 				</div>
 			</div>
 		</section>
-		<section class="section section-soft" id="stories" aria-labelledby="stories-title">
+		<section class="section section-soft" id="stories" aria-labelledby="stories-title" hidden>
 			<div class="container">
 				<div class="section-heading">
 					<h2 id="stories-title">Student Experiences</h2>
@@ -696,7 +720,7 @@
 				<div class="accordion faq-list" id="faqAccordion">
 					<div class="accordion-item">
 						<h3 class="accordion-header"><button class="accordion-button" type="button" data-bs-toggle="collapse" data-bs-target="#faqLessons" aria-expanded="true" aria-controls="faqLessons">How are the courses delivered?</button></h3>
-						<div id="faqLessons" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion"><div class="accordion-body">Courses use recorded lessons so you can learn at your own pace. You’ll also work on real assignments and receive instructor feedback.</div></div>
+						<div id="faqLessons" class="accordion-collapse collapse show" data-bs-parent="#faqAccordion"><div class="accordion-body">Courses include recorded lessons, practical assignments, instructor feedback, career resources, and mentorship. Bookkeeping lessons open on 4 January 2027. Paying the registration fee does not open Week 1 before that date.</div></div>
 					</div>
 					<div class="accordion-item">
 						<h3 class="accordion-header"><button class="accordion-button collapsed" type="button" data-bs-toggle="collapse" data-bs-target="#faqProgress" aria-expanded="false" aria-controls="faqProgress">Can I track my learning progress?</button></h3>
@@ -722,7 +746,7 @@
 				</div>
 				<div class="cta-actions">
 					<a class="btn btn-accent" href="#courses">Explore Courses</a>
-					<a class="btn btn-outline-light" href="register?course=bookkeeping">Register</a>
+					<a class="btn btn-outline-light" href="https://docs.google.com/forms/d/e/1FAIpQLSdBQiS4nzSfxvZUSlLkfTS3pdqq5V0aa_NIbk83wGmzDRjnng/viewform">Register</a>
 				</div>
 			</div>
 		</section>
@@ -740,6 +764,8 @@
 					<a href="#services">Professional Services</a>
 					<a href="#toolkit">Free Resource</a>
 					<a href="contact-us">Contact Us</a>
+					<a href="terms-and-conditions">Terms and Conditions</a>
+					<a href="mailto:admin@bryllagroup.org">admin@bryllagroup.org</a>
 				</nav>
 			</div>
 			<p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p>
@@ -822,7 +848,7 @@
 				}
 				const client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
 				if (!client) {
-					notifyServiceMessage.textContent = "The waitlist could not be saved. Email hello@bryllaacademy.com instead.";
+					notifyServiceMessage.textContent = "The waitlist could not be saved. Email admin@bryllagroup.org instead.";
 					notifyServiceMessage.classList.remove("is-success");
 					notifyServiceMessage.hidden = false;
 					return;
@@ -839,7 +865,7 @@
 						const duplicate = result.error.code === "23505" || /duplicate/i.test(result.error.message || "");
 						notifyServiceMessage.textContent = duplicate
 							? "You're already on the waitlist for this course."
-							: "The waitlist could not be saved. Email hello@bryllaacademy.com instead.";
+							: "The waitlist could not be saved. Email admin@bryllagroup.org instead.";
 						notifyServiceMessage.classList.remove("is-success");
 						notifyServiceMessage.hidden = false;
 						return;
@@ -850,6 +876,21 @@
 					notifyServiceMessage.hidden = false;
 				});
 			});
+
+			fetch("assets/data/service-orders.json")
+				.then((response) => response.ok ? response.json() : null)
+				.then((orders) => {
+					if (!orders) return;
+					document.querySelectorAll("[data-service-order]").forEach((link) => {
+						const url = orders[link.dataset.serviceOrder];
+						if (typeof url === "string" && /^https:\/\//i.test(url)) {
+							link.href = url;
+							link.target = "_blank";
+							link.rel = "noopener";
+						}
+					});
+				})
+				.catch(() => {});
 
 			const resourceList = document.getElementById("resource-list");
 			const resourceIcons = { linkedin: "fa-brands fa-linkedin-in", file: "fa-solid fa-file-lines" };
@@ -868,12 +909,20 @@
 						title.textContent = resource.title;
 						const copy = document.createElement("p");
 						copy.textContent = resource.description;
-						const link = document.createElement("a");
-						link.className = "resource-link";
-						link.href = resource.href;
-						link.textContent = "Download guide";
-						if (resource.download) link.setAttribute("download", resource.download);
-						card.append(icon, title, copy, link);
+						card.append(icon, title, copy);
+						if (resource.ready === false || !resource.href) {
+							const note = document.createElement("p");
+							note.className = "resource-note";
+							note.textContent = "Coming soon";
+							card.append(note);
+						} else {
+							const link = document.createElement("a");
+							link.className = "resource-link";
+							link.href = resource.href;
+							link.textContent = "Download guide";
+							if (resource.download) link.setAttribute("download", resource.download);
+							card.append(link);
+						}
 						resourceList.append(card);
 					});
 				})
