@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<script src="assets/js/brylla-errors.js"></script>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Register for the Brylla Academy US Bookkeeping course. The registration fee is GHS 50.">
+	<meta name="theme-color" content="#073b70">
+	<title>Bookkeeping registration | Brylla Academy</title>
+	<link rel="icon" type="image/png" href="assets/img/logo.png">
+	<link rel="apple-touch-icon" href="assets/img/logo.png">
+	<link rel="preconnect" href="https://fonts.googleapis.com">
+	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
+	<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
+	<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
+	<style>
+		:root {
+			--navy: #073b70;
+			--navy-deep: #062b52;
+			--teal: #13b8ad;
+			--teal-dark: #078d87;
+			--ink: #122d49;
+			--muted: #60748a;
+			--line: #e3ebf2;
+			--soft: #f4f8fb;
+			--space-2: 12px;
+			--space-3: 16px;
+			--space-4: 24px;
+			--space-5: 32px;
+		}
+		body { margin: 0; color: var(--ink); background: #fff; font-family: Raleway, "Segoe UI", Arial, sans-serif; font-size: 14px; line-height: 1.65; }
+		h1, h2 { font-family: Raleway, "Segoe UI", Arial, sans-serif; font-weight: 700; letter-spacing: -.035em; color: var(--navy-deep); }
+		a { color: inherit; }
+		.btn { border-radius: 8px; font-weight: 700; padding: 12px 20px; }
+		.btn-brand { color: #fff; background: var(--navy); border: 1px solid var(--navy); text-decoration: none; }
+		.btn-brand:hover, .btn-brand:focus { color: #fff; background: var(--navy-deep); }
+		.btn-accent { color: var(--navy-deep); background: var(--teal); border: 1px solid var(--teal); text-decoration: none; }
+		.btn-outline-brand { color: var(--navy); border: 1px solid #bfd0df; background: #fff; text-decoration: none; }
+		.site-header { position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,.96); border-bottom: 1px solid var(--line); }
+		.header-inner { min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+		.brand-lockup { display: flex; align-items: center; text-decoration: none; }
+		.brand-window { width: 133px; height: 70px; position: relative; overflow: hidden; display: block; }
+		.brand-window img { position: absolute; width: 170px; max-width: none; height: 170px; top: calc(50% + 6px); left: 50%; transform: translate(-50%, -50%); }
+		.nav-links { display: flex; align-items: center; gap: 18px; margin: 0; padding: 0; list-style: none; }
+		.nav-links a { color: #35516c; font-size: 14px; font-weight: 650; text-decoration: none; }
+		.nav-links a:hover { color: var(--teal-dark); }
+		.menu-drop { position: relative; }
+		.menu-drop > a:after { content: ""; display: inline-block; width: 6px; height: 6px; margin-left: 6px; border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor; transform: translateY(-2px) rotate(45deg); vertical-align: middle; }
+		.menu-drop > ul { display: none; position: absolute; top: calc(100% + 10px); left: 0; z-index: 30; min-width: 320px; margin: 0; padding: 8px; list-style: none; border: 1px solid var(--line); border-radius: 12px; background: #fff; box-shadow: 0 16px 40px rgba(7,59,112,.12); }
+		.menu-drop > ul:before { content: ""; position: absolute; top: -12px; right: 0; left: 0; height: 12px; }
+		.menu-drop:hover > ul, .menu-drop:focus-within > ul, .menu-drop.is-open > ul { display: grid; }
+		.menu-drop > ul a { display: block; padding: 9px 10px; border-radius: 8px; white-space: nowrap; }
+		.menu-drop > ul a:hover, .menu-drop > ul a:focus { background: #f4f8fb; }
+		.navbar-collapse { flex-grow: 1; }
+		.header-actions { display: flex; align-items: center; gap: 10px; }
+		.navbar-toggler { border: 1px solid var(--line); padding: 8px 11px; color: var(--navy); }
+		.register { padding: 32px 0 96px; background: var(--soft); }
+		.register-card { padding: var(--space-5); border: 1px solid var(--line); border-radius: 16px; background: #fff; }
+		.register h1 { margin: 0 0 8px; font-size: clamp(1.8rem, 4vw, 2.4rem); }
+		.register p { max-width: 68ch; margin: 0 0 16px; color: #40566b; }
+		.register-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; }
+		.register-actions.after-form { margin: 16px 0 0; }
+		.form-frame { display: block; width: 100%; height: 72vh; min-height: 560px; border: 0; border-radius: 12px; background: #fff; }
+		.site-footer { padding: 35px 0; background: #041f3c; color: #d1e0ed; }
+		.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
+		.footer-brand { display: flex; align-items: center; gap: 13px; text-decoration: none; }
+		.footer-brand-mark { position: relative; display: block; width: 72px; height: 72px; flex: 0 0 72px; overflow: hidden; border-radius: 50%; background: #fff; }
+		.footer-brand-mark img { position: absolute; top: calc(50% + 5px); left: 50%; width: 164px; height: 164px; max-width: none; transform: translate(-50%, -50%); }
+		.footer-brand strong { display: block; color: #fff; font-size: 15px; }
+		.footer-brand span { color: #aac0d3; font-size: 14px; }
+		.footer-links { display: flex; flex-wrap: wrap; gap: 18px; }
+		.footer-links a { color: #d1e0ed; font-size: 14px; text-decoration: none; }
+		.footer-links a:hover { color: var(--teal); }
+		.copyright { margin: 22px 0 0; padding-top: 18px; border-top: 1px solid rgba(255,255,255,.14); color: #aac0d3; font-size: 14px; text-align: center; }
+		:focus-visible { outline: 3px solid #f28a3c; outline-offset: 3px; }
+		@media (max-width: 991.98px) {
+			.header-inner { min-height: 72px; }
+			.brand-lockup { order: 1; }
+			.navbar-toggler { order: 2; }
+			.header-actions { order: 3; margin-left: auto; margin-right: 12px; }
+			.navbar-collapse { order: 4; width: 100%; padding: 3px 0 12px; }
+			.nav-links { align-items: stretch; flex-direction: column; gap: 0; }
+			.nav-links > li { border-top: 1px solid var(--line); }
+			.nav-links a { display: block; padding: 9px 3px; }
+			.menu-drop > ul { display: grid; position: static; min-width: 0; padding: 0 0 6px 14px; border: 0; border-radius: 0; box-shadow: none; }
+			.menu-drop > ul a { white-space: normal; }
+		}
+		@media (max-width: 767.98px) {
+			.header-inner { min-height: 68px; flex-wrap: wrap; gap: 8px; }
+			.brand-window { width: 100px; height: 52px; }
+			.brand-window img { width: 115px; height: 115px; top: calc(50% + 4px); }
+			.header-actions { margin-left: auto; }
+			.navbar-collapse { width: 100%; padding: 3px 0 15px; }
+			.register { padding: 20px 0 88px; }
+			.register-card { padding: var(--space-4); }
+			.footer-inner { align-items: flex-start; flex-direction: column; }
+		}
+		@media (min-width: 768px) {
+			body:has(> .site-footer) { min-height: 100vh; display: flex; flex-direction: column; }
+			body:has(> .site-footer) > .site-footer { margin-top: auto; }
+		}
+	</style>
+</head>
+<body>
+	<header class="site-header">
+		<nav class="container header-inner navbar navbar-expand-lg" aria-label="Main navigation">
+			<a class="brand-lockup" href="/" aria-label="Brylla Academy home">
+				<span class="brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></span>
+			</a>
+			<button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#siteNavigation" aria-controls="siteNavigation" aria-expanded="false" aria-label="Toggle navigation">
+				<i class="fa-solid fa-bars" aria-hidden="true"></i>
+			</button>
+			<div class="collapse navbar-collapse" id="siteNavigation">
+				<ul class="nav-links ms-lg-auto me-lg-4">
+					<li><a href="/">Home</a></li>
+					<li class="menu-drop">
+						<a href="/#courses">Courses</a>
+						<ul>
+							<li><a href="/#bookkeeping">Bookkeeping</a></li>
+							<li><a href="/#project-management">Project Management — Coming Soon</a></li>
+							<li><a href="/#digital-marketing">Digital Marketing — Coming Soon</a></li>
+							<li><a href="/#podcast-management">Podcast Management — Coming Soon</a></li>
+						</ul>
+					</li>
+					<li class="menu-drop">
+						<a href="/#services">Professional Services</a>
+						<ul>
+							<li><a href="/#linkedin-optimization">LinkedIn Profile Optimization</a></li>
+							<li><a href="/#upwork-optimization">Upwork Profile Optimization</a></li>
+						</ul>
+					</li>
+					<li><a href="/#toolkit">Free Resource</a></li>
+					<li><a href="contact-us">Contact Us</a></li>
+				</ul>
+			</div>
+			<div class="header-actions">
+				<a class="btn btn-outline-brand" href="login">Login</a>
+				<a class="btn btn-accent" href="register">Signup</a>
+			</div>
+		</nav>
+	</header>
+	<main class="register">
+		<div class="container">
+			<article class="register-card">
+				<h1>Bookkeeping registration</h1>
+				<p>Complete the form to register for the US Bookkeeping course. The registration fee is GHS 50. After you submit, Back to home returns you to Brylla Academy.</p>
+				<div class="register-actions">
+					<a class="btn btn-outline-brand" href="/">Back to home</a>
+				</div>
+				<iframe class="form-frame" src="https://docs.google.com/forms/d/e/1FAIpQLSdBQiS4nzSfxvZUSlLkfTS3pdqq5V0aa_NIbk83wGmzDRjnng/viewform?embedded=true" title="US Bookkeeping Registration Form">Loading the registration form.</iframe>
+				<div class="register-actions after-form">
+					<a class="btn btn-brand" href="/">Back to home</a>
+				</div>
+			</article>
+		</div>
+	</main>
+	<footer class="site-footer">
+		<div class="container">
+			<div class="footer-inner">
+				<a class="footer-brand" href="/">
+					<span class="footer-brand-mark"><img src="assets/img/logo.png" alt=""></span>
+					<span><strong>Brylla Academy</strong><span>Practical professional skills taught for the remote world.</span></span>
+				</a>
+				<nav class="footer-links" aria-label="Footer navigation">
+					<a href="/">Home</a>
+					<a href="/#courses">Courses</a>
+					<a href="contact-us">Contact Us</a>
+					<a href="terms-and-conditions">Terms and Conditions</a>
+					<a href="mailto:admin@bryllagroup.org">admin@bryllagroup.org</a>
+				</nav>
+			</div>
+			<p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p>
+		</div>
+	</footer>
+	<script src="assets/js/bootstrap.bundle.min.js"></script>
+	<script>
+		(function () {
+			var desktop = window.matchMedia("(min-width: 992px)");
+			var pointer = "mouse";
+			document.addEventListener("pointerdown", function (event) {
+				pointer = event.pointerType || "mouse";
+			}, true);
+			function closeMenus(except) {
+				document.querySelectorAll(".menu-drop.is-open").forEach(function (item) {
+					if (item === except) return;
+					item.classList.remove("is-open");
+					var trigger = item.querySelector("a");
+					if (trigger) trigger.setAttribute("aria-expanded", "false");
+				});
+			}
+			function markMenus() {
+				var shown = !desktop.matches;
+				document.querySelectorAll(".menu-drop > a").forEach(function (link) {
+					link.setAttribute("aria-haspopup", "true");
+					if (!link.parentElement.classList.contains("is-open")) link.setAttribute("aria-expanded", shown ? "true" : "false");
+				});
+			}
+			markMenus();
+			if (desktop.addEventListener) desktop.addEventListener("change", markMenus);
+			document.querySelectorAll(".menu-drop > a").forEach(function (link) {
+				link.addEventListener("click", function (event) {
+					if (!desktop.matches || pointer === "mouse") return;
+					var item = link.parentElement;
+					if (item.classList.contains("is-open")) return;
+					event.preventDefault();
+					closeMenus(item);
+					item.classList.add("is-open");
+					link.setAttribute("aria-expanded", "true");
+				});
+			});
+		})();
+	</script>
+</body>
+</html>

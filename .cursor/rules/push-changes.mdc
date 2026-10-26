@@ -1,0 +1,13 @@
+---
+description: Commit and push completed work to the current branch
+alwaysApply: true
+---
+
+# Push completed work
+
+After finishing a requested code change, commit it and push it to the current branch.
+
+- Follow the repository git safety rules. Do not force-push, skip hooks, or change git config.
+- Leave out secrets, `.env` files, and unrelated accidental edits.
+- If the commit or push fails, fix the cause and try again with a new commit.
+- Skip the commit only when the user says not to push, or when there is nothing to commit.
