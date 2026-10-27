@@ -290,7 +290,7 @@
 			overflow: hidden;
 			padding: 20px 22px;
 			border-radius: var(--radius-card);
-			background: linear-gradient(10.93deg, #392C7D 16.22%, #6850E3 120.13%);
+			background: linear-gradient(145deg, #073b70 0%, #04635e 100%);
 			color: var(--color-banner-text);
 		}
 		.banner::before, .banner::after {
@@ -1022,7 +1022,7 @@
 			heading.id = "student-name";
 			const meta = el("p", "banner-meta");
 			if (data.welcomeOnly) {
-				meta.append(el("span", "banner-course", "Welcome"));
+				meta.append(el("span", "banner-course", "Brylla Academy"));
 			} else if (!data.course.weeksTotal) {
 				meta.append(el("span", "banner-course", data.course.name));
 			} else {
@@ -1284,7 +1284,7 @@
 				renderError();
 				return;
 			}
-			mainEl.append(renderWelcome());
+			mainEl.append(renderBanner(data), renderWelcome());
 		}
 
 		function openMenu() {

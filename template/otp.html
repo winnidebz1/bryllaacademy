@@ -92,26 +92,26 @@
                                         <h1 class="fs-32 fw-bold mb-3">Email OTP</h1>
                                         <p class="fs-14 fw-normal mb-0">Verification email: <strong id="verification-email">the email used during signup</strong></p>
                                     </div>
-                                    <div class="alert alert-info" role="status">
-                                        Email verification is not connected yet. No code has been sent, and verification will be enabled after the authentication provider is integrated.
-                                    </div>
-                                    <form class="mb-3 pb-3" aria-label="Email verification form">
-                                        <fieldset disabled>
+                                    <p class="mb-3" id="otp-status" role="status">Enter the 6-digit code from your email.</p>
+                                    <form class="mb-3 pb-3" id="otp-form" aria-label="Email verification form">
+                                        <fieldset>
                                             <legend class="visually-hidden">Enter the verification code</legend>
                                             <div class="d-flex align-items-center mb-3">
-                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 1">
-                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 2">
-                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 3">
-                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 4">
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" autocomplete="one-time-code" aria-label="Verification code digit 1" required>
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 2" required>
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 3" required>
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 4" required>
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 5" required>
+                                                <input type="text" class="form-control otp" maxlength="1" inputmode="numeric" aria-label="Verification code digit 6" required>
                                             </div>
                                             <div class="d-grid">
-                                                <button id="verify-email" class="btn btn-secondary btn-lg w-100" type="button">Verify email</button>
+                                                <button id="verify-email" class="btn btn-secondary btn-lg w-100" type="submit">Verify email</button>
                                             </div>
                                         </fieldset>
                                     </form>
 
                                     <div class="fs-14 fw-normal d-flex align-items-center justify-content-center">
-                                        Didn’t get the code? <button class="btn btn-link link-2 ms-1 p-0" type="button" disabled>Resend code</button>
+                                        Didn’t get the code? <button class="btn btn-link link-2 ms-1 p-0" type="button" id="resend-code">Resend code</button>
                                     </div>
                                     <div class="text-center mt-3"><a href="register.html" class="link-2">Back to sign up</a></div>
     
@@ -140,28 +140,80 @@
 		
 		<!-- Custom JS -->
 		<script src="assets/js/script.js"></script>
-		<script src="assets/js/brylla-student.js"></script>
+		<script src="assets/js/brylla-public-config.js"></script>
+		<script src="assets/js/brylla-checkout.js"></script>
 		<script>
-			const pendingEmail = sessionStorage.getItem("bryllaPendingEmail");
-			const verificationEmail = document.getElementById("verification-email");
-			if (pendingEmail) {
-				verificationEmail.textContent = pendingEmail;
-			} else {
-				verificationEmail.textContent = "no signup email is available in this browser session";
-			}
-			document.getElementById("verify-email").addEventListener("click", function () {
-				const digits = Array.from(document.querySelectorAll(".otp")).map(function (input) { return input.value.trim(); }).join("");
-				if (digits.length < 4) {
-					document.querySelector(".otp").focus();
-					return;
+			(function () {
+				var email = sessionStorage.getItem("bryllaSignupEmail") || "";
+				var name = sessionStorage.getItem("bryllaSignupName") || "";
+				var verificationEmail = document.getElementById("verification-email");
+				var status = document.getElementById("otp-status");
+				var form = document.getElementById("otp-form");
+				var inputs = Array.prototype.slice.call(document.querySelectorAll(".otp"));
+				var button = document.getElementById("verify-email");
+				verificationEmail.textContent = email || "the email used during signup";
+				if (!email) status.textContent = "Go back to sign up so we know where to send the code.";
+				function code() {
+					return inputs.map(function (input) { return input.value.replace(/\D/g, ""); }).join("");
 				}
-				const name = sessionStorage.getItem("bryllaPendingName") || "";
-				const email = sessionStorage.getItem("bryllaPendingEmail") || "";
-				const course = sessionStorage.getItem("bryllaPendingCourse") || "";
-				if (name && email && window.BryllaStudent) BryllaStudent.saveProfile({ name: name, email: email });
-				if (course && window.BryllaStudent) BryllaStudent.enroll(course);
-				window.location.assign(course ? "student-courses.html" : "student-dashboard.html");
-			});
+				function show(message, failed) {
+					status.className = failed ? "mb-3 text-danger" : "mb-3";
+					status.textContent = message;
+				}
+				inputs.forEach(function (input, index) {
+					input.addEventListener("input", function () {
+						input.value = input.value.replace(/\D/g, "").slice(-1);
+						if (input.value && inputs[index + 1]) inputs[index + 1].focus();
+					});
+					input.addEventListener("keydown", function (event) {
+						if (event.key === "Backspace" && !input.value && inputs[index - 1]) inputs[index - 1].focus();
+					});
+					input.addEventListener("paste", function (event) {
+						var text = (event.clipboardData || window.clipboardData).getData("text").replace(/\D/g, "").slice(0, 6);
+						if (!text) return;
+						event.preventDefault();
+						text.split("").forEach(function (digit, digitIndex) {
+							if (inputs[digitIndex]) inputs[digitIndex].value = digit;
+						});
+						(inputs[text.length] || inputs[inputs.length - 1]).focus();
+					});
+				});
+				form.addEventListener("submit", function (event) {
+					event.preventDefault();
+					var digits = code();
+					if (digits.length < 6) {
+						show("Enter all 6 digits.", true);
+						inputs[0].focus();
+						return;
+					}
+					if (!email || !window.BryllaCheckout) {
+						show("Start again from sign up.", true);
+						return;
+					}
+					button.disabled = true;
+					window.BryllaCheckout.post("signup-code", { action: "verify", email: email, code: digits }).then(function (result) {
+						sessionStorage.setItem("bryllaSignupToken", result.token);
+						window.location.assign("set-password?signup=1");
+					}).catch(function (error) {
+						button.disabled = false;
+						show(error.message || "That code could not be checked.", true);
+					});
+				});
+				document.getElementById("resend-code").addEventListener("click", function () {
+					if (!email || !name || !window.BryllaCheckout) {
+						show("Start again from sign up.", true);
+						return;
+					}
+					show("Sending a new code…", false);
+					window.BryllaCheckout.post("signup-code", { action: "send", name: name, email: email }).then(function () {
+						inputs.forEach(function (input) { input.value = ""; });
+						show("A new code is on its way.", false);
+						inputs[0].focus();
+					}).catch(function (error) {
+						show(error.message || "The code could not be sent.", true);
+					});
+				});
+			})();
 		</script>
 		
 	</body>

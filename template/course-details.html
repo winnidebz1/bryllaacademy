@@ -12,6 +12,7 @@
 	<link rel="preconnect" href="https://fonts.googleapis.com">
 	<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+	<style>html.course-page-pending .detail-card { visibility: hidden; }</style>
 	<link rel="stylesheet" href="assets/css/bootstrap.min.css">
 	<link rel="stylesheet" href="assets/plugins/fontawesome/css/fontawesome.min.css">
 	<link rel="stylesheet" href="assets/plugins/fontawesome/css/all.min.css">
@@ -274,33 +275,129 @@
 			<p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p>
 		</div>
 	</footer>
+	<script>
+		(function () {
+			var query = new URLSearchParams(location.search);
+			var course = query.get("course");
+			var share = query.get("share");
+			if ((course && course !== "bookkeeping") || share) document.documentElement.classList.add("course-page-pending");
+		})();
+	</script>
 	<script src="assets/js/bootstrap.bundle.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
 	<script src="assets/js/brylla-currency.js"></script>
 	<script>
 		(function () {
-			var code = new URLSearchParams(location.search).get("share");
-			if (!code || !window.BryllaPublic || !BryllaPublic.client) return;
+			var params = new URLSearchParams(location.search);
+			var courseId = params.get("course") || "";
+			var share = params.get("share") || "";
+			var card = document.querySelector(".detail-card");
+			if (!card || (!courseId && !share) || (courseId === "bookkeeping" && !share)) {
+				document.documentElement.classList.remove("course-page-pending");
+				return;
+			}
+			if (!window.BryllaPublic || !BryllaPublic.client) {
+				document.documentElement.classList.remove("course-page-pending");
+				return;
+			}
 			var client = BryllaPublic.client();
-			client.rpc("open_shared_course", { p_code: code }).then(function (result) {
-				var course = result.data && result.data[0];
-				var title = document.querySelector(".detail-card h1");
-				if (!course || !title) return;
-				title.textContent = course.title;
-				var lead = document.querySelector(".detail-card .lead");
-				if (lead) lead.textContent = course.short_description || course.description || "";
-				var price = document.querySelector("[data-price-amount]");
-				if (price) {
-					price.setAttribute("data-price-amount", String(course.price_amount || 0));
-					price.setAttribute("data-price-currency", course.currency || "GHS");
-					price.textContent = (course.currency || "GHS") + " " + course.price_amount;
-					if (window.BryllaCurrency) BryllaCurrency.paint();
+			function text(value) {
+				return document.createTextNode(String(value || ""));
+			}
+			function el(tag, className) {
+				var node = document.createElement(tag);
+				if (className) node.className = className;
+				return node;
+			}
+			function showUnavailable() {
+				card.replaceChildren();
+				var eyebrow = el("p", "eyebrow");
+				eyebrow.append(text("Course"));
+				var heading = el("h1");
+				heading.append(text("This course is not available yet"));
+				var lead = el("p", "lead");
+				lead.append(text("This page belongs to that course. Its own details appear here once the course is approved."));
+				card.append(eyebrow, heading, lead);
+				document.title = "Course details | Brylla Academy";
+				document.documentElement.classList.remove("course-page-pending");
+			}
+			function money(amount, currency) {
+				var number = Number(amount);
+				if (!isFinite(number)) number = 0;
+				return (currency || "GHS") + " " + number.toLocaleString(undefined, { maximumFractionDigits: 2 });
+			}
+			function showCourse(course) {
+				card.replaceChildren();
+				var eyebrow = el("p", "eyebrow");
+				eyebrow.append(text(course.level || "Course"));
+				var heading = el("h1");
+				heading.append(text(course.title));
+				var lead = el("p", "lead");
+				lead.append(text(course.short_description || course.description || "Details for this course."));
+				var facts = el("ul", "facts");
+				var price = el("li");
+				price.append(text("Course fee " + money(course.price_amount, course.currency)));
+				facts.append(price);
+				if (course.level) {
+					var level = el("li");
+					level.append(text(course.level));
+					facts.append(level);
 				}
-			});
-			client.auth.getSession().then(function (session) {
-				if (session.data && session.data.session) client.rpc("claim_shared_course", { p_code: code });
-			});
+				var actions = el("div", "actions");
+				var signup = el("a", "btn btn-brand");
+				signup.href = "register";
+				signup.append(text("Sign up"));
+				var all = el("a", "btn btn-outline-brand");
+				all.href = "/#courses";
+				all.append(text("All courses"));
+				actions.append(signup, all);
+				card.append(eyebrow, heading, lead, facts, actions);
+				if (course.description && course.description !== course.short_description) {
+					var intro = el("p", "syllabus-intro");
+					intro.append(text(course.description));
+					card.append(intro);
+				}
+				(course.topics || []).forEach(function (topic, index) {
+					var section = el("section", "syllabus-module");
+					var title = el("h2");
+					title.id = "topic-" + (index + 1);
+					title.append(text(topic.title));
+					section.setAttribute("aria-labelledby", title.id);
+					var list = el("ul", "syllabus-list");
+					(topic.lessons || []).forEach(function (lesson) {
+						var item = document.createElement("li");
+						item.append(text(lesson));
+						list.append(item);
+					});
+					if (!list.children.length) {
+						var empty = document.createElement("li");
+						empty.append(text("Lessons for this topic will be listed here."));
+						list.append(empty);
+					}
+					section.append(title, list);
+					card.append(section);
+				});
+				document.title = course.title + " course details | Brylla Academy";
+				document.documentElement.classList.remove("course-page-pending");
+			}
+			client.rpc("course_public_details", { p_course: courseId || null, p_share: share || null }).then(function (result) {
+				var course = result.data;
+				if (result.error || !course || course.state !== "ready" || course.id === "bookkeeping") {
+					if (courseId === "bookkeeping" && !share) {
+						document.documentElement.classList.remove("course-page-pending");
+						return;
+					}
+					showUnavailable();
+					return;
+				}
+				showCourse(course);
+			}).catch(function () { showUnavailable(); });
+			if (share) {
+				client.auth.getSession().then(function (session) {
+					if (session.data && session.data.session) client.rpc("claim_shared_course", { p_code: share });
+				});
+			}
 		})();
 	</script>
 	<script>

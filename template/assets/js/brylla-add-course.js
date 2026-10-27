@@ -21,6 +21,9 @@
 	function shareUrl(code) {
 		return "https://bryllaacademy.vercel.app/course-details?share=" + encodeURIComponent(code);
 	}
+	function coursePageUrl(id) {
+		return "https://bryllaacademy.vercel.app/course-details?course=" + encodeURIComponent(id);
+	}
 	function field(id) { return $(id) ? $(id).value.trim() : ""; }
 
 	function requireStaff() {
@@ -101,14 +104,15 @@
 
 	function paintShare(course) {
 		var box = $("course-share-box");
-		if (!box) return;
+		if (!box || !courseId) return;
+		var page = coursePageUrl(courseId);
+		var html = "Course page: <a href=\"" + page + "\">" + page + "</a>";
 		if (course && course.visibility === "private" && course.share_code && course.approval_status !== "draft") {
 			var url = shareUrl(course.share_code);
-			box.hidden = false;
-			box.innerHTML = "Private course link for students: <a href=\"" + url + "\">" + url + "</a>";
-		} else {
-			box.hidden = true;
+			html += "<br>Private link: <a href=\"" + url + "\">" + url + "</a>";
 		}
+		box.hidden = false;
+		box.innerHTML = html;
 	}
 
 	function renderTopics(rows) {
@@ -527,11 +531,12 @@
 			}).then(function (result) {
 				if (result.error) throw new Error(result.error.message || "The course could not be submitted.");
 				var code = result.data;
-				var url = field("course-visibility") === "Private" ? shareUrl(code) : "";
+				var page = coursePageUrl(courseId);
+				var url = field("course-visibility") === "Private" && code ? shareUrl(code) : page;
 				var note = $("course-share-note");
 				if (note) {
-					note.hidden = !url;
-					if (url) note.innerHTML = "Share this private link with students: <a href=\"" + url + "\">" + url + "</a>";
+					note.hidden = false;
+					note.innerHTML = "Course page: <a href=\"" + page + "\">" + page + "</a>" + (url !== page ? "<br>Private link: <a href=\"" + url + "\">" + url + "</a>" : "");
 				}
 				sessionStorage.removeItem(DRAFT_KEY);
 				var modalEl = document.getElementById("success");

@@ -1413,7 +1413,9 @@
 			}
 			host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Courses waiting for approval</h2>' +
 				(rows.length ? rows.map(function (course) {
-					var link = course.visibility === "private" && course.share_code ? '<p class="mb-2">Private link: https://bryllaacademy.vercel.app/course-details?share=' + esc(course.share_code) + "</p>" : "";
+					var page = "https://bryllaacademy.vercel.app/course-details?course=" + encodeURIComponent(course.id);
+					var link = '<p class="mb-2">Course page: <a href="' + page + '">' + esc(page) + "</a></p>";
+					if (course.visibility === "private" && course.share_code) link += '<p class="mb-2">Private link: https://bryllaacademy.vercel.app/course-details?share=' + esc(course.share_code) + "</p>";
 					return '<article class="border rounded-3 p-3 mb-2"><h3 class="h6 fw-bold">' + esc(course.title) + "</h3>" + link +
 						'<button class="btn btn-primary btn-sm rounded-pill me-2" type="button" data-approve="' + esc(course.id) + '">Approve</button>' +
 						'<button class="btn btn-light btn-sm rounded-pill" type="button" data-reject="' + esc(course.id) + '">Reject</button></article>';

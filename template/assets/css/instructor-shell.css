@@ -294,10 +294,11 @@ body.instructor-app[data-area="admin"] .app-brand img { height: 84px; width: aut
 .app-avatar img { width: 100%; height: 100%; object-fit: cover; }
 .app-profile { position: relative; margin-left: auto; }
 .app-profile-button { display: flex; align-items: center; gap: 8px; margin-left: auto; border: 0; background: transparent; color: #0C3157; text-decoration: none; }
-.welcome-badge { display: inline-block; max-width: 100%; margin: 0 0 10px; padding: 14px 20px; border-radius: 12px; background: linear-gradient(10.93deg, #392C7D 16.22%, #6850E3 120.13%); color: #fff; font-size: 20px; font-weight: 500; line-height: 1.3; }
+.welcome-badge { display: block; box-sizing: border-box; width: 100%; margin: 0 0 16px; padding: 22px 24px; border-radius: 16px; background: linear-gradient(145deg, #073b70 0%, #04635e 100%); color: #fff; font-size: 22px; font-weight: 500; line-height: 1.3; }
 .app-profile-menu { position: absolute; right: 0; top: 46px; background: #fff; border: 1px solid #e6ebf2; border-radius: 10px; min-width: 180px; box-shadow: 0 8px 24px rgba(12,49,87,.08); padding: 8px; z-index: 30; }
 .app-profile-menu a { display: block; padding: 8px; color: #0C3157; text-decoration: none; }
 .dash-head { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; margin-bottom: 16px; flex-wrap: wrap; }
+.dash-head > div:first-child { flex: 1 1 100%; }
 .attention-list { margin: 0 0 12px; padding-left: 18px; }
 body.sidebar-collapsed .app-sidebar { width: 76px; }
 body.sidebar-collapsed .app-sidebar span, body.sidebar-collapsed .app-nav-label { display: none; }
