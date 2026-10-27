@@ -249,7 +249,6 @@
 			w6l3: "Find bookkeeping work, write applications, and use AI with care."
 		};
 		var PRICE = "GHS 600";
-		var ENROL_URL = "register.html";
 		var courseKey = new URLSearchParams(location.search).get("course") || "bookkeeping";
 		var courseTitle = courseKey === "bookkeeping" ? "Bookkeeping" : "Course";
 
@@ -274,12 +273,13 @@
 				{ id: "platform-tutorial", kind: "guide", week: 0, topic: "Start here", n: 2, title: "How to use the learning platform", min: 0, preview: false, summary: "A short guide to lessons, assignments, and progress.", videoUrl: "", pageUrl: "platform-tutorial.html" }
 			);
 		}
-		var COURSE_OPENS_AT = Date.parse("2027-01-04T00:00:00Z");
-		function lessonsOpen() { return Date.now() >= COURSE_OPENS_AT; }
+		var signedIn = false;
+		var unlockedWeeks = {};
 		function itemLocked(item) {
-			if (!enrolled) return true;
-			if (item.kind === "guide") return false;
-			return courseKey === "bookkeeping" && !lessonsOpen();
+			if (!item) return true;
+			if (item.kind === "guide") return !signedIn;
+			if (courseKey === "bookkeeping") return !unlockedWeeks[item.week];
+			return !enrolled;
 		}
 
 		var enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
@@ -328,7 +328,7 @@
 
 		function lessonRow(item, sets) {
 			var locked = itemLocked(item);
-			var current = item === sel && enrolled;
+			var current = item === sel && signedIn;
 			var finished = isDone(item, sets);
 			var icon = finished ? "ti-circle-check" : current ? "ti-player-play-filled" : locked ? "ti-lock" : "ti-circle";
 			var color = finished && !current ? ' style="color:var(--green-fg)"' : "";
@@ -358,9 +358,12 @@
 
 		function sidebarGroups() {
 			if (courseKey === "bookkeeping") {
-				return [{ week: 0, label: "Start here", title: "Welcome", assignment: false }].concat(BryllaStudent.modules.map(function (module) {
-					return { week: module.week, label: "Week " + module.week, title: module.title, assignment: true };
-				}));
+				var groups = [{ week: 0, label: "Start here", title: "Welcome", assignment: false }];
+				BryllaStudent.modules.forEach(function (module) {
+					if (!unlockedWeeks[module.week]) return;
+					groups.push({ week: module.week, label: "Week " + module.week, title: module.title, assignment: true });
+				});
+				return groups;
 			}
 			var groups = [];
 			var seen = {};
@@ -392,12 +395,13 @@
 				return '<details' + (open ? " open" : "") + '><summary><span class="t">' + esc(module.label) + '</span><span class="s">' + status + '</span><i class="ti ti-chevron-down chev" aria-hidden="true"></i></summary><div class="lessons">' + rows.map(function (item) { return lessonRow(item, sets); }).join("") + assignment + "</div></details>";
 			}).join("");
 			var lockNote = $("locknote");
-			if (!enrolled) {
+			var closedModule = courseKey === "bookkeeping" && BryllaStudent.modules.some(function (module) { return !unlockedWeeks[module.week]; });
+			if (!signedIn) {
 				lockNote.hidden = false;
-				lockNote.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i> Other lessons unlock after you enrol';
-			} else if (courseKey === "bookkeeping" && !lessonsOpen()) {
+				lockNote.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i> Sign in to watch the welcome';
+			} else if (closedModule) {
 				lockNote.hidden = false;
-				lockNote.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i> Week 1 lessons open on 4 January 2027';
+				lockNote.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i> More modules appear when the founder opens them';
 			} else {
 				lockNote.hidden = true;
 			}
@@ -448,37 +452,37 @@
 		function renderMain() {
 			var sets = progressSets();
 			var summary = BryllaStudent.summary();
-			var can = enrolled && !itemLocked(sel);
+			var can = signedIn && !itemLocked(sel);
 			var nextItem = ALL[ALL.indexOf(sel) + 1];
 			var videoClass = sel.kind === "guide" && sel.pageUrl ? "video guide" : "video";
 			var video;
 			if (can && sel.kind === "guide") {
 				video = embedVideo(sel.videoUrl) || (sel.pageUrl
 					? '<iframe src="' + esc(sel.pageUrl) + '" title="' + esc(sel.title) + '"></iframe>'
-					: '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><strong>Welcome video</strong><small>A welcome from Brylla Academy will play here. It will be added before the course opens on 4 January 2027.</small></div>');
+					: '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><strong>Welcome video</strong><small>A welcome from the founder will play here.</small></div>');
 			} else if (can && sel.kind === "lesson") {
 				video = embedVideo(sel.videoUrl) || '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><small>This lesson\'s video will play here when a link is added.</small></div>';
 			} else if (can && sel.kind === "live") {
 				video = '<div class="msg"><i class="ti ti-broadcast" aria-hidden="true"></i><strong>' + esc(sel.title) + '</strong><small>Live session. Mark attended after you join.</small></div>';
-			} else if (enrolled) {
-				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>Lessons open on 4 January 2027</strong><small>Registering keeps your place. Week 1 does not open before the course start date.</small></div>';
+			} else if (signedIn) {
+				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>This module is not open yet</strong><small>The founder opens each module when it is ready.</small></div>';
 			} else {
-				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>Enrol to start learning</strong><small>Course lessons unlock after you enrol.</small></div>';
+				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>Sign in to watch the welcome</strong><small><a href="login">Sign in</a> to see the welcome from the founder.</small></div>';
 			}
 			var head = can
 				? "<h1>" + esc(sel.title) + "</h1><p class=\"sub\">" + (sel.week ? "Week " + sel.week + (sel.kind === "live" ? ", live session" : ", lesson " + sel.n) : "Start here") + "</p>"
 				: "<h1>Study Materials</h1><p class=\"sub\">Bookkeeping course resources</p>";
 			var actions = "";
-			if (enrolled && sel.kind === "guide") {
+			if (signedIn && sel.kind === "guide") {
 				if (nextItem && !itemLocked(nextItem)) actions += '<button class="btn primary" type="button" data-a="next">Next <i class="ti ti-arrow-right" aria-hidden="true"></i></button>';
-			} else if (enrolled && sel.kind === "lesson" && !itemLocked(sel)) {
+			} else if (signedIn && sel.kind === "lesson" && !itemLocked(sel)) {
 				var finished = Boolean(sets.done[sel.id]);
 				var currentId = summary.lessonId;
 				if (finished) actions += '<button class="btn" type="button" disabled aria-pressed="true"><i class="ti ti-circle-check" aria-hidden="true"></i>Completed</button>';
 				else if (sel.id !== currentId) actions += '<button class="btn" type="button" disabled>Finish the current lesson first</button>';
 				else actions += '<button class="btn" type="button" data-a="done"><i class="ti ti-circle-check" aria-hidden="true"></i>Mark complete</button>';
 				if (nextItem && !itemLocked(nextItem)) actions += '<button class="btn primary" type="button" data-a="next">Next lesson <i class="ti ti-arrow-right" aria-hidden="true"></i></button>';
-			} else if (enrolled && sel.kind === "live" && !itemLocked(sel)) {
+			} else if (signedIn && sel.kind === "live" && !itemLocked(sel)) {
 				if (sets.attended[sel.id]) actions += '<button class="btn" type="button" disabled>Attendance saved</button>';
 				else actions += '<button class="btn" type="button" data-a="attend"><i class="ti ti-circle-check" aria-hidden="true"></i>Mark attended</button>';
 				if (nextItem && !itemLocked(nextItem)) actions += '<button class="btn primary" type="button" data-a="next">Next lesson <i class="ti ti-arrow-right" aria-hidden="true"></i></button>';
@@ -512,8 +516,11 @@
 		}
 
 		function render() {
-			if (!sel || (enrolled && itemLocked(sel))) {
-				sel = enrolled && lessonsOpen() ? (itemById(BryllaStudent.summary().lessonId) || ALL[0]) : (itemById("welcome") || ALL[0]);
+			var requested = itemById(new URLSearchParams(location.search).get("item"));
+			if (!sel || itemLocked(sel)) {
+				var current = itemById(BryllaStudent.summary().lessonId);
+				var resume = BryllaStudent.summary().started && current && !itemLocked(current) ? current : null;
+				sel = (requested && !itemLocked(requested) ? requested : null) || resume || itemById("welcome") || ALL[0];
 			}
 			renderSide();
 			renderMain();
@@ -761,7 +768,19 @@
 				});
 			});
 		}
-		render();
+		function loadUnlocks() {
+			var client = window.BryllaAuth && BryllaAuth.client;
+			if (!client) return Promise.resolve();
+			return client.auth.getSession().then(function (session) {
+				signedIn = Boolean(session.data.session);
+				if (!signedIn || courseKey !== "bookkeeping") return null;
+				return client.from("course_module_unlocks").select("week").eq("course_id", "bookkeeping");
+			}).then(function (result) {
+				unlockedWeeks = {};
+				if (result && result.data) result.data.forEach(function (row) { unlockedWeeks[Number(row.week)] = true; });
+			}).catch(function () {});
+		}
+		$("main").innerHTML = '<p class="sub">Loading your lesson…</p>';
 		if (window.BryllaAuth) BryllaAuth.ready.then(function () {
 			if (courseKey === "bookkeeping") {
 				enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
@@ -769,10 +788,11 @@
 			}
 			if (!studentPicked) sel = null;
 			showStudent();
-			return Promise.all([loadSubmittedAssignments(), loadLessonLinks()]);
+			return Promise.all([loadSubmittedAssignments(), loadLessonLinks(), loadUnlocks()]);
 		}).then(function () {
 			render();
 		});
+		else render();
 
 		var menuBtn = $("menu-btn");
 		var drawer = $("drawer");

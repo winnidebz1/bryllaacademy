@@ -345,6 +345,21 @@
 			gap: var(--space-4);
 			padding: var(--space-4);
 		}
+		.continue-card.is-welcome { flex-direction: column; align-items: stretch; }
+		.welcome-stage {
+			display: grid;
+			place-items: center;
+			min-height: 220px;
+			margin-top: 12px;
+			padding: 24px;
+			border-radius: 12px;
+			background: linear-gradient(145deg, #073b70 0%, #04635e 100%);
+			color: #ffffff;
+			text-align: center;
+		}
+		.welcome-stage strong { font-size: 18px; font-weight: 500; }
+		.welcome-stage span { display: block; max-width: 36rem; margin-top: 8px; font-size: 14px; }
+		.continue-card.is-welcome .btn-fill { align-self: flex-start; margin-top: 16px; }
 		.continue-copy { min-width: 0; flex: 1; }
 		.continue-actions { display: flex; align-items: center; gap: 12px; flex: 0 0 auto; }
 		.lesson-preview {
@@ -738,6 +753,8 @@
 		const scrimEl = document.getElementById("menu-scrim");
 		let menuOpen = false;
 		let runtimeState = null;
+		let unlockedWeeks = {};
+		let unlocksLoaded = false;
 
 		const svgNs = "http://www.w3.org/2000/svg";
 		const iconPaths = {
@@ -831,12 +848,12 @@
 					data.stats.assignmentsDue = 0;
 					data.stats.attendancePercent = 0;
 				}
-				if (data.lesson) {
-					data.lesson.minutesLeft = 0;
-					if (progress) data.lesson.title = progress.lessonTitle;
-				}
-				return;
+			if (data.lesson) {
+				data.lesson.minutesLeft = 0;
+				if (progress && unlockedWeeks[progress.weekCurrent]) data.lesson.title = progress.lessonTitle;
 			}
+			return;
+		}
 			data.course.weekCurrent = progress.weekCurrent;
 			data.course.weeksTotal = progress.weeksTotal;
 			if (data.stats) {
@@ -848,6 +865,7 @@
 			if (data.lesson) {
 				data.lesson.minutesLeft = progress.minutesLeft;
 				data.lesson.title = progress.lessonTitle;
+				data.lesson.itemId = progress.lessonId;
 				data.lesson.percentComplete = progress.percentComplete;
 			}
 			if (progress.completed) data.state = "completed";
@@ -874,6 +892,19 @@
 			if (data.stats && data.lesson) {
 				const total = data.stats.lessonsTotal;
 				data.lesson.percentComplete = total ? Math.round((data.stats.lessonsDone / total) * 100) : 0;
+			}
+			const progress = window.BryllaStudent ? BryllaStudent.summary() : null;
+			const lessonWeek = progress && progress.started ? progress.weekCurrent : 1;
+			data.welcomeOnly = data.state !== "completed" && (!unlocksLoaded || !unlockedWeeks[lessonWeek]);
+			if (data.welcomeOnly) {
+				data.state = "new";
+				data.upcoming = [];
+				data.lesson.title = "Welcome to Brylla Academy";
+				data.course.weekCurrent = 0;
+				data.course.weeksTotal = 0;
+			} else if (progress && data.lesson) {
+				data.lesson.itemId = progress.lessonId;
+				data.lesson.title = progress.lessonTitle;
 			}
 			return data;
 		}
@@ -990,8 +1021,14 @@
 			const heading = el("h1", null, "Welcome, " + firstName);
 			heading.id = "student-name";
 			const meta = el("p", "banner-meta");
-			meta.append(el("span", "banner-course", data.course.name + ", "));
-			meta.append(document.createTextNode("Week " + data.course.weekCurrent + " of " + data.course.weeksTotal));
+			if (data.welcomeOnly) {
+				meta.append(el("span", "banner-course", "Welcome"));
+			} else if (!data.course.weeksTotal) {
+				meta.append(el("span", "banner-course", data.course.name));
+			} else {
+				meta.append(el("span", "banner-course", data.course.name + ", "));
+				meta.append(document.createTextNode("Week " + data.course.weekCurrent + " of " + data.course.weeksTotal));
+			}
 			copy.append(heading, meta);
 			section.append(wrap, copy);
 			return section;
@@ -1010,6 +1047,20 @@
 			return section;
 		}
 
+		function renderWelcome() {
+			const section = el("section", "card continue-card is-welcome");
+			const heading = el("h2", "continue-title", "Welcome to Brylla Academy");
+			heading.id = "continue-title";
+			section.setAttribute("aria-labelledby", "continue-title");
+			const stage = el("div", "welcome-stage");
+			stage.append(el("strong", null, "Welcome video"));
+			stage.append(el("span", null, "A welcome from the founder will play here."));
+			const button = el("a", "btn-fill", "Watch welcome");
+			button.href = "course-watch.html";
+			section.append(heading, el("p", "continue-meta", "A welcome from the founder."), stage, button);
+			return section;
+		}
+
 		function renderContinue(data) {
 			const section = el("section", "card continue-card");
 			const copy = el("div", "continue-copy");
@@ -1017,8 +1068,9 @@
 			let meta = data.lesson.minutesLeft + " min left, " + data.lesson.percentComplete + "% of course complete";
 			const record = window.BryllaStudent ? BryllaStudent.courseRecord("bookkeeping") : { enrolled: false };
 			const started = window.BryllaStudent ? BryllaStudent.summary().started : false;
-			let action = record.enrolled ? (started ? "Resume lesson" : "Start course") : "Sign up";
-			let href = record.enrolled ? data.course.watchUrl : "register";
+			const lessonLink = data.course.watchUrl + (data.lesson.itemId ? "?item=" + encodeURIComponent(data.lesson.itemId) : "");
+			let action = started ? "Resume lesson" : "Start course";
+			let href = lessonLink;
 			let showCheck = false;
 			if (data.state === "new") {
 				title = "Start your first lesson";
@@ -1235,9 +1287,27 @@
 			mainEl.append(renderBanner(data));
 			if (data.payment.outstanding) mainEl.append(renderPayment(data));
 			mainEl.append(renderShared());
-			mainEl.append(renderContinue(data));
-			if (data.state !== "new" && data.stats) mainEl.append(renderStats(data));
-			mainEl.append(renderUpcoming(data));
+			mainEl.append(data.welcomeOnly ? renderWelcome() : renderContinue(data));
+			if (!data.welcomeOnly && data.state !== "new" && data.stats) mainEl.append(renderStats(data));
+			if (!data.welcomeOnly) mainEl.append(renderUpcoming(data));
+		}
+
+		function loadUnlocks() {
+			const client = window.BryllaAuth && BryllaAuth.client;
+			if (!client) {
+				unlocksLoaded = true;
+				render();
+				return;
+			}
+			client.from("course_module_unlocks").select("week").eq("course_id", "bookkeeping").then(function (result) {
+				unlockedWeeks = {};
+				if (result && result.data) result.data.forEach(function (row) { unlockedWeeks[Number(row.week)] = true; });
+				unlocksLoaded = true;
+				render();
+			}).catch(function () {
+				unlocksLoaded = true;
+				render();
+			});
 		}
 
 		function openMenu() {
@@ -1324,7 +1394,8 @@
 		});
 		window.addEventListener("pageshow", function () { render(); });
 		render();
-		if (window.BryllaAuth) BryllaAuth.ready.then(render);
+		if (window.BryllaAuth) BryllaAuth.ready.then(loadUnlocks);
+		else loadUnlocks();
 	</script>
 </body>
 </html>

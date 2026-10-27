@@ -65,7 +65,8 @@
 		{ label: "Courses", items: [
 			{ label: "All courses", href: "admin-courses.html", icon: "isax isax-teacher5", page: "admin-courses" },
 			{ label: "Add course", href: "add-course.html", icon: "isax isax-add-circle5", page: "add-course" },
-			{ label: "Course performance", href: "admin-performance.html", icon: "isax isax-book", page: "admin-performance" }
+			{ label: "Course performance", href: "admin-performance.html", icon: "isax isax-book", page: "admin-performance" },
+			{ label: "Open modules", href: "admin-dashboard.html#module-unlocks", icon: "isax isax-book", page: "module-unlocks" }
 		] },
 		{ label: "People", items: [
 			{ label: "Students", href: "admin-students.html", icon: "isax isax-profile-2user5", page: "admin-students" },
@@ -1222,11 +1223,60 @@
 	function financeNotice() {
 		return '<div class="card"><div class="card-body"><h2 class="h5 fw-bold">Payments are not connected</h2><p class="mb-2">Gross sales, refunds, provider fees, net receipts and outstanding balances stay hidden until a payment provider confirms a transaction.</p><p class="mb-0">Revenue is not estimated from course prices or enrolments.</p></div></div>';
 	}
+	function moduleUnlockCard() {
+		var rows = BOOKKEEPING_MODULES.map(function (module) {
+			return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom">' +
+				'<span><strong>Week ' + module.week + '</strong><span class="d-block">' + esc(module.title) + '</span></span>' +
+				'<button class="btn btn-light" type="button" data-unlock-week="' + module.week + '" aria-pressed="false">Open</button></li>';
+		}).join("");
+		return '<div class="card mb-3" id="module-unlocks"><div class="card-body"><h2 class="h5 fw-bold">Open course modules</h2><p class="mb-3">Students see the welcome until you open a module. Open each Bookkeeping module when you want it to appear.</p><ul class="list-unstyled mb-0" id="module-unlock-list">' + rows + '</ul><p class="mb-0 mt-3" id="module-unlock-status" role="status">Loading modules…</p></div></div>';
+	}
+	function paintModuleUnlocks() {
+		var current = staffClient();
+		var status = document.getElementById("module-unlock-status");
+		var list = document.getElementById("module-unlock-list");
+		if (!current || !list) return;
+		if (!list.dataset.bound) {
+			list.dataset.bound = "1";
+			list.addEventListener("click", function (event) {
+				var button = event.target.closest("[data-unlock-week]");
+				if (!button) return;
+				var week = Number(button.getAttribute("data-unlock-week"));
+				var opening = button.getAttribute("aria-pressed") !== "true";
+				button.disabled = true;
+				current.rpc("set_module_unlock", { p_course: "bookkeeping", p_week: week, p_open: opening }).then(function (saved) {
+					button.disabled = false;
+					if (saved.error) {
+						if (status) status.textContent = saved.error.message || "That module could not be updated.";
+						return;
+					}
+					paintModuleUnlocks();
+				});
+			});
+		}
+		current.from("course_module_unlocks").select("week").eq("course_id", "bookkeeping").then(function (result) {
+			if (result.error) {
+				if (status) status.textContent = result.error.message || "Modules could not be loaded.";
+				return;
+			}
+			var open = {};
+			(result.data || []).forEach(function (row) { open[Number(row.week)] = true; });
+			list.querySelectorAll("[data-unlock-week]").forEach(function (button) {
+				var week = Number(button.getAttribute("data-unlock-week"));
+				var isOpen = Boolean(open[week]);
+				button.textContent = isOpen ? "Close" : "Open";
+				button.className = isOpen ? "btn btn-primary" : "btn btn-light";
+				button.setAttribute("aria-pressed", isOpen ? "true" : "false");
+			});
+			if (status) status.textContent = "Students see a module only after you open it. The welcome stays available.";
+		});
+	}
 	function renderAdminDashboard(root, data) {
 		var count = totals(data);
 		var wide = "col-md-6 col-xl-3";
 		root.innerHTML = '<div class="dash-head"><div><h1 class="welcome-badge">Welcome, ' + esc(welcomeName(data)) + '</h1><p class="mb-0">Revenue is the total students paid before their course opened.</p></div>' +
 			'<div class="d-flex flex-wrap gap-2" role="group" aria-label="Date range"><button class="btn btn-light" type="button" data-range="7">7 days</button><button class="btn btn-light" type="button" data-range="30">30 days</button><button class="btn btn-light" type="button" data-range="90">90 days</button></div></div>' +
+			moduleUnlockCard() +
 			'<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>' +
 			'<p id="range-note" class="mb-3" role="status">Loading student payments…</p>' +
 			'<div class="card mb-3" id="recent-enrolments"><div class="card-body"><h2 class="h5 fw-bold">Recent enrolments</h2><p role="status">Loading enrolments…</p></div></div><div class="row">' +
@@ -1247,6 +1297,7 @@
 			}
 		});
 		paintInstructorInvite();
+		paintModuleUnlocks();
 		paintPendingCourses();
 		paintFinance(90);
 		watchEnrolments(paintLiveEnrolments);
