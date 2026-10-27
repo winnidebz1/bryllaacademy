@@ -196,7 +196,7 @@
 				<div class="plabel" id="plabel"></div>
 			</div>
 			<div id="weeks"></div>
-			<div class="note" id="locknote"><i class="ti ti-lock" aria-hidden="true"></i> Other lessons unlock after you enrol</div>
+			<div class="note" id="locknote" hidden></div>
 		</nav>
 									</div>
 	<dialog class="assignment-dialog" id="assignment-dialog" aria-labelledby="assignment-dialog-title">
@@ -263,9 +263,9 @@
 		BryllaStudent.modules.forEach(function (module) {
 			module.lessons.forEach(function (title, index) {
 				var id = "w" + module.week + "l" + (index + 1);
-				ALL.push({ id: id, kind: "lesson", week: module.week, topic: module.title, n: index + 1, title: title, min: BryllaStudent.lessonMinutes, preview: false, summary: SUMMARIES[id] || title });
+				ALL.push({ id: id, kind: "lesson", week: module.week, moduleKey: String(module.week), topic: module.title, n: index + 1, title: title, min: BryllaStudent.lessonMinutes, preview: false, summary: SUMMARIES[id] || title });
 			});
-			ALL.push({ id: "w" + module.week + "live", kind: "live", week: module.week, topic: module.title, n: 0, title: module.live, min: 60, preview: false, summary: "A live session with your instructor." });
+			ALL.push({ id: "w" + module.week + "live", kind: "live", week: module.week, moduleKey: String(module.week), topic: module.title, n: 0, title: module.live, min: 60, preview: false, summary: "A live session with your instructor." });
 		});
 		if (courseKey === "bookkeeping") {
 			ALL.unshift(
@@ -278,8 +278,8 @@
 		function itemLocked(item) {
 			if (!item) return true;
 			if (item.kind === "guide") return !signedIn;
-			if (courseKey === "bookkeeping") return !unlockedWeeks[item.week];
-			return !enrolled;
+			var key = item.moduleKey != null ? String(item.moduleKey) : String(item.week || "");
+			return !unlockedWeeks[key];
 		}
 
 		var enrolled = BryllaStudent.courseRecord("bookkeeping").enrolled;
@@ -360,7 +360,7 @@
 			if (courseKey === "bookkeeping") {
 				var groups = [{ week: 0, label: "Start here", title: "Welcome", assignment: false }];
 				BryllaStudent.modules.forEach(function (module) {
-					if (!unlockedWeeks[module.week]) return;
+					if (!unlockedWeeks[String(module.week)]) return;
 					groups.push({ week: module.week, label: "Week " + module.week, title: module.title, assignment: true });
 				});
 				return groups;
@@ -368,6 +368,7 @@
 			var groups = [];
 			var seen = {};
 			ALL.forEach(function (item) {
+				if (item.kind !== "guide" && itemLocked(item)) return;
 				if (seen[item.week]) return;
 				seen[item.week] = true;
 				groups.push({ week: item.week, label: item.topic || "Topic", title: item.topic || "Topic", assignment: false });
@@ -386,7 +387,7 @@
 			$("pbar").setAttribute("aria-valuenow", String(pct));
 			$("plabel").textContent = pct + "% complete, " + doneCount + " of " + total + " lessons";
 			$("weeks").innerHTML = sidebarGroups().map(function (module) {
-				var rows = ALL.filter(function (item) { return item.week === module.week; });
+				var rows = ALL.filter(function (item) { return item.week === module.week && (item.kind === "guide" || !itemLocked(item)); });
 				var countable = rows.filter(function (item) { return item.kind !== "live"; });
 				var finished = countable.filter(function (item) { return sets.done[item.id]; }).length;
 				var open = rows.indexOf(sel) !== -1;
@@ -394,17 +395,7 @@
 				var assignment = module.assignment ? moduleAssignment(module) : "";
 				return '<details' + (open ? " open" : "") + '><summary><span class="t">' + esc(module.label) + '</span><span class="s">' + status + '</span><i class="ti ti-chevron-down chev" aria-hidden="true"></i></summary><div class="lessons">' + rows.map(function (item) { return lessonRow(item, sets); }).join("") + assignment + "</div></details>";
 			}).join("");
-			var lockNote = $("locknote");
-			var closedModule = courseKey === "bookkeeping" && BryllaStudent.modules.some(function (module) { return !unlockedWeeks[module.week]; });
-			if (!signedIn) {
-				lockNote.hidden = false;
-				lockNote.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i> Sign in to watch the welcome';
-			} else if (closedModule) {
-				lockNote.hidden = false;
-				lockNote.innerHTML = '<i class="ti ti-lock" aria-hidden="true"></i> More modules appear when the founder opens them';
-			} else {
-				lockNote.hidden = true;
-			}
+			$("locknote").hidden = true;
 		}
 
 		function openAssignment(moduleTitle, week) {
@@ -465,7 +456,7 @@
 			} else if (can && sel.kind === "live") {
 				video = '<div class="msg"><i class="ti ti-broadcast" aria-hidden="true"></i><strong>' + esc(sel.title) + '</strong><small>Live session. Mark attended after you join.</small></div>';
 			} else if (signedIn) {
-				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>This module is not open yet</strong><small>The founder opens each module when it is ready.</small></div>';
+				video = '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><strong>Welcome video</strong><small>A welcome from the founder will play here.</small></div>';
 			} else {
 				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>Sign in to watch the welcome</strong><small><a href="login">Sign in</a> to see the welcome from the founder.</small></div>';
 			}
@@ -706,7 +697,7 @@
 				ALL = modules.map(function (module) {
 					var week = topicOrder[module.topic_id] || 1;
 					counts[week] = (counts[week] || 0) + 1;
-					return { id: "mod-" + module.id, kind: "lesson", week: week, topic: topicName[module.topic_id] || "Lessons", n: counts[week], title: module.title, min: 0, preview: false, summary: module.title, videoUrl: module.video_url || "" };
+					return { id: "mod-" + module.id, kind: "lesson", week: week, moduleKey: module.topic_id || module.id, topic: topicName[module.topic_id] || "Lessons", n: counts[week], title: module.title, min: 0, preview: false, summary: module.title, videoUrl: module.video_url || "" };
 				});
 				if (!ALL.some(function (item) { return item === sel; })) sel = ALL[0] || null;
 				return;
@@ -717,7 +708,7 @@
 			var links = (rows || []).slice();
 			if (courseKey !== "bookkeeping") {
 				ALL = links.map(function (link, index) {
-					return { id: "link-" + link.id, kind: "lesson", week: 1, topic: "Lessons", n: index + 1, title: link.title, min: 0, preview: false, summary: link.title, videoUrl: link.video_url };
+					return { id: "link-" + link.id, kind: "lesson", week: 1, moduleKey: link.id, topic: "Lessons", n: index + 1, title: link.title, min: 0, preview: false, summary: link.title, videoUrl: link.video_url };
 				});
 				if (!ALL.some(function (item) { return item === sel; })) sel = ALL[0] || null;
 				return;
@@ -773,11 +764,11 @@
 			if (!client) return Promise.resolve();
 			return client.auth.getSession().then(function (session) {
 				signedIn = Boolean(session.data.session);
-				if (!signedIn || courseKey !== "bookkeeping") return null;
-				return client.from("course_module_unlocks").select("week").eq("course_id", "bookkeeping");
+				if (!signedIn) return null;
+				return client.from("course_module_unlocks").select("module_key").eq("course_id", courseKey);
 			}).then(function (result) {
 				unlockedWeeks = {};
-				if (result && result.data) result.data.forEach(function (row) { unlockedWeeks[Number(row.week)] = true; });
+				if (result && result.data) result.data.forEach(function (row) { unlockedWeeks[String(row.module_key)] = true; });
 			}).catch(function () {});
 		}
 		$("main").innerHTML = '<p class="sub">Loading your lesson…</p>';

@@ -1224,51 +1224,76 @@
 		return '<div class="card"><div class="card-body"><h2 class="h5 fw-bold">Payments are not connected</h2><p class="mb-2">Gross sales, refunds, provider fees, net receipts and outstanding balances stay hidden until a payment provider confirms a transaction.</p><p class="mb-0">Revenue is not estimated from course prices or enrolments.</p></div></div>';
 	}
 	function moduleUnlockCard() {
-		var rows = BOOKKEEPING_MODULES.map(function (module) {
-			return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom">' +
-				'<span><strong>Week ' + module.week + '</strong><span class="d-block">' + esc(module.title) + '</span></span>' +
-				'<button class="btn btn-light" type="button" data-unlock-week="' + module.week + '" aria-pressed="false">Open</button></li>';
-		}).join("");
-		return '<div class="card mb-3" id="module-unlocks"><div class="card-body"><h2 class="h5 fw-bold">Open course modules</h2><p class="mb-3">Students see the welcome until you open a module. Open each Bookkeeping module when you want it to appear.</p><ul class="list-unstyled mb-0" id="module-unlock-list">' + rows + '</ul><p class="mb-0 mt-3" id="module-unlock-status" role="status">Loading modules…</p></div></div>';
+		return '<div class="card mb-3" id="module-unlocks"><div class="card-body"><h2 class="h5 fw-bold">Open course modules</h2><p class="mb-3">Open a module when students should see it. This applies to Bookkeeping and to every course added later.</p><div id="module-unlock-list"><p role="status">Loading modules…</p></div></div></div>';
+	}
+	function modulesForCourse(course, topics, modules) {
+		if (course.id === "bookkeeping") {
+			return BOOKKEEPING_MODULES.map(function (module) {
+				return { key: String(module.week), title: "Week " + module.week + ": " + module.title };
+			});
+		}
+		var courseTopics = topics.filter(function (topic) { return topic.course_id === course.id; });
+		if (courseTopics.length) {
+			return courseTopics.map(function (topic) { return { key: topic.id, title: topic.title }; });
+		}
+		return modules.filter(function (mod) { return mod.course_id === course.id; }).map(function (mod) {
+			return { key: mod.id, title: mod.title };
+		});
 	}
 	function paintModuleUnlocks() {
 		var current = staffClient();
-		var status = document.getElementById("module-unlock-status");
 		var list = document.getElementById("module-unlock-list");
-		if (!current || !list) return;
-		if (!list.dataset.bound) {
-			list.dataset.bound = "1";
-			list.addEventListener("click", function (event) {
-				var button = event.target.closest("[data-unlock-week]");
+		var card = document.getElementById("module-unlocks");
+		if (!current || !list || !card) return;
+		if (!card.dataset.bound) {
+			card.dataset.bound = "1";
+			card.addEventListener("click", function (event) {
+				var button = event.target.closest("[data-module-key]");
 				if (!button) return;
-				var week = Number(button.getAttribute("data-unlock-week"));
 				var opening = button.getAttribute("aria-pressed") !== "true";
 				button.disabled = true;
-				current.rpc("set_module_unlock", { p_course: "bookkeeping", p_week: week, p_open: opening }).then(function (saved) {
+				current.rpc("set_module_unlock", {
+					p_course: button.getAttribute("data-course-id"),
+					p_module: button.getAttribute("data-module-key"),
+					p_open: opening
+				}).then(function (saved) {
 					button.disabled = false;
 					if (saved.error) {
-						if (status) status.textContent = saved.error.message || "That module could not be updated.";
+						list.insertAdjacentHTML("beforeend", '<p class="mb-0 mt-2" role="status">' + esc(saved.error.message || "That module could not be updated.") + "</p>");
 						return;
 					}
 					paintModuleUnlocks();
 				});
 			});
 		}
-		current.from("course_module_unlocks").select("week").eq("course_id", "bookkeeping").then(function (result) {
-			if (result.error) {
-				if (status) status.textContent = result.error.message || "Modules could not be loaded.";
+		Promise.all([
+			current.from("courses").select("id,title").order("title"),
+			current.from("course_topics").select("id,course_id,title,position").order("position"),
+			current.from("course_modules").select("id,course_id,title,position").order("position"),
+			current.from("course_module_unlocks").select("course_id,module_key")
+		]).then(function (parts) {
+			var courses = (parts[0].data || []).slice();
+			if (!courses.some(function (course) { return course.id === "bookkeeping"; })) {
+				courses.unshift({ id: "bookkeeping", title: "Bookkeeping" });
+			}
+			var topics = parts[1].error ? [] : (parts[1].data || []);
+			var modules = parts[2].error ? [] : (parts[2].data || []);
+			var open = {};
+			(parts[3].error ? [] : (parts[3].data || [])).forEach(function (row) {
+				open[row.course_id + ":" + row.module_key] = true;
+			});
+			if (!courses.length) {
+				list.innerHTML = "<p class=\"mb-0\">No courses yet.</p>";
 				return;
 			}
-			var open = {};
-			(result.data || []).forEach(function (row) { open[Number(row.week)] = true; });
-			list.querySelectorAll("[data-unlock-week]").forEach(function (button) {
-				var week = Number(button.getAttribute("data-unlock-week"));
-				var isOpen = Boolean(open[week]);
-				button.textContent = isOpen ? "Close" : "Open";
-				button.className = isOpen ? "btn btn-primary" : "btn btn-light";
-				button.setAttribute("aria-pressed", isOpen ? "true" : "false");
-			});
-			if (status) status.textContent = "Students see a module only after you open it. The welcome stays available.";
+			list.innerHTML = courses.map(function (course) {
+				var items = modulesForCourse(course, topics, modules);
+				var rows = items.length ? items.map(function (module) {
+					var isOpen = Boolean(open[course.id + ":" + module.key]);
+					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(module.title) + '</span><button class="' + (isOpen ? "btn btn-primary" : "btn btn-light") + '" type="button" data-course-id="' + esc(course.id) + '" data-module-key="' + esc(module.key) + '" aria-pressed="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close" : "Open") + "</button></li>";
+				}).join("") : '<li class="py-2 text-muted">No modules have been added to this course yet.</li>';
+				return '<section class="mb-3"><h3 class="h6 fw-bold">' + esc(course.title) + '</h3><ul class="list-unstyled mb-0">' + rows + "</ul></section>";
+			}).join("");
 		});
 	}
 	function renderAdminDashboard(root, data) {

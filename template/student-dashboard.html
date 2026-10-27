@@ -1284,30 +1284,7 @@
 				renderError();
 				return;
 			}
-			mainEl.append(renderBanner(data));
-			if (data.payment.outstanding) mainEl.append(renderPayment(data));
-			mainEl.append(renderShared());
-			mainEl.append(data.welcomeOnly ? renderWelcome() : renderContinue(data));
-			if (!data.welcomeOnly && data.state !== "new" && data.stats) mainEl.append(renderStats(data));
-			if (!data.welcomeOnly) mainEl.append(renderUpcoming(data));
-		}
-
-		function loadUnlocks() {
-			const client = window.BryllaAuth && BryllaAuth.client;
-			if (!client) {
-				unlocksLoaded = true;
-				render();
-				return;
-			}
-			client.from("course_module_unlocks").select("week").eq("course_id", "bookkeeping").then(function (result) {
-				unlockedWeeks = {};
-				if (result && result.data) result.data.forEach(function (row) { unlockedWeeks[Number(row.week)] = true; });
-				unlocksLoaded = true;
-				render();
-			}).catch(function () {
-				unlocksLoaded = true;
-				render();
-			});
+			mainEl.append(renderWelcome());
 		}
 
 		function openMenu() {
@@ -1394,8 +1371,7 @@
 		});
 		window.addEventListener("pageshow", function () { render(); });
 		render();
-		if (window.BryllaAuth) BryllaAuth.ready.then(loadUnlocks);
-		else loadUnlocks();
+		if (window.BryllaAuth) BryllaAuth.ready.then(render);
 	</script>
 </body>
 </html>
