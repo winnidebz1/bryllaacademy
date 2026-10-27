@@ -106,8 +106,8 @@
                                         <a href="/" class="link-1">Back to Home</a>
                                     </div>
                                     <h1 class="fs-32 fw-bold topic">Sign up</h1>
-                                    <p class="small text-muted mb-3" role="status">Bookkeeping costs GHS 600 in total. Pay the GHS 50 registration fee now. The remaining GHS 550 covers enrolment in the course. You set a password only after Paystack confirms the registration payment.</p>
-                                    <form id="signup-form" class="mb-3 pb-3" action="checkout" method="get" novalidate>
+                                    <p class="small text-muted mb-3" id="signup-note" role="status">Create your Brylla Academy account. You can sign in with this email and password.</p>
+                                    <form id="signup-form" class="mb-3 pb-3" action="student-dashboard" method="get" novalidate>
                                         <div class="mb-3 position-relative">
                                             <label class="form-label" for="signup-name">Full Name<span class="text-danger ms-1">*</span></label>
                                             <div class="position-relative">
@@ -122,11 +122,18 @@
                                                 <span><i class="isax isax-sms input-icon text-gray-7 fs-14"></i></span>
                                             </div>
                                         </div>
-                                        <div class="mb-3">
-                                            <label class="form-label" for="signup-course">Course<span class="text-danger ms-1">*</span></label>
-                                            <select id="signup-course" name="course" class="form-select form-select-lg" required>
-                                                <option value="bookkeeping">Bookkeeping — registration fee GHS 50</option>
-                                            </select>
+                                        <div class="mb-3 position-relative">
+                                            <label class="form-label" for="signup-password">Password<span class="text-danger ms-1">*</span></label>
+                                            <div class="position-relative" id="passwordInput">
+                                                <input id="signup-password" name="password" type="password" class="pass-inputs form-control form-control-lg" autocomplete="new-password" minlength="8" required>
+                                                <span class="isax toggle-passwords isax-eye-slash fs-14"></span>
+                                            </div>
+                                        </div>
+                                        <div class="mb-3 position-relative">
+                                            <label class="form-label" for="signup-password-confirm">Confirm password<span class="text-danger ms-1">*</span></label>
+                                            <div class="position-relative">
+                                                <input id="signup-password-confirm" name="passwordConfirm" type="password" class="form-control form-control-lg" autocomplete="new-password" minlength="8" required>
+                                            </div>
                                         </div>
                                         <div class="d-flex align-items-center justify-content-between mb-4">
                                             <div class="remember-me d-flex align-items-center">
@@ -138,7 +145,7 @@
                                         </div>
                                         <p class="text-danger small mb-3" id="signup-error" role="alert" hidden></p>
                                         <div class="d-grid">
-                                            <button class="btn btn-secondary btn-lg" type="submit">Continue to checkout <i class="isax isax-arrow-right-3 ms-1"></i></button>
+                                            <button class="btn btn-secondary btn-lg" type="submit" id="signup-button">Sign up <i class="isax isax-arrow-right-3 ms-1"></i></button>
                                         </div>
                                     </form>
 
@@ -174,23 +181,57 @@
 		
 		<!-- Custom JS -->
 		<script src="assets/js/script.js"></script>
+		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+		<script src="assets/js/brylla-public-config.js"></script>
 		<script>
-			const params = new URLSearchParams(window.location.search);
-			const courseField = document.getElementById("signup-course");
-			const requested = params.get("course");
-			if ([...courseField.options].some((option) => option.value === requested)) courseField.value = requested;
-			document.getElementById("signup-form").addEventListener("submit", (event) => {
-				event.preventDefault();
-				const form = event.currentTarget;
-				const error = document.getElementById("signup-error");
-				error.hidden = true;
-				if (!form.reportValidity()) return;
-				const name = document.getElementById("signup-name").value.trim();
-				const email = document.getElementById("signup-email").value.trim();
-				sessionStorage.setItem("bryllaPendingName", name);
-				sessionStorage.setItem("bryllaPendingEmail", email);
-				window.location.assign("checkout?course=" + encodeURIComponent(courseField.value) + "&purpose=registration");
-			});
+			(function () {
+				var form = document.getElementById("signup-form");
+				var errorEl = document.getElementById("signup-error");
+				var button = document.getElementById("signup-button");
+				var note = document.getElementById("signup-note");
+				var client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
+				function showError(message) {
+					errorEl.textContent = message;
+					errorEl.hidden = false;
+				}
+				if (client) {
+					client.auth.getSession().then(function (result) {
+						if (result.data && result.data.session) {
+							note.textContent = "You are already signed in.";
+							form.hidden = true;
+						}
+					});
+				}
+				form.addEventListener("submit", async function (event) {
+					event.preventDefault();
+					errorEl.hidden = true;
+					if (!form.reportValidity()) return;
+					var name = document.getElementById("signup-name").value.trim();
+					var email = document.getElementById("signup-email").value.trim();
+					var password = document.getElementById("signup-password").value;
+					var confirmPassword = document.getElementById("signup-password-confirm").value;
+					if (password.length < 8) return showError("Use a password of at least 8 characters.");
+					if (password !== confirmPassword) return showError("Those passwords don't match.");
+					if (!client) return showError("Sign-up is not available right now. Try again later.");
+					button.disabled = true;
+					var created = await client.rpc("register_student", {
+						p_name: name,
+						p_email: email,
+						p_password: password
+					});
+					if (created.error) {
+						button.disabled = false;
+						return showError(created.error.message || "The account could not be created.");
+					}
+					var signedIn = await client.auth.signInWithPassword({ email: email, password: password });
+					if (signedIn.error) {
+						window.location.assign("login");
+						return;
+					}
+					sessionStorage.setItem("brylla-role", "student");
+					window.location.replace("student-dashboard");
+				});
+			})();
 		</script>
 		
 	</body>

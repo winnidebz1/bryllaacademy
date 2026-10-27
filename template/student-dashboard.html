@@ -657,7 +657,7 @@
 			"outstanding": false,
 			"balanceLabel": "GHS 200",
 			"dueDate": "2026-10-16",
-			"payUrl": "checkout"
+			"payUrl": "register"
 		},
 		"upcoming": [
 			{
@@ -998,14 +998,13 @@
 		}
 
 		function renderPayment(data) {
-			const due = formatGhanaDate(data.payment.dueDate);
 			const section = el("section", "payment-banner");
 			section.setAttribute("role", "status");
-			section.setAttribute("aria-label", "Payment due");
+			section.setAttribute("aria-label", "Sign up");
 			const copy = el("div", "payment-copy");
 			copy.append(icon("warning"));
-			copy.append(el("p", null, "Payment due. Your balance of " + data.payment.balanceLabel + " is due by " + due.label + "."));
-			const pay = el("a", "btn-outline", "Pay now");
+			copy.append(el("p", null, "Create a student account to use the learning platform."));
+			const pay = el("a", "btn-outline", "Sign up");
 			pay.href = data.payment.payUrl;
 			section.append(copy, pay);
 			return section;
@@ -1018,8 +1017,8 @@
 			let meta = data.lesson.minutesLeft + " min left, " + data.lesson.percentComplete + "% of course complete";
 			const record = window.BryllaStudent ? BryllaStudent.courseRecord("bookkeeping") : { enrolled: false };
 			const started = window.BryllaStudent ? BryllaStudent.summary().started : false;
-			let action = record.enrolled ? (started ? "Resume lesson" : "Start course") : "Pay course fee";
-			let href = record.enrolled ? data.course.watchUrl : "checkout.html?course=bookkeeping&purpose=enrolment";
+			let action = record.enrolled ? (started ? "Resume lesson" : "Start course") : "Sign up";
+			let href = record.enrolled ? data.course.watchUrl : "register";
 			let showCheck = false;
 			if (data.state === "new") {
 				title = "Start your first lesson";
