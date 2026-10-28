@@ -66,6 +66,18 @@
 		});
 	}
 
+	function openRequestedCourse() {
+		var requested = new URLSearchParams(location.search).get("course") || "";
+		if (!requested) return ensureDraft();
+		return client.from("courses").select("id,created_by,status").eq("id", requested).maybeSingle().then(function (result) {
+			if (result.error || !result.data) throw new Error("That course could not be opened.");
+			if (staffRole !== "founder" && (result.data.created_by !== userId || result.data.status !== "draft")) throw new Error("Only the founder can edit a published course.");
+			courseId = result.data.id;
+			sessionStorage.removeItem(DRAFT_KEY);
+			return courseId;
+		});
+	}
+
 	function ensureDraft() {
 		var stored = sessionStorage.getItem(DRAFT_KEY) || "";
 		if (!stored) return createDraft();
@@ -273,7 +285,7 @@
 		});
 	}
 	function saveVideoLink(title, url) {
-		return ensureDraft().then(function () {
+		return keepCourse().then(function () {
 			return nextPosition("course_video_links");
 		}).then(function (position) {
 			return client.from("course_video_links").insert({
@@ -310,7 +322,7 @@
 	}
 
 	function uploadFiles(files, kind) {
-		return ensureDraft().then(function () {
+		return keepCourse().then(function () {
 			return files.reduce(function (chain, file) {
 				return chain.then(function () {
 					var path = userId + "/" + courseId + "/" + Date.now() + "-" + safeName(file.name);
@@ -373,7 +385,7 @@
 				return;
 			}
 			formStatus("topic-form-status", "Saving topic…");
-			ensureDraft().then(function () {
+			keepCourse().then(function () {
 				return nextPosition("course_topics");
 			}).then(function (position) {
 				return client.from("course_topics").insert({ course_id: courseId, title: title.slice(0, 160), position: position });
@@ -408,7 +420,7 @@
 				return;
 			}
 			formStatus("module-form-status", "Saving module…");
-			ensureDraft().then(function () {
+			keepCourse().then(function () {
 				return client.from("course_modules").select("position").eq("topic_id", topicId).order("position", { ascending: false }).limit(1);
 			}).then(function (result) {
 				if (result.error) throw new Error(result.error.message || "The module could not be saved.");
@@ -447,7 +459,7 @@
 			}
 			var enabled = $("flexRadioDefault6") ? $("flexRadioDefault6").checked : true;
 			formStatus("faq-form-status", "Saving question…");
-			ensureDraft().then(function () {
+			keepCourse().then(function () {
 				return nextPosition("course_faqs");
 			}).then(function (position) {
 				return client.from("course_faqs").insert({
@@ -511,12 +523,17 @@
 		}
 	}
 
+	function keepCourse() {
+		if (courseId) return Promise.resolve(courseId);
+		return ensureDraft();
+	}
+
 	function bindSave() {
 		["course-title", "course-level", "course-visibility", "course-short", "course-intro", "course-currency", "course-price"].forEach(function (id) {
 			var node = $(id);
 			if (!node) return;
 			node.addEventListener("change", function () {
-				ensureDraft().then(saveFields).then(function () {
+				keepCourse().then(saveFields).then(function () {
 					return client.from("courses").select("visibility,share_code,approval_status").eq("id", courseId).maybeSingle();
 				}).then(function (result) { paintShare(result.data); }).catch(function (error) { show(error.message, true); });
 			});
@@ -526,7 +543,7 @@
 		submit.addEventListener("click", function (event) {
 			event.preventDefault();
 			show("Submitting the course for approval…");
-			ensureDraft().then(saveFields).then(function () {
+			keepCourse().then(saveFields).then(function () {
 				return client.rpc("submit_course", { p_course: courseId });
 			}).then(function (result) {
 				if (result.error) throw new Error(result.error.message || "The course could not be submitted.");
@@ -576,7 +593,7 @@
 	bindVideoLinks();
 
 	requireStaff().then(function () {
-		return ensureDraft();
+		return openRequestedCourse();
 	}).then(function () {
 		return Promise.all([loadCourse(), loadTopics(), loadFaqs(), loadFiles(), loadVideoLinks()]);
 	}).then(function () {

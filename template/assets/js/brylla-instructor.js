@@ -57,10 +57,9 @@
 		] }
 	];
 	var ADMIN_MENU = [
-		{ label: "Business", items: [
-			{ label: "Business overview", href: "admin-dashboard.html", icon: "isax isax-grid-35", page: "admin-dashboard" },
-			{ label: "Analytics and reports", href: "admin-reports.html", icon: "isax isax-note-215", page: "admin-reports" },
-			{ label: "Financial management", href: "admin-earnings.html", icon: "isax isax-wallet-add5", page: "admin-earnings" }
+		{ label: "Academy", items: [
+			{ label: "Academy Overview", href: "admin-dashboard.html", icon: "isax isax-grid-35", page: "admin-dashboard" },
+			{ label: "Analytics and reports", href: "admin-reports.html", icon: "isax isax-note-215", page: "admin-reports" }
 		] },
 		{ label: "Courses", items: [
 			{ label: "All courses", href: "admin-courses.html", icon: "isax isax-teacher5", page: "admin-courses" },
@@ -73,13 +72,11 @@
 			{ label: "Instructors", href: "admin-instructors.html", icon: "isax isax-user", page: "admin-instructors" }
 		] },
 		{ label: "Operations", items: [
-			{ label: "Announcements", href: "admin-announcements.html", icon: "isax isax-volume-high5", page: "admin-announcements" },
-			{ label: "Support", href: "admin-support.html", icon: "isax isax-messages-35", page: "admin-support" }
+			{ label: "Announcements", href: "admin-announcements.html", icon: "isax isax-volume-high5", page: "admin-announcements" }
 		] },
 		{ label: "Account", items: [
 			{ label: "My profile", href: "admin-profile.html", icon: "isax isax-user", page: "profile" },
 			{ label: "Platform settings", href: "admin-settings.html", icon: "isax isax-setting-25", page: "admin-settings" },
-			{ label: "Help", href: "admin-help.html", icon: "isax isax-messages-35", page: "admin-help" },
 			{ label: "Logout", href: "index-4.html", icon: "isax isax-logout5", page: "logout", danger: true }
 		] }
 	];
@@ -1052,7 +1049,7 @@
 
 	function renderAdminStudents(root) {
 		function draw(rows, error) {
-			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><p class="mb-3">Everyone who has enrolled, including students still setting up their account. This list updates when someone enrols.</p>' +
+			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><p class="mb-3">Every student enrolled in a course is listed here, including a student who is still setting up an account.</p>' +
 				(error ? empty(error.message || "Students could not be loaded.") : (rows.length ? table(
 					[{ label: "Student" }, { label: "Email" }, { label: "Course" }, { label: "Enrolled" }, { label: "Status" }],
 					rows.map(function (row) {
@@ -1210,7 +1207,7 @@
 		var items = data.activity || [];
 		var body = items.length ? "<ul class=\"mb-0\">" + items.slice(0, 8).map(function (item) {
 			return "<li>" + esc(item.text) + " · " + esc(formatDate(item.date)) + "</li>";
-		}).join("") + "</ul>" : '<p class="mb-0">No activity yet. Enrolments, payments, and new instructors appear here.</p>';
+		}).join("") + "</ul>" : '<p class="mb-0">No activity yet. Enrolments and new instructors appear here.</p>';
 		return '<div class="card h-100"><div class="card-body"><h2 class="h5 fw-bold">Recent activity</h2>' + body + "</div></div>";
 	}
 	function quickActions() {
@@ -1292,29 +1289,22 @@
 					var isOpen = Boolean(open[course.id + ":" + module.key]);
 					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(module.title) + '</span><button class="' + (isOpen ? "btn btn-primary" : "btn btn-light") + '" type="button" data-course-id="' + esc(course.id) + '" data-module-key="' + esc(module.key) + '" aria-pressed="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close" : "Open") + "</button></li>";
 				}).join("") : '<li class="py-2 text-muted">No modules have been added to this course yet.</li>';
-				return '<section class="mb-3"><h3 class="h6 fw-bold">' + esc(course.title) + '</h3><ul class="list-unstyled mb-0">' + rows + "</ul></section>";
+				return '<section class="mb-3"><h3 class="h6 fw-bold">' + esc(course.title) + ' <a class="fw-normal" href="add-course.html?course=' + encodeURIComponent(course.id) + '">Edit</a></h3><ul class="list-unstyled mb-0">' + rows + "</ul></section>";
 			}).join("");
 		});
 	}
 	function renderAdminDashboard(root, data) {
 		var count = totals(data);
 		var wide = "col-md-6 col-xl-3";
-		root.innerHTML = '<div class="dash-head"><div><h1 class="welcome-badge">Welcome, ' + esc(welcomeName(data)) + '</h1><p class="mb-0">Revenue is the total students paid before their course opened.</p></div>' +
-			'<div class="d-flex flex-wrap gap-2" role="group" aria-label="Date range"><button class="btn btn-light" type="button" data-range="7">7 days</button><button class="btn btn-light" type="button" data-range="30">30 days</button><button class="btn btn-light" type="button" data-range="90">90 days</button></div></div>' +
+		root.innerHTML = '<div class="dash-head"><div><h1 class="welcome-badge">Welcome, ' + esc(welcomeName(data)) + '</h1><p class="mb-0">Students, courses, and modules for the academy.</p></div></div>' +
 			moduleUnlockCard() +
+			'<div class="card mb-3" id="published-courses"><div class="card-body"><h2 class="h5 fw-bold">Published courses</h2><p role="status">Loading courses…</p></div></div>' +
 			'<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>' +
-			'<p id="range-note" class="mb-3" role="status">Loading student payments…</p>' +
 			'<div class="card mb-3" id="recent-enrolments"><div class="card-body"><h2 class="h5 fw-bold">Recent enrolments</h2><p role="status">Loading enrolments…</p></div></div><div class="row">' +
-			statCard("isax isax-wallet-add5", "bg-purple-transparent", "Total revenue", "…", "admin-earnings.html", "", wide) +
 			statCard("isax isax-book", "bg-success-transparent", "Awaiting approval", "…", "admin-courses.html", "", wide) +
 			statCard("isax isax-profile-2user5", "bg-info-transparent", "Total students", "…", "admin-students.html", "", wide) +
 			statCard("isax isax-user", "bg-primary-transparent", "Active instructors", String(count.instructors), "admin-instructors.html", "", wide) +
-			'</div><div class="mb-3">' + submissionTable(data) + '</div><div class="row"><div class="col-lg-7 mb-3"><div class="card h-100"><div class="card-body" id="finance-panel"><p role="status">Loading student payments…</p></div></div></div><div class="col-lg-5 mb-3"><div class="card h-100"><div class="card-body" id="payment-status"><h2 class="h5 fw-bold">Payment status</h2><p role="status">Loading payments…</p></div></div></div></div><div class="row"><div class="col-lg-7 mb-3">' + activityCard(data) + '</div><div class="col-lg-5 mb-3">' + quickActions() + "</div></div>";
-		root.querySelectorAll("[data-range]").forEach(function (button) {
-			button.addEventListener("click", function () {
-				paintFinance(Number(button.getAttribute("data-range")));
-			});
-		});
+			'</div><div class="mb-3">' + submissionTable(data) + '</div><div class="row"><div class="col-lg-7 mb-3">' + activityCard(data) + '</div><div class="col-lg-5 mb-3">' + quickActions() + "</div></div>";
 		root.querySelectorAll(".card-body span").forEach(function (label) {
 			if (label.textContent === "Total students") {
 				var value = label.parentElement.querySelector("h4");
@@ -1323,8 +1313,8 @@
 		});
 		paintInstructorInvite();
 		paintModuleUnlocks();
+		paintPublishedCourses();
 		paintPendingCourses();
-		paintFinance(90);
 		watchEnrolments(paintLiveEnrolments);
 		paintLiveEnrolments();
 	}
@@ -1445,14 +1435,37 @@
 			node.innerHTML = '<a href="' + esc(url) + '">' + esc(url) + "</a>";
 		});
 	}
-	function renderAdminCourses(root, data) {
-		root.innerHTML = '<h1 class="h5 fw-bold">All courses</h1>' + (data.courses.length ? table(
-			[{ label: "Course", sort: "title" }, { label: "Students" }, { label: "Lessons" }, { label: "Price" }, { label: "Status", sort: "status" }],
-			data.courses.map(function (course) {
-				return '<tr data-search-item>' + cell("Course", esc(course.title)) + cell("Students", String(studentCount(data, course.id))) + cell("Lessons", String(course.lessons || 0)) +
-					cell("Price", course.price == null ? "Not set" : money(course.price)) + cell("Status", statusBadge(course.status)) + "</tr>";
-			})
-		) : empty("No courses yet."));
+	function courseEditLink(course) {
+		return '<a class="btn btn-light btn-sm" href="add-course.html?course=' + encodeURIComponent(course.id) + '">Edit</a>';
+	}
+	function paintPublishedCourses() {
+		var current = staffClient();
+		var host = document.getElementById("published-courses");
+		if (!current || !host) return;
+		current.from("courses").select("id,title,status").eq("status", "published").order("title").then(function (result) {
+			if (!document.body.contains(host)) return;
+			var rows = result.error ? [] : (result.data || []);
+			host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Published courses</h2>' +
+				(result.error ? empty(result.error.message || "Published courses could not be loaded.") : (rows.length ? "<ul class=\"list-unstyled mb-0\">" + rows.map(function (course) {
+					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(course.title) + "</span>" + courseEditLink(course) + "</li>";
+				}).join("") + "</ul>" : "<p class=\"mb-0\">No published courses yet.</p>")) + "</div>";
+		});
+	}
+	function renderAdminCourses(root) {
+		root.innerHTML = '<h1 class="h5 fw-bold">All courses</h1><p role="status">Loading courses…</p>';
+		var current = staffClient();
+		if (!current) return;
+		current.from("courses").select("id,title,status,price_amount,currency").order("title").then(function (result) {
+			var rows = result.error ? [] : (result.data || []);
+			root.innerHTML = '<h1 class="h5 fw-bold">All courses</h1><p class="mb-3">Published courses can be edited. The change is saved on that course.</p>' +
+				(result.error ? empty(result.error.message || "Courses could not be loaded.") : (rows.length ? table(
+					[{ label: "Course" }, { label: "Price" }, { label: "Status" }, { label: "Actions" }],
+					rows.map(function (course) {
+						var price = course.price_amount == null ? "Not set" : (course.currency || "GHS") + " " + course.price_amount;
+						return "<tr>" + cell("Course", esc(course.title)) + cell("Price", esc(price)) + cell("Status", statusBadge(course.status)) + cell("Actions", courseEditLink(course)) + "</tr>";
+					})
+				) : empty("No courses yet.")));
+		});
 	}
 	function renderAdminPerformance(root) {
 		root.innerHTML = '<h1 class="h5 fw-bold">Course performance</h1><p id="performance-status" role="status">Loading student progress…</p>';
@@ -1472,15 +1485,8 @@
 			) : empty("No published courses yet."));
 		});
 	}
-	function renderAdminTransactions(root, data) {
-		var payments = data.payments || [];
-		root.innerHTML = '<h1 class="h5 fw-bold">Transactions and refunds</h1>' + (payments.length ? table(
-			[{ label: "Student" }, { label: "Course" }, { label: "Amount" }, { label: "Status" }, { label: "Date" }],
-			payments.map(function (row) {
-				var course = courseById(data, row.courseId);
-				return '<tr data-search-item>' + cell("Student", esc(row.student)) + cell("Course", esc(course ? course.title : "")) + cell("Amount", money(row.amount)) + cell("Status", statusBadge(row.status)) + cell("Date", formatDate(row.date)) + "</tr>";
-			})
-		) : financeNotice());
+	function renderAdminTransactions(root) {
+		root.innerHTML = '<h1 class="h5 fw-bold">Academy Overview</h1><p class="mb-3">Payment records are no longer part of the academy dashboard.</p><a href="admin-dashboard.html">Back to Academy Overview</a>';
 	}
 	function renderAdminReports(root) {
 		root.innerHTML = '<h1 class="h5 fw-bold">Analytics and reports</h1><p role="status">Loading courses and students…</p>';
@@ -1544,8 +1550,7 @@
 		load();
 	}
 	function renderAdminEarnings(root) {
-		root.innerHTML = '<h1 class="h5 fw-bold">Financial management</h1><p>Payments students made before a course opened.</p><div class="card"><div class="card-body" id="finance-panel"><p role="status">Loading student payments…</p></div></div>';
-		paintFinance(0);
+		root.innerHTML = '<h1 class="h5 fw-bold">Academy Overview</h1><p class="mb-3">Payment records are no longer part of the academy dashboard.</p><a href="admin-dashboard.html">Back to Academy Overview</a>';
 	}
 	function renderAnalytics(root, data) {
 		var count = totals(data);
@@ -1754,9 +1759,9 @@
 		"admin-students": renderStudents,
 		"admin-instructors": renderAdminInstructors,
 		"admin-announcements": renderAnnouncements,
-		"admin-support": renderMessages,
+		"admin-support": function (root) { renderEmptyPage(root, "Academy Overview", "Support is not part of the founder dashboard."); },
 		"admin-settings": renderPlatformSettings,
-		"admin-help": function (root) { renderEmptyPage(root, "Help", "Help for academy operations will be added here."); }
+		"admin-help": function (root) { renderEmptyPage(root, "Academy Overview", "Help is not part of the founder dashboard."); }
 	};
 
 	function boot() {
