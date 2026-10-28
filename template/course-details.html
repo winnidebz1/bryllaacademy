@@ -42,8 +42,9 @@
 		.pay-dialog { width: min(440px, calc(100% - 32px)); padding: 0; border: 1px solid #cfdae3; border-radius: 12px; background: #fff; color: var(--ink); }
 		.pay-dialog::backdrop { background: rgba(6, 24, 43, .58); }
 		.pay-dialog-content { padding: 24px; }
-		.pay-dialog h2 { margin: 0 0 8px; font-size: 22px; }
-		.pay-dialog p { margin: 0 0 16px; color: #40566b; }
+		.pay-dialog-head { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
+		.pay-dialog p { margin: 0; color: #40566b; font-size: 16px; }
+		.pay-dialog-close { display: grid; width: 36px; height: 36px; flex: 0 0 36px; place-items: center; border: 1px solid var(--line); border-radius: 8px; background: #fff; color: var(--navy-deep); cursor: pointer; }
 		.pay-dialog .actions { display: grid; gap: 10px; }
 		.site-header { position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,.96); border-bottom: 1px solid var(--line); }
 		.header-inner { min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
@@ -264,12 +265,13 @@
 	</main>
 	<dialog class="pay-dialog" id="bookkeeping-pay-dialog" aria-labelledby="bookkeeping-pay-title">
 		<div class="pay-dialog-content">
-			<h2 id="bookkeeping-pay-title">Bookkeeping registration</h2>
-			<p>Choose how you want to pay. International payment opens Selar. Ghanaian payment opens the registration form.</p>
+			<div class="pay-dialog-head">
+				<p id="bookkeeping-pay-title">Choose how you want to pay</p>
+				<button class="pay-dialog-close" type="button" data-pay-close aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+			</div>
 			<div class="actions">
 				<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">International payment</a>
 				<a class="btn btn-outline-brand" href="bookkeeping-registration">Ghanaian payment</a>
-				<button class="btn btn-outline-brand" type="button" data-pay-close>Close</button>
 			</div>
 		</div>
 	</dialog>
