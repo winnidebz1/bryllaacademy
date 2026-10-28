@@ -373,7 +373,7 @@
 						<p class="hero-copy">Brylla Academy teaches practical, career-focused skills through recorded lessons, practical assignments, instructor feedback, career resources, and mentorship.</p>
 						<div class="hero-actions">
 							<a class="btn btn-brand" href="#courses">Explore Courses <i class="fa-solid fa-arrow-right ms-2" aria-hidden="true"></i></a>
-							<a class="btn btn-outline-brand" href="bookkeeping-registration">Register</a>
+							<button class="btn btn-outline-brand" type="button" data-bookkeeping-pay>Register</button>
 						</div>
 					</div>
 					<div class="feature-visual">
@@ -451,7 +451,7 @@
 							<p class="fee-note">Pay the <span data-price-amount="50" data-price-currency="GHS">GHS 50</span> registration fee first. The remaining <span data-price-amount="550" data-price-currency="GHS">GHS 550</span> covers enrolment in the course.</p>
 							<p class="course-meta"><i class="fa-regular fa-clock" aria-hidden="true"></i><span>6 weeks of training, about 8 weeks with support</span></p>
 							<p class="course-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Next cohort starts <strong>4 January 2027</strong></span></p>
-							<a class="btn btn-brand enroll-button" href="bookkeeping-registration">Register</a>
+							<button class="btn btn-brand enroll-button" type="button" data-bookkeeping-pay>Register</button>
 							<a class="course-syllabus-link" href="course-details">View more</a>
 						</div>
 					</article>
@@ -483,6 +483,19 @@
 					</div>
 				</div>
 			</div>
+			<dialog class="course-dialog" id="bookkeeping-pay-dialog" aria-labelledby="bookkeeping-pay-title">
+				<div class="course-dialog-content">
+					<div class="course-dialog-header">
+						<h3 id="bookkeeping-pay-title">Bookkeeping registration</h3>
+						<button class="course-dialog-close" type="button" data-dialog-close aria-label="Close payment options"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
+					</div>
+					<p>Choose how you want to pay. International payment opens Selar. Ghanaian payment opens the registration form.</p>
+					<div class="d-grid gap-2">
+						<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">International payment</a>
+						<a class="btn btn-outline-brand" href="bookkeeping-registration">Ghanaian payment</a>
+					</div>
+				</div>
+			</dialog>
 			<dialog class="course-dialog" id="course-syllabus-dialog" aria-labelledby="course-syllabus-title">
 				<div class="course-dialog-content">
 					<div class="course-dialog-header">
@@ -746,7 +759,7 @@
 				</div>
 				<div class="cta-actions">
 					<a class="btn btn-accent" href="#courses">Explore Courses</a>
-					<a class="btn btn-outline-light" href="bookkeeping-registration">Register</a>
+					<button class="btn btn-outline-light" type="button" data-bookkeeping-pay>Register</button>
 				</div>
 			</div>
 		</section>
@@ -777,6 +790,7 @@
 		(() => {
 			const syllabusDialog = document.getElementById("course-syllabus-dialog");
 			const notifyDialog = document.getElementById("course-notify-dialog");
+			const payDialog = document.getElementById("bookkeeping-pay-dialog");
 			const notifyForm = document.getElementById("course-notify-form");
 			const notifyName = document.getElementById("notify-name");
 			const notifyEmail = document.getElementById("notify-email");
@@ -786,6 +800,13 @@
 			let selectedCourse = "";
 			let selectedLabel = "";
 			let activeTrigger = null;
+
+			document.querySelectorAll("[data-bookkeeping-pay]").forEach((trigger) => {
+				trigger.addEventListener("click", () => {
+					activeTrigger = trigger;
+					payDialog.showModal();
+				});
+			});
 
 			document.querySelectorAll("[data-dialog-open]").forEach((trigger) => {
 				trigger.addEventListener("click", () => {
@@ -816,7 +837,7 @@
 				trigger.addEventListener("click", () => trigger.closest("dialog").close());
 			});
 
-			[syllabusDialog, notifyDialog].forEach((dialog) => {
+			[syllabusDialog, notifyDialog, payDialog].forEach((dialog) => {
 				dialog.addEventListener("click", (event) => {
 					if (event.target === dialog) dialog.close();
 				});
@@ -973,5 +994,6 @@
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
 	<script src="assets/js/brylla-currency.js"></script>
+	<script src="assets/js/brylla-home-courses.js"></script>
 </body>
 </html>

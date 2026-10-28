@@ -39,6 +39,12 @@
 		.btn-brand:hover, .btn-brand:focus { color: #fff; background: var(--navy-deep); }
 		.btn-accent { color: var(--navy-deep); background: var(--teal); border: 1px solid var(--teal); text-decoration: none; }
 		.btn-outline-brand { color: var(--navy); border: 1px solid #bfd0df; background: #fff; text-decoration: none; }
+		.pay-dialog { width: min(440px, calc(100% - 32px)); padding: 0; border: 1px solid #cfdae3; border-radius: 12px; background: #fff; color: var(--ink); }
+		.pay-dialog::backdrop { background: rgba(6, 24, 43, .58); }
+		.pay-dialog-content { padding: 24px; }
+		.pay-dialog h2 { margin: 0 0 8px; font-size: 22px; }
+		.pay-dialog p { margin: 0 0 16px; color: #40566b; }
+		.pay-dialog .actions { display: grid; gap: 10px; }
 		.site-header { position: sticky; top: 0; z-index: 1000; background: rgba(255,255,255,.96); border-bottom: 1px solid var(--line); }
 		.header-inner { min-height: 82px; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 		.brand-lockup { display: flex; align-items: center; text-decoration: none; }
@@ -171,7 +177,7 @@
 					<li>Next cohort: 4 January 2027</li>
 				</ul>
 				<div class="actions">
-					<a class="btn btn-brand" href="bookkeeping-registration">Register</a>
+					<button class="btn btn-brand" type="button" data-bookkeeping-pay>Register</button>
 					<a class="btn btn-outline-brand" href="/#courses">All courses</a>
 				</div>
 				<p class="syllabus-intro">The bookkeeping training lasts six weeks. The full learning and support period is about eight weeks. Weeks 1 to 6 cover recorded lessons and practical assignments. Week 7 is for catching up on outstanding assignments. Week 8 is mentorship.</p>
@@ -256,6 +262,17 @@
 			</article>
 		</div>
 	</main>
+	<dialog class="pay-dialog" id="bookkeeping-pay-dialog" aria-labelledby="bookkeeping-pay-title">
+		<div class="pay-dialog-content">
+			<h2 id="bookkeeping-pay-title">Bookkeeping registration</h2>
+			<p>Choose how you want to pay. International payment opens Selar. Ghanaian payment opens the registration form.</p>
+			<div class="actions">
+				<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">International payment</a>
+				<a class="btn btn-outline-brand" href="bookkeeping-registration">Ghanaian payment</a>
+				<button class="btn btn-outline-brand" type="button" data-pay-close>Close</button>
+			</div>
+		</div>
+	</dialog>
 	<footer class="site-footer">
 		<div class="container">
 			<div class="footer-inner">
@@ -284,6 +301,19 @@
 		})();
 	</script>
 	<script src="assets/js/bootstrap.bundle.min.js"></script>
+	<script>
+		(function () {
+			var dialog = document.getElementById("bookkeeping-pay-dialog");
+			if (!dialog) return;
+			document.querySelectorAll("[data-bookkeeping-pay]").forEach(function (button) {
+				button.addEventListener("click", function () { dialog.showModal(); });
+			});
+			dialog.querySelector("[data-pay-close]").addEventListener("click", function () { dialog.close(); });
+			dialog.addEventListener("click", function (event) {
+				if (event.target === dialog) dialog.close();
+			});
+		})();
+	</script>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
 	<script src="assets/js/brylla-currency.js"></script>

@@ -1049,13 +1049,14 @@
 
 	function renderAdminStudents(root) {
 		function draw(rows, error) {
-			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><p class="mb-3">Every student enrolled in a course is listed here, including a student who is still setting up an account.</p>' +
+			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><div id="pending-accounts" class="card mb-3"><div class="card-body"><p role="status">Loading accounts…</p></div></div><p class="mb-3">Every student enrolled in a course is listed here, including a student who is still setting up an account.</p>' +
 				(error ? empty(error.message || "Students could not be loaded.") : (rows.length ? table(
 					[{ label: "Student" }, { label: "Email" }, { label: "Course" }, { label: "Enrolled" }, { label: "Status" }],
 					rows.map(function (row) {
 						return "<tr>" + cell("Student", esc(row.student_name || row.email || "")) + cell("Email", esc(row.email || "")) + cell("Course", esc(row.course_title || "")) + cell("Enrolled", esc(formatDate(row.enrolled_at))) + cell("Status", esc(enrolmentLabel(row.status))) + "</tr>";
 					})
 				) : empty("No students have enrolled yet.")));
+			paintPendingAccounts();
 		}
 		root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><p role="status">Loading enrolments…</p>';
 		function refresh() {
@@ -1315,6 +1316,7 @@
 		paintModuleUnlocks();
 		paintPublishedCourses();
 		paintPendingCourses();
+		paintPendingAccounts();
 		watchEnrolments(paintLiveEnrolments);
 		paintLiveEnrolments();
 	}
@@ -1416,6 +1418,42 @@
 					current.rpc("founder_review_course", { p_course: id, p_approve: button.hasAttribute("data-approve") }).then(function (review) {
 						if (review.error) toast(review.error.message || "The course could not be updated.");
 						else { toast(button.hasAttribute("data-approve") ? "Course approved." : "Course rejected."); paintPendingCourses(); }
+					});
+				});
+			});
+		});
+	}
+	function paintPendingAccounts() {
+		var current = staffClient();
+		var host = document.getElementById("pending-accounts");
+		if (!current) return;
+		if (!host) {
+			var anchor = document.getElementById("recent-enrolments") || document.getElementById("main");
+			if (!anchor) return;
+			host = document.createElement("div");
+			host.id = "pending-accounts";
+			host.className = "card mb-3";
+			if (anchor.id === "main") anchor.insertAdjacentElement("afterbegin", host);
+			else anchor.insertAdjacentElement("beforebegin", host);
+		}
+		current.rpc("founder_pending_accounts").then(function (result) {
+			if (!document.body.contains(host)) return;
+			var rows = result.error ? [] : (result.data || []);
+			host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Student accounts waiting for approval</h2><p class="mb-3">A new student can sign in only after you approve the account.</p>' +
+				(result.error ? empty(result.error.message || "Accounts could not be loaded.") : (rows.length ? "<ul class=\"list-unstyled mb-0\">" + rows.map(function (row) {
+					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(row.full_name || row.email || "Student") + " · " + esc(row.email || "") + '</span><button class="btn btn-primary btn-sm" type="button" data-approve-student="' + esc(row.id) + '">Approve</button></li>';
+				}).join("") + "</ul>" : '<p class="mb-0">No student accounts are waiting.</p>')) + "</div>";
+			host.querySelectorAll("[data-approve-student]").forEach(function (button) {
+				button.addEventListener("click", function () {
+					button.disabled = true;
+					current.rpc("founder_approve_student", { p_user: button.getAttribute("data-approve-student") }).then(function (saved) {
+						if (saved.error) {
+							button.disabled = false;
+							toast(saved.error.message || "The account could not be approved.");
+							return;
+						}
+						toast("Student account approved.");
+						paintPendingAccounts();
 					});
 				});
 			});

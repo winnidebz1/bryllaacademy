@@ -57,8 +57,7 @@
 			visibility: "public",
 			approval_status: "draft",
 			created_by: userId,
-			price_amount: 0,
-			share_code: Math.random().toString(16).slice(2, 14)
+			price_amount: 0
 		}).then(function (created) {
 			if (created.error) throw new Error(created.error.message || "The course draft could not be saved.");
 			sessionStorage.setItem(DRAFT_KEY, courseId);
@@ -114,17 +113,11 @@
 		});
 	}
 
-	function paintShare(course) {
+	function paintShare() {
 		var box = $("course-share-box");
-		if (!box || !courseId) return;
-		var page = coursePageUrl(courseId);
-		var html = "Course page: <a href=\"" + page + "\">" + page + "</a>";
-		if (course && course.visibility === "private" && course.share_code && course.approval_status !== "draft") {
-			var url = shareUrl(course.share_code);
-			html += "<br>Private link: <a href=\"" + url + "\">" + url + "</a>";
-		}
-		box.hidden = false;
-		box.innerHTML = html;
+		if (!box) return;
+		box.hidden = true;
+		box.textContent = "";
 	}
 
 	function renderTopics(rows) {
@@ -311,7 +304,7 @@
 			if ($("course-intro")) $("course-intro").value = course.intro_video_url || "";
 			if ($("course-currency")) $("course-currency").value = course.currency || "GHS";
 			if ($("course-price")) $("course-price").value = course.price_amount || "";
-			paintShare(course);
+			paintShare();
 			var editor = document.querySelector(".note-editable");
 			if (editor && course.description) editor.innerText = course.description;
 		});
@@ -533,9 +526,7 @@
 			var node = $(id);
 			if (!node) return;
 			node.addEventListener("change", function () {
-				keepCourse().then(saveFields).then(function () {
-					return client.from("courses").select("visibility,share_code,approval_status").eq("id", courseId).maybeSingle();
-				}).then(function (result) { paintShare(result.data); }).catch(function (error) { show(error.message, true); });
+				keepCourse().then(saveFields).then(function () { paintShare(); }).catch(function (error) { show(error.message, true); });
 			});
 		});
 		var submit = $("course-submit");
@@ -547,13 +538,21 @@
 				return client.rpc("submit_course", { p_course: courseId });
 			}).then(function (result) {
 				if (result.error) throw new Error(result.error.message || "The course could not be submitted.");
-				var code = result.data;
-				var page = coursePageUrl(courseId);
-				var url = field("course-visibility") === "Private" && code ? shareUrl(code) : page;
 				var note = $("course-share-note");
+				var privateLink = field("course-visibility") === "Private" && result.data ? shareUrl(result.data) : "";
 				if (note) {
-					note.hidden = false;
-					note.innerHTML = "Course page: <a href=\"" + page + "\">" + page + "</a>" + (url !== page ? "<br>Private link: <a href=\"" + url + "\">" + url + "</a>" : "");
+					if (privateLink) {
+						note.hidden = false;
+						note.textContent = "";
+						note.appendChild(document.createTextNode("Private link: "));
+						var link = document.createElement("a");
+						link.href = privateLink;
+						link.textContent = privateLink;
+						note.appendChild(link);
+					} else {
+						note.hidden = true;
+						note.textContent = "";
+					}
 				}
 				sessionStorage.removeItem(DRAFT_KEY);
 				var modalEl = document.getElementById("success");

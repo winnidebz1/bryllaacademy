@@ -173,6 +173,10 @@
 					notice.textContent = "Your password is saved. Sign in with your email and new password.";
 					notice.hidden = false;
 				}
+				if (params.get("waiting") === "1") {
+					notice.textContent = "The founder still needs to approve your account before you can sign in.";
+					notice.hidden = false;
+				}
 				function showError(message) {
 					errorEl.textContent = message;
 					errorEl.hidden = false;
@@ -191,8 +195,13 @@
 						button.disabled = false;
 						return showError(result.error.status === 400 ? "That email and password don't match. Try again, or use Forgot Password." : result.error.message);
 					}
-					var profile = await client.from("profiles").select("role").eq("id", result.data.user.id).maybeSingle();
+					var profile = await client.from("profiles").select("role,account_status").eq("id", result.data.user.id).maybeSingle();
 					var role = profile.data && profile.data.role;
+					if (role === "student" && profile.data.account_status === "pending") {
+						await client.auth.signOut({ scope: "local" });
+						button.disabled = false;
+						return showError("The founder still needs to approve your account before you can sign in.");
+					}
 					sessionStorage.setItem("brylla-role", role || "student");
 					if (role === "founder") location.replace("admin-dashboard");
 					else if (role === "instructor") location.replace("instructor-dashboard");

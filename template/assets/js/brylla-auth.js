@@ -21,19 +21,6 @@
 		cloak = null;
 	}
 
-	function storedSession() {
-		try {
-			return Object.keys(sessionStorage).some(function (key) {
-				return key.indexOf("sb-") === 0 && key.slice(-11) === "-auth-token" && sessionStorage.getItem(key);
-			});
-		} catch (error) {
-			return false;
-		}
-	}
-
-	// A saved login is enough to show the page. Account checks continue after it is visible.
-	if (guarded && storedSession()) reveal();
-
 	function read(key) {
 		try {
 			return JSON.parse(localStorage.getItem(key) || "null");
@@ -160,10 +147,15 @@
 		}
 		user = checked.data.user;
 		var results = await Promise.all([
-			client.from("profiles").select("full_name").eq("id", user.id).maybeSingle(),
+			client.from("profiles").select("full_name,role,account_status").eq("id", user.id).maybeSingle(),
 			client.from("enrollments").select("course_id,status,started_at").eq("user_id", user.id),
 			client.from("lesson_progress").select("course_id,item_id,kind").eq("user_id", user.id)
 		]);
+		if (results[0].data && results[0].data.role === "student" && results[0].data.account_status === "pending") {
+			await client.auth.signOut({ scope: "local" });
+			location.replace("login?waiting=1");
+			return new Promise(function () {});
+		}
 		if (results[1].error) throw results[1].error;
 		syncStudent(user, results[0].data, results[1].data || [], results[2].error ? null : results[2].data || []);
 		return { user: user };
