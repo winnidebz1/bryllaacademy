@@ -89,11 +89,11 @@
                                         <span class="otp-brand-window"><img src="assets/img/logo.png" alt="Brylla Academy"></span>
                                     </div>
                                     <div class="topic">
-                                        <h1 class="fs-32 fw-bold mb-3">Email OTP</h1>
-                                        <p class="fs-14 fw-normal mb-0">Verification email: <strong id="verification-email">the email used during signup</strong></p>
+                                        <h1 class="fs-32 fw-bold mb-3">Check your email</h1>
+                                        <p class="fs-14 fw-normal mb-0">Registration email: <strong id="verification-email">the email used during signup</strong></p>
                                     </div>
-                                    <p class="mb-3" id="otp-status" role="status">Enter the 6-digit code from your email.</p>
-                                    <form class="mb-3 pb-3" id="otp-form" aria-label="Email verification form">
+                                    <p class="mb-3" id="otp-status" role="status">Open the link in that email to choose your password. A code is not required.</p>
+                                    <form class="mb-3 pb-3" id="otp-form" aria-label="Email verification form" hidden>
                                         <fieldset>
                                             <legend class="visually-hidden">Enter the verification code</legend>
                                             <div class="d-flex align-items-center mb-3">
@@ -111,7 +111,7 @@
                                     </form>
 
                                     <div class="fs-14 fw-normal d-flex align-items-center justify-content-center">
-                                        Didn’t get the code? <button class="btn btn-link link-2 ms-1 p-0" type="button" id="resend-code">Resend code</button>
+                                        Didn’t get the link? <button class="btn btn-link link-2 ms-1 p-0" type="button" id="resend-code">Send the link again</button>
                                     </div>
                                     <div class="text-center mt-3"><a href="register.html" class="link-2">Back to sign up</a></div>
     
@@ -152,7 +152,7 @@
 				var inputs = Array.prototype.slice.call(document.querySelectorAll(".otp"));
 				var button = document.getElementById("verify-email");
 				verificationEmail.textContent = email || "the email used during signup";
-				if (!email) status.textContent = "Go back to sign up so we know where to send the code.";
+				if (!email) status.textContent = "Go back to sign up so we know where to send the link.";
 				function code() {
 					return inputs.map(function (input) { return input.value.replace(/\D/g, ""); }).join("");
 				}
@@ -204,13 +204,11 @@
 						show("Start again from sign up.", true);
 						return;
 					}
-					show("Sending a new code…", false);
+					show("Sending a new link…", false);
 					window.BryllaCheckout.post("signup-code", { action: "send", name: name, email: email }).then(function () {
-						inputs.forEach(function (input) { input.value = ""; });
-						show("A new code is on its way.", false);
-						inputs[0].focus();
+						show("A new link is on its way. Open it to choose your password.", false);
 					}).catch(function (error) {
-						show(error.message || "The code could not be sent.", true);
+						show(error.message || "The link could not be sent.", true);
 					});
 				});
 			})();

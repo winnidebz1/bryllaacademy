@@ -42,17 +42,18 @@ async function sendCode(supabase: ReturnType<typeof serviceClient>, email: strin
 	const name = rawName.trim();
 	if (name.length < 2 || name.length > 120) return json({ error: "Enter your full name." }, 400);
 	const role = await supabase.rpc("account_role_for_email", { p_email: email });
-	if (role.error) return json({ error: "The code could not be sent. Try again." }, 500);
+	if (role.error) return json({ error: "The link could not be sent. Try again." }, 500);
 	if (role.data === "founder" || role.data === "instructor") {
 		return json({ error: "An account with this email already exists. Sign in instead." }, 409);
 	}
 	const since = new Date(Date.now() - 60 * 60 * 1000).toISOString();
 	const recent = await supabase.from("email_events").select("id", { count: "exact", head: true }).eq("email", email).eq("kind", "signup_code").gte("created_at", since);
-	if ((recent.count ?? 0) >= 5) return json({ error: "Too many codes. Try again in an hour." }, 429);
-	const code = sixDigits();
+	if ((recent.count ?? 0) >= 5) return json({ error: "Too many emails. Try again in an hour." }, 429);
+	const token = randomHex(32);
 	const salt = randomHex(16);
-	const hash = await sha256(salt + ":" + code);
-	const expires = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+	const tokenHash = await sha256(email + ":" + token);
+	const hash = await sha256(salt + ":" + token);
+	const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString();
 	const saved = await supabase.from("signup_codes").upsert({
 		email,
 		full_name: name,
@@ -60,16 +61,18 @@ async function sendCode(supabase: ReturnType<typeof serviceClient>, email: strin
 		code_hash: hash,
 		expires_at: expires,
 		attempts: 0,
-		token_hash: null,
-		token_expires_at: null,
+		token_hash: tokenHash,
+		token_expires_at: expires,
 		updated_at: new Date().toISOString(),
 	});
-	if (saved.error) return json({ error: "The code could not be sent. Try again." }, 500);
-	const sent = await sendEmail(email, name, code);
+	if (saved.error) return json({ error: "The link could not be sent. Try again." }, 500);
+	const site = (Deno.env.get("SITE_URL") || "https://bryllaacademy.vercel.app").replace(/\/$/, "");
+	const link = site + "/set-password?email=" + encodeURIComponent(email) + "&token=" + encodeURIComponent(token);
+	const sent = await sendEmail(email, name, link);
 	await supabase.from("email_events").insert({ email, kind: "signup_code", status: sent.ok ? "sent" : "failed" });
 	if (!sent.ok) {
 		await supabase.from("signup_codes").delete().eq("email", email);
-		return json({ error: sent.error || "The code could not be emailed. Try again." }, 502);
+		return json({ error: sent.error || "The link could not be emailed. Try again." }, 502);
 	}
 	return json({ ok: true });
 }
@@ -104,7 +107,7 @@ async function completeSignup(supabase: ReturnType<typeof serviceClient>, email:
 		return json({ error: "Verify your email, then choose a password." }, 400);
 	}
 	if (new Date(row.data.token_expires_at).getTime() < Date.now()) {
-		return json({ error: "That email check has expired. Request a new code." }, 400);
+		return json({ error: "That link has expired. Sign up again to get a new one." }, 400);
 	}
 	const tokenHash = await sha256(email + ":" + token);
 	if (!same(tokenHash, row.data.token_hash)) return json({ error: "Verify your email, then choose a password." }, 400);
@@ -147,13 +150,6 @@ async function completeSignup(supabase: ReturnType<typeof serviceClient>, email:
 	return json({ ok: true });
 }
 
-function sixDigits(): string {
-	const bytes = new Uint8Array(4);
-	crypto.getRandomValues(bytes);
-	const value = new DataView(bytes.buffer).getUint32(0) % 1000000;
-	return String(value).padStart(6, "0");
-}
-
 function randomHex(bytes: number): string {
 	const buffer = new Uint8Array(bytes);
 	crypto.getRandomValues(buffer);
@@ -172,28 +168,29 @@ function same(left: string, right: string): boolean {
 	return mismatch === 0;
 }
 
-async function sendEmail(email: string, name: string, code: string): Promise<{ ok: boolean; error: string }> {
+async function sendEmail(email: string, name: string, link: string): Promise<{ ok: boolean; error: string }> {
 	const key = Deno.env.get("RESEND_API_KEY") ?? "";
 	const from = Deno.env.get("RESEND_FROM") ?? "";
 	if (!key || !from) return { ok: false, error: "The email service is not configured." };
 	const safeName = name.replace(/[<>&]/g, "");
+	const safeLink = link.replace(/&/g, "&amp;").replace(/"/g, "&quot;");
 	const response = await fetch("https://api.resend.com/emails", {
 		method: "POST",
 		headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
 		body: JSON.stringify({
 			from,
 			to: email,
-			subject: "Your Brylla Academy code",
-			html: `<div style="font-family:Arial,sans-serif;color:#122d49;max-width:520px"><p>Hello ${safeName},</p><p>Use this code to confirm your email before you choose a password.</p><p style="font-size:28px;letter-spacing:6px;font-weight:700;color:#073b70">${code}</p><p>The code expires in 10 minutes. If you did not sign up, you can ignore this email.</p><p>Brylla Academy</p></div>`,
+			subject: "Finish your Brylla Academy registration",
+			html: `<div style="font-family:Arial,sans-serif;color:#122d49;max-width:520px"><p>Hello ${safeName},</p><p>Click the button to choose your password and finish creating your Brylla Academy account.</p><p><a href="${safeLink}" style="background:#073b70;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px">Choose a password</a></p><p>The link expires in 24 hours. If you did not sign up, you can ignore this email.</p><p>Brylla Academy</p></div>`,
 		}),
 	});
 	if (response.ok) return { ok: true, error: "" };
-	let message = "The code could not be emailed. Try again.";
+	let message = "The link could not be emailed. Try again.";
 	try {
 		const payload = await response.json();
 		if (payload && typeof payload.message === "string" && payload.message.trim()) message = payload.message.trim().slice(0, 180);
 	} catch (_error) {
-		message = "The code could not be emailed. Try again.";
+		message = "The link could not be emailed. Try again.";
 	}
 	return { ok: false, error: message };
 }
