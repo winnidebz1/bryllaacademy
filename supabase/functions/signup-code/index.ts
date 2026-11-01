@@ -66,10 +66,10 @@ async function sendCode(supabase: ReturnType<typeof serviceClient>, email: strin
 	});
 	if (saved.error) return json({ error: "The code could not be sent. Try again." }, 500);
 	const sent = await sendEmail(email, name, code);
-	await supabase.from("email_events").insert({ email, kind: "signup_code", status: sent ? "sent" : "failed" });
-	if (!sent) {
+	await supabase.from("email_events").insert({ email, kind: "signup_code", status: sent.ok ? "sent" : "failed" });
+	if (!sent.ok) {
 		await supabase.from("signup_codes").delete().eq("email", email);
-		return json({ error: "The code could not be emailed. Try again." }, 502);
+		return json({ error: sent.error || "The code could not be emailed. Try again." }, 502);
 	}
 	return json({ ok: true });
 }
@@ -172,10 +172,10 @@ function same(left: string, right: string): boolean {
 	return mismatch === 0;
 }
 
-async function sendEmail(email: string, name: string, code: string): Promise<boolean> {
+async function sendEmail(email: string, name: string, code: string): Promise<{ ok: boolean; error: string }> {
 	const key = Deno.env.get("RESEND_API_KEY") ?? "";
 	const from = Deno.env.get("RESEND_FROM") ?? "";
-	if (!key || !from) return false;
+	if (!key || !from) return { ok: false, error: "The email service is not configured." };
 	const safeName = name.replace(/[<>&]/g, "");
 	const response = await fetch("https://api.resend.com/emails", {
 		method: "POST",
@@ -187,5 +187,13 @@ async function sendEmail(email: string, name: string, code: string): Promise<boo
 			html: `<div style="font-family:Arial,sans-serif;color:#122d49;max-width:520px"><p>Hello ${safeName},</p><p>Use this code to confirm your email before you choose a password.</p><p style="font-size:28px;letter-spacing:6px;font-weight:700;color:#073b70">${code}</p><p>The code expires in 10 minutes. If you did not sign up, you can ignore this email.</p><p>Brylla Academy</p></div>`,
 		}),
 	});
-	return response.ok;
+	if (response.ok) return { ok: true, error: "" };
+	let message = "The code could not be emailed. Try again.";
+	try {
+		const payload = await response.json();
+		if (payload && typeof payload.message === "string" && payload.message.trim()) message = payload.message.trim().slice(0, 180);
+	} catch (_error) {
+		message = "The code could not be emailed. Try again.";
+	}
+	return { ok: false, error: message };
 }

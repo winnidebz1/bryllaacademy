@@ -121,12 +121,7 @@
 	}
 
 	client.rpc("public_course_listing", { p_course: "bookkeeping" }).then(function (result) {
-		if (result.error) return;
-		if (!result.data) {
-			var article = document.getElementById("bookkeeping");
-			if (article) article.remove();
-			return;
-		}
+		if (result.error || !result.data) return;
 		fillBookkeeping(result.data);
 		if (window.BryllaCurrency && BryllaCurrency.paint) BryllaCurrency.paint();
 	});

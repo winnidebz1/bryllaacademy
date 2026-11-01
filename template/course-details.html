@@ -339,25 +339,10 @@
 				target.setAttribute("data-price-currency", currency || "GHS");
 				target.textContent = (currency || "GHS") + " " + number;
 			}
-			function showBookkeepingRemoved() {
-				if (!card) return;
-				card.replaceChildren();
-				var heading = document.createElement("h1");
-				heading.textContent = "This course is not available";
-				var lead = document.createElement("p");
-				lead.className = "lead";
-				lead.textContent = "Bookkeeping is no longer listed.";
-				card.append(heading, lead);
-				document.title = "Course details | Brylla Academy";
-			}
 			if (!share && (!courseId || courseId === "bookkeeping") && window.BryllaPublic && BryllaPublic.client) {
 				BryllaPublic.client().rpc("public_course_listing", { p_course: "bookkeeping" }).then(function (result) {
-					if (result.error || !card) return;
+					if (result.error || !card || !result.data) return;
 					var course = result.data;
-					if (!course) {
-						showBookkeepingRemoved();
-						return;
-					}
 					putListing("title", course.title);
 					putListing("summary", course.summary);
 					putListing("includes", course.includes_note);
