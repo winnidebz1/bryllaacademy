@@ -107,7 +107,7 @@
                                     </div>
                                     <h1 class="fs-32 fw-bold topic">Sign up</h1>
                                     <p class="small text-muted mb-3" id="signup-note" role="status">Create your Brylla Academy account. We email a link, and you choose a password from that link.</p>
-                                    <form id="signup-form" class="mb-3 pb-3" action="otp" method="get" novalidate>
+                                    <form id="signup-form" class="mb-3 pb-3" novalidate>
                                         <div class="mb-3 position-relative">
                                             <label class="form-label" for="signup-name">Full Name<span class="text-danger ms-1">*</span></label>
                                             <div class="position-relative">
@@ -204,7 +204,7 @@
 						sessionStorage.setItem("bryllaSignupEmail", email);
 						sessionStorage.removeItem("bryllaSignupToken");
 						form.hidden = true;
-						note.textContent = "We sent a link to " + email + ". Open it to choose your password and finish registration.";
+						note.textContent = "We sent a link to " + email + ". Open the email and click Choose a password. You do not type a code.";
 					}).catch(function (error) {
 						button.disabled = false;
 						showError(error.message || "The link could not be sent.");

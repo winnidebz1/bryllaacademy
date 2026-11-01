@@ -181,7 +181,7 @@ async function sendEmail(email: string, name: string, link: string): Promise<{ o
 			from,
 			to: email,
 			subject: "Finish your Brylla Academy registration",
-			html: `<div style="font-family:Arial,sans-serif;color:#122d49;max-width:520px"><p>Hello ${safeName},</p><p>Click the button to choose your password and finish creating your Brylla Academy account.</p><p><a href="${safeLink}" style="background:#073b70;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px">Choose a password</a></p><p>The link expires in 24 hours. If you did not sign up, you can ignore this email.</p><p>Brylla Academy</p></div>`,
+			html: `<div style="font-family:Arial,sans-serif;color:#122d49;max-width:520px"><p>Hello ${safeName},</p><p>Click the button to choose your password and finish creating your Brylla Academy account. There is no code to type.</p><p><a href="${safeLink}" style="background:#073b70;color:#fff;text-decoration:none;padding:12px 18px;border-radius:999px">Choose a password</a></p><p>Or open this link:<br><a href="${safeLink}">${safeLink}</a></p><p>The link expires in 24 hours. If you did not sign up, you can ignore this email.</p><p>Brylla Academy</p></div>`,
 		}),
 	});
 	if (response.ok) return { ok: true, error: "" };
