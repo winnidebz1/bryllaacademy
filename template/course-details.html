@@ -165,17 +165,17 @@
 		<div class="container">
 			<article class="detail-card">
 				<p class="eyebrow">Open now</p>
-				<h1>Bookkeeping</h1>
-				<p class="lead">US bookkeeping training over six weeks, with about eight weeks of learning and support. Record transactions, work in QuickBooks Online and Xero, reconcile accounts, and close a client's books.</p>
+				<h1 data-listing="title">Bookkeeping</h1>
+				<p class="lead" data-listing="summary">US bookkeeping training over six weeks, with about eight weeks of learning and support. Record transactions, work in QuickBooks Online and Xero, reconcile accounts, and close a client's books.</p>
 				<ul class="facts">
-					<li>Total course fee <span data-price-amount="600" data-price-currency="GHS">GHS 600</span></li>
-					<li>Registration fee <span data-price-amount="50" data-price-currency="GHS">GHS 50</span>, paid first</li>
-					<li>Course fee <span data-price-amount="550" data-price-currency="GHS">GHS 550</span>, covers enrolment</li>
-					<li>Includes bookkeeping training and mentorship</li>
+					<li>Total course fee <span data-listing="price" data-price-amount="600" data-price-currency="GHS">GHS 600</span></li>
+					<li>Registration fee <span data-listing="registration" data-price-amount="50" data-price-currency="GHS">GHS 50</span>, paid first</li>
+					<li>Course fee <span data-listing="enrolment" data-price-amount="550" data-price-currency="GHS">GHS 550</span>, covers enrolment</li>
+					<li data-listing="includes">Includes bookkeeping training and mentorship</li>
 					<li>Weeks 1–6: lessons and practical assignments</li>
 					<li>Week 7: catch-up for outstanding assignments</li>
 					<li>Week 8: mentorship</li>
-					<li>Next cohort: 4 January 2027</li>
+					<li>Next cohort: <strong data-listing="cohort">4 January 2027</strong></li>
 				</ul>
 				<div class="actions">
 					<button class="btn btn-brand" type="button" data-bookkeeping-pay>Register</button>
@@ -325,6 +325,50 @@
 			var courseId = params.get("course") || "";
 			var share = params.get("share") || "";
 			var card = document.querySelector(".detail-card");
+			function putListing(name, value) {
+				var target = card && card.querySelector('[data-listing="' + name + '"]');
+				if (!target || value == null || String(value).trim() === "") return;
+				target.textContent = String(value);
+			}
+			function putListingPrice(name, amount, currency) {
+				var target = card && card.querySelector('[data-listing="' + name + '"]');
+				if (!target || amount == null || amount === "") return;
+				var number = Number(amount);
+				if (!isFinite(number)) return;
+				target.setAttribute("data-price-amount", String(number));
+				target.setAttribute("data-price-currency", currency || "GHS");
+				target.textContent = (currency || "GHS") + " " + number;
+			}
+			function showBookkeepingRemoved() {
+				if (!card) return;
+				card.replaceChildren();
+				var heading = document.createElement("h1");
+				heading.textContent = "This course is not available";
+				var lead = document.createElement("p");
+				lead.className = "lead";
+				lead.textContent = "Bookkeeping is no longer listed.";
+				card.append(heading, lead);
+				document.title = "Course details | Brylla Academy";
+			}
+			if (!share && (!courseId || courseId === "bookkeeping") && window.BryllaPublic && BryllaPublic.client) {
+				BryllaPublic.client().rpc("public_course_listing", { p_course: "bookkeeping" }).then(function (result) {
+					if (result.error || !card) return;
+					var course = result.data;
+					if (!course) {
+						showBookkeepingRemoved();
+						return;
+					}
+					putListing("title", course.title);
+					putListing("summary", course.summary);
+					putListing("includes", course.includes_note);
+					putListing("cohort", course.cohort_label);
+					putListingPrice("price", course.price_amount, course.currency);
+					putListingPrice("registration", course.registration_fee, course.currency);
+					putListingPrice("enrolment", course.enrolment_fee, course.currency);
+					if (course.title) document.title = course.title + " course details | Brylla Academy";
+					if (window.BryllaCurrency && BryllaCurrency.paint) BryllaCurrency.paint();
+				});
+			}
 			if (!card || (!courseId && !share) || (courseId === "bookkeeping" && !share)) {
 				document.documentElement.classList.remove("course-page-pending");
 				return;

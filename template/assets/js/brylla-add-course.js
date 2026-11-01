@@ -5,6 +5,9 @@
 	var userId = "";
 	var courseId = "";
 	var staffRole = "";
+	var listingReady = false;
+	var descriptionReady = false;
+	var loadedDescription = "";
 
 	function $(id) { return document.getElementById(id); }
 	function show(message, isError) {
@@ -91,24 +94,97 @@
 		});
 	}
 
+	function minorAmount(id) {
+		var text = field(id);
+		if (text === "") return null;
+		var amount = Number(text);
+		if (!isFinite(amount) || amount < 0) amount = 0;
+		return Math.round(amount * 100);
+	}
+	function highlightLines() {
+		return [1, 2, 3].map(function (number) {
+			return field("course-highlight-" + number).slice(0, 160);
+		}).filter(Boolean);
+	}
+	function plainDescription() {
+		if (window.jQuery) {
+			var box = jQuery(".summernote");
+			if (box.length && box.data("summernote")) {
+				var holder = document.createElement("div");
+				holder.innerHTML = box.summernote("code") || "";
+				return (holder.innerText || "").replace(/\u00a0/g, " ").trim();
+			}
+		}
+		var editor = document.querySelector(".note-editable");
+		return editor ? editor.innerText.trim() : "";
+	}
+	function writeDescription(text) {
+		var safe = text || "";
+		function html() {
+			return safe.split(/\n{2,}/).map(function (part) {
+				return "<p>" + part.replace(/[&<>]/g, function (ch) {
+					return ch === "&" ? "&amp;" : ch === "<" ? "&lt;" : "&gt;";
+				}).replace(/\n/g, "<br>") + "</p>";
+			}).join("");
+		}
+		function apply() {
+			if (window.jQuery) {
+				var box = jQuery(".summernote");
+				if (box.length && box.data("summernote")) {
+					box.summernote("code", safe ? html() : "");
+					descriptionReady = true;
+					return true;
+				}
+			}
+			var editor = document.querySelector(".note-editable");
+			if (editor) {
+				editor.innerText = safe;
+				descriptionReady = true;
+				return true;
+			}
+			return false;
+		}
+		if (apply()) return;
+		var tries = 0;
+		var timer = window.setInterval(function () {
+			tries += 1;
+			if (apply() || tries > 30) window.clearInterval(timer);
+		}, 100);
+	}
 	function saveFields() {
 		if (!courseId) return Promise.resolve();
-		var amount = Number(field("course-price") || 0);
-		if (!isFinite(amount) || amount < 0) amount = 0;
-		var description = "";
-		var editor = document.querySelector(".note-editable");
-		description = editor ? editor.innerText.trim() : "";
-		return client.from("courses").update({
+		var payload = {
 			title: field("course-title") || "Untitled course",
 			level: field("course-level") === "Select" ? "" : field("course-level"),
 			visibility: field("course-visibility") === "Private" ? "private" : "public",
 			short_description: field("course-short").slice(0, 300),
-			description: description.slice(0, 4000),
 			intro_video_url: field("course-intro").slice(0, 400),
-			currency: field("course-currency") || "GHS",
-			price_amount: amount,
-			price_minor: Math.round(amount * 100)
-		}).eq("id", courseId).then(function (saved) {
+			currency: field("course-currency") || "GHS"
+		};
+		var priceText = field("course-price");
+		if (priceText !== "") {
+			var amount = Number(priceText);
+			if (!isFinite(amount) || amount < 0) amount = 0;
+			payload.price_amount = amount;
+			payload.price_minor = Math.round(amount * 100);
+		}
+		if (descriptionReady || loadedDescription) {
+			var nextDescription = descriptionReady ? plainDescription() : loadedDescription;
+			if (!nextDescription && loadedDescription) nextDescription = loadedDescription;
+			payload.description = nextDescription.slice(0, 4000);
+		}
+		if (listingReady) {
+			payload.highlights = highlightLines();
+			payload.includes_note = field("course-includes").slice(0, 300);
+			payload.fee_note = field("course-fee-note").slice(0, 400);
+			payload.duration_note = field("course-duration").slice(0, 160);
+			payload.cohort_label = field("course-cohort").slice(0, 80);
+			var registration = minorAmount("course-registration-fee");
+			var enrolment = minorAmount("course-enrolment-fee");
+			payload.registration_fee_minor = registration == null ? 0 : registration;
+			payload.enrolment_fee_minor = enrolment == null ? 0 : enrolment;
+		}
+		return client.from("courses").update(payload).eq("id", courseId).then(function (saved) {
 			if (saved.error) throw new Error(saved.error.message || "The course could not be saved.");
 		});
 	}
@@ -293,20 +369,52 @@
 		});
 	}
 
+	function majorAmount(minor) {
+		if (minor == null || minor === "") return "";
+		var amount = Number(minor) / 100;
+		return isFinite(amount) ? String(amount) : "";
+	}
+	function applyCourse(course) {
+		if (!course) return;
+		if ($("course-title") && course.title !== "Untitled course") $("course-title").value = course.title;
+		if ($("course-level") && course.level) $("course-level").value = course.level;
+		if ($("course-visibility")) $("course-visibility").value = course.visibility === "private" ? "Private" : "Public";
+		if ($("course-short")) $("course-short").value = course.short_description || "";
+		if ($("course-intro")) $("course-intro").value = course.intro_video_url || "";
+		if ($("course-currency")) $("course-currency").value = course.currency || "GHS";
+		if ($("course-price") && course.price_amount != null) $("course-price").value = course.price_amount;
+		if ($("course-registration-fee")) $("course-registration-fee").value = majorAmount(course.registration_fee_minor);
+		if ($("course-enrolment-fee")) $("course-enrolment-fee").value = majorAmount(course.enrolment_fee_minor);
+		if ($("course-includes")) $("course-includes").value = course.includes_note || "";
+		if ($("course-fee-note")) $("course-fee-note").value = course.fee_note || "";
+		if ($("course-duration")) $("course-duration").value = course.duration_note || "";
+		if ($("course-cohort")) $("course-cohort").value = course.cohort_label || "";
+		var highlights = Array.isArray(course.highlights) ? course.highlights : [];
+		[1, 2, 3].forEach(function (number) {
+			var input = $("course-highlight-" + number);
+			if (input) input.value = highlights[number - 1] || "";
+		});
+		loadedDescription = course.description || "";
+		writeDescription(loadedDescription);
+		if (window.jQuery) {
+			["course-level", "course-visibility"].forEach(function (id) {
+				var box = jQuery("#" + id);
+				if (box.length && box.data("select2")) box.trigger("change.select2");
+			});
+		}
+		paintShare();
+	}
 	function loadCourse() {
-		return client.from("courses").select("title,level,visibility,short_description,description,intro_video_url,currency,price_amount,share_code,approval_status").eq("id", courseId).maybeSingle().then(function (result) {
-			var course = result.data;
-			if (!course) return;
-			if ($("course-title") && course.title !== "Untitled course") $("course-title").value = course.title;
-			if ($("course-level") && course.level) $("course-level").value = course.level;
-			if ($("course-visibility")) $("course-visibility").value = course.visibility === "private" ? "Private" : "Public";
-			if ($("course-short")) $("course-short").value = course.short_description || "";
-			if ($("course-intro")) $("course-intro").value = course.intro_video_url || "";
-			if ($("course-currency")) $("course-currency").value = course.currency || "GHS";
-			if ($("course-price")) $("course-price").value = course.price_amount || "";
-			paintShare();
-			var editor = document.querySelector(".note-editable");
-			if (editor && course.description) editor.innerText = course.description;
+		var listing = "title,level,visibility,short_description,description,intro_video_url,currency,price_amount,share_code,approval_status,highlights,includes_note,fee_note,duration_note,cohort_label,registration_fee_minor,enrolment_fee_minor";
+		return client.from("courses").select(listing).eq("id", courseId).maybeSingle().then(function (result) {
+			if (result.error) {
+				return client.from("courses").select("title,level,visibility,short_description,description,intro_video_url,currency,price_amount,share_code,approval_status").eq("id", courseId).maybeSingle();
+			}
+			listingReady = true;
+			return result;
+		}).then(function (result) {
+			if (result.error) throw new Error(result.error.message || "The course could not be opened.");
+			applyCourse(result.data);
 		});
 	}
 
@@ -522,13 +630,19 @@
 	}
 
 	function bindSave() {
-		["course-title", "course-level", "course-visibility", "course-short", "course-intro", "course-currency", "course-price"].forEach(function (id) {
+		["course-title", "course-level", "course-visibility", "course-short", "course-intro", "course-currency", "course-price", "course-registration-fee", "course-enrolment-fee", "course-includes", "course-fee-note", "course-duration", "course-cohort", "course-highlight-1", "course-highlight-2", "course-highlight-3"].forEach(function (id) {
 			var node = $(id);
 			if (!node) return;
 			node.addEventListener("change", function () {
 				keepCourse().then(saveFields).then(function () { paintShare(); }).catch(function (error) { show(error.message, true); });
 			});
 		});
+		if (window.jQuery && jQuery(".summernote").data("summernote")) {
+			jQuery(".summernote").on("summernote.change", function () {
+				descriptionReady = true;
+				keepCourse().then(saveFields).then(function () { paintShare(); }).catch(function (error) { show(error.message, true); });
+			});
+		}
 		var submit = $("course-submit");
 		if (!submit) return;
 		submit.addEventListener("click", function (event) {

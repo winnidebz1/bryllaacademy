@@ -1246,6 +1246,14 @@
 		if (!card.dataset.bound) {
 			card.dataset.bound = "1";
 			card.addEventListener("click", function (event) {
+				var remove = event.target.closest("[data-delete-course]");
+				if (remove && card.contains(remove)) {
+					deleteCourse(remove, function () {
+						paintModuleUnlocks();
+						paintPublishedCourses();
+					});
+					return;
+				}
 				var button = event.target.closest("[data-module-key]");
 				if (!button) return;
 				var opening = button.getAttribute("aria-pressed") !== "true";
@@ -1290,7 +1298,7 @@
 					var isOpen = Boolean(open[course.id + ":" + module.key]);
 					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(module.title) + '</span><button class="' + (isOpen ? "btn btn-primary" : "btn btn-light") + '" type="button" data-course-id="' + esc(course.id) + '" data-module-key="' + esc(module.key) + '" aria-pressed="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close" : "Open") + "</button></li>";
 				}).join("") : '<li class="py-2 text-muted">No modules have been added to this course yet.</li>';
-				return '<section class="mb-3"><h3 class="h6 fw-bold">' + esc(course.title) + ' <a class="fw-normal" href="add-course.html?course=' + encodeURIComponent(course.id) + '">Edit</a></h3><ul class="list-unstyled mb-0">' + rows + "</ul></section>";
+				return '<section class="mb-3"><div class="d-flex justify-content-between align-items-center gap-2 mb-2"><h3 class="h6 fw-bold mb-0">' + esc(course.title) + "</h3>" + courseActions(course) + '</div><ul class="list-unstyled mb-0">' + rows + "</ul></section>";
 			}).join("");
 		});
 	}
@@ -1476,16 +1484,53 @@
 	function courseEditLink(course) {
 		return '<a class="btn btn-light btn-sm" href="add-course.html?course=' + encodeURIComponent(course.id) + '">Edit</a>';
 	}
+	function courseDeleteButton(course) {
+		return '<button class="btn btn-light btn-sm" type="button" data-delete-course="' + esc(course.id) + '" data-delete-title="' + esc(course.title) + '">Delete</button>';
+	}
+	function courseActions(course) {
+		return '<span class="d-inline-flex gap-2 flex-shrink-0">' + courseEditLink(course) + courseDeleteButton(course) + "</span>";
+	}
+	function deleteCourse(button, refresh) {
+		var title = button.getAttribute("data-delete-title") || "this course";
+		confirmAction("Delete " + title + "? The course is removed. Student accounts stay.").then(function (ok) {
+			if (!ok) return;
+			var current = staffClient();
+			if (!current) return;
+			button.disabled = true;
+			current.rpc("founder_delete_course", { p_course: button.getAttribute("data-delete-course") }).then(function (result) {
+				if (result.error) {
+					button.disabled = false;
+					toast(result.error.message || "The course could not be deleted.");
+					return;
+				}
+				toast("Course deleted.");
+				refresh();
+			});
+		});
+	}
+	function bindCourseDeletes(host, refresh) {
+		if (!host || host.dataset.deleteBound) return;
+		host.dataset.deleteBound = "1";
+		host.addEventListener("click", function (event) {
+			var button = event.target.closest("[data-delete-course]");
+			if (!button || !host.contains(button)) return;
+			deleteCourse(button, refresh);
+		});
+	}
 	function paintPublishedCourses() {
 		var current = staffClient();
 		var host = document.getElementById("published-courses");
 		if (!current || !host) return;
+		bindCourseDeletes(host, function () {
+			paintPublishedCourses();
+			paintModuleUnlocks();
+		});
 		current.from("courses").select("id,title,status").eq("status", "published").order("title").then(function (result) {
 			if (!document.body.contains(host)) return;
 			var rows = result.error ? [] : (result.data || []);
 			host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Published courses</h2>' +
 				(result.error ? empty(result.error.message || "Published courses could not be loaded.") : (rows.length ? "<ul class=\"list-unstyled mb-0\">" + rows.map(function (course) {
-					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(course.title) + "</span>" + courseEditLink(course) + "</li>";
+					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(course.title) + "</span>" + courseActions(course) + "</li>";
 				}).join("") + "</ul>" : "<p class=\"mb-0\">No published courses yet.</p>")) + "</div>";
 		});
 	}
@@ -1500,9 +1545,10 @@
 					[{ label: "Course" }, { label: "Price" }, { label: "Status" }, { label: "Actions" }],
 					rows.map(function (course) {
 						var price = course.price_amount == null ? "Not set" : (course.currency || "GHS") + " " + course.price_amount;
-						return "<tr>" + cell("Course", esc(course.title)) + cell("Price", esc(price)) + cell("Status", statusBadge(course.status)) + cell("Actions", courseEditLink(course)) + "</tr>";
+						return "<tr>" + cell("Course", esc(course.title)) + cell("Price", esc(price)) + cell("Status", statusBadge(course.status)) + cell("Actions", courseActions(course)) + "</tr>";
 					})
 				) : empty("No courses yet.")));
+			bindCourseDeletes(root, function () { renderAdminCourses(root); });
 		});
 	}
 	function renderAdminPerformance(root) {

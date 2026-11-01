@@ -264,10 +264,84 @@
 									</div>
 									<div class="col-md-12">
 										<div class="input-block">
-											<label class="form-label">Short Description<span
+											<label class="form-label" for="course-short">Short Description<span
 													class="text-danger ms-1">*</span></label>
-											<input type="text" class="form-control" id="course-short">
+											<input type="text" class="form-control" id="course-short" maxlength="300">
+											<p class="mt-2 mb-0 text-muted">This paragraph is the text on the homepage course card.</p>
 										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="input-block">
+											<label class="form-label" for="course-highlight-1">Homepage highlights</label>
+											<p class="mb-2 text-muted">Up to three lines under that paragraph on the homepage.</p>
+											<input type="text" class="form-control mb-2" id="course-highlight-1" maxlength="160">
+											<input type="text" class="form-control mb-2" id="course-highlight-2" maxlength="160" aria-label="Second homepage highlight">
+											<input type="text" class="form-control" id="course-highlight-3" maxlength="160" aria-label="Third homepage highlight">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="input-block">
+											<label class="form-label" for="course-currency">Currency</label>
+											<select class="form-select" id="course-currency">
+												<option value="GHS">GHS — Ghanaian cedi</option>
+												<option value="NGN">NGN — Nigerian naira</option>
+												<option value="USD">USD — US dollar</option>
+												<option value="EUR">EUR — euro</option>
+												<option value="GBP">GBP — British pound</option>
+												<option value="CAD">CAD — Canadian dollar</option>
+												<option value="KES">KES — Kenyan shilling</option>
+												<option value="ZAR">ZAR — South African rand</option>
+												<option value="XOF">XOF — West African CFA franc</option>
+												<option value="INR">INR — Indian rupee</option>
+												<option value="AUD">AUD — Australian dollar</option>
+											</select>
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="input-block">
+											<label class="form-label" for="course-price">Total course fee</label>
+											<input type="number" class="form-control" id="course-price" min="0" step="0.01" inputmode="decimal">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="input-block">
+											<label class="form-label" for="course-registration-fee">Registration fee</label>
+											<input type="number" class="form-control" id="course-registration-fee" min="0" step="0.01" inputmode="decimal">
+										</div>
+									</div>
+									<div class="col-md-4">
+										<div class="input-block">
+											<label class="form-label" for="course-enrolment-fee">Course fee</label>
+											<input type="number" class="form-control" id="course-enrolment-fee" min="0" step="0.01" inputmode="decimal">
+											<p class="mt-2 mb-0 text-muted">Paid after the registration fee.</p>
+										</div>
+									</div>
+									<div class="col-md-8">
+										<div class="input-block">
+											<label class="form-label" for="course-includes">Includes</label>
+											<input type="text" class="form-control" id="course-includes" maxlength="300">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<div class="input-block">
+											<label class="form-label" for="course-fee-note">Fee note</label>
+											<input type="text" class="form-control" id="course-fee-note" maxlength="400">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="input-block">
+											<label class="form-label" for="course-duration">Duration</label>
+											<input type="text" class="form-control" id="course-duration" maxlength="160">
+										</div>
+									</div>
+									<div class="col-md-6">
+										<div class="input-block">
+											<label class="form-label" for="course-cohort">Next cohort</label>
+											<input type="text" class="form-control" id="course-cohort" maxlength="80">
+										</div>
+									</div>
+									<div class="col-md-12">
+										<p id="course-price-preview" class="mb-3 text-muted"></p>
 									</div>
 									<div class="col-md-12">
 										<div class="input-block">
@@ -453,25 +527,7 @@
 											</label>
 										</div>
 									</div>
-									<div class="input-block mb-2">
-										<label class="form-label" for="course-currency">Currency</label>
-										<select class="form-select mb-3" id="course-currency">
-											<option value="GHS">GHS — Ghanaian cedi</option>
-											<option value="NGN">NGN — Nigerian naira</option>
-											<option value="USD">USD — US dollar</option>
-											<option value="EUR">EUR — euro</option>
-											<option value="GBP">GBP — British pound</option>
-											<option value="CAD">CAD — Canadian dollar</option>
-											<option value="KES">KES — Kenyan shilling</option>
-											<option value="ZAR">ZAR — South African rand</option>
-											<option value="XOF">XOF — West African CFA franc</option>
-											<option value="INR">INR — Indian rupee</option>
-											<option value="AUD">AUD — Australian dollar</option>
-										</select>
-										<label class="form-label" for="course-price">Course price</label>
-										<input type="number" class="form-control" id="course-price" min="0" step="0.01" inputmode="decimal">
-										<p id="course-price-preview" class="mt-2 mb-0 text-muted"></p>
-									</div>
+									<p class="mb-3">The total course fee, registration fee, and course fee are saved with the basic information. Those are the amounts visitors see on the homepage.</p>
 									<div class="d-flex align-items-center mb-3">
 										<div class="form-check form-check-md d-flex align-items-center">
 											<input class="form-check-input" type="checkbox" value=""

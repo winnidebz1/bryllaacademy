@@ -9,6 +9,56 @@
 		if (text) element.textContent = text;
 		return element;
 	}
+	function meta(iconClass, text) {
+		var row = node("p", "course-meta");
+		var icon = document.createElement("i");
+		icon.className = iconClass;
+		icon.setAttribute("aria-hidden", "true");
+		row.appendChild(icon);
+		row.appendChild(node("span", "", text));
+		return row;
+	}
+	function putText(root, name, value) {
+		var target = root.querySelector('[data-listing="' + name + '"]');
+		if (!target || value == null || String(value).trim() === "") return;
+		target.textContent = String(value);
+	}
+	function putPrice(root, name, amount, currency) {
+		var target = root.querySelector('[data-listing="' + name + '"]');
+		if (!target || amount == null || amount === "") return;
+		var number = Number(amount);
+		if (!isFinite(number)) return;
+		target.setAttribute("data-price-amount", String(number));
+		target.setAttribute("data-price-currency", currency || "GHS");
+		target.textContent = (currency || "GHS") + " " + number;
+	}
+	function fillBookkeeping(course) {
+		var article = document.getElementById("bookkeeping");
+		if (!article || !course) return;
+		putText(article, "title", course.title);
+		putText(article, "summary", course.summary);
+		putText(article, "includes", course.includes_note);
+		putText(article, "fee-note", course.fee_note);
+		putText(article, "duration", course.duration_note);
+		putText(article, "cohort", course.cohort_label);
+		putPrice(article, "price", course.price_amount, course.currency);
+		putPrice(article, "registration", course.registration_fee, course.currency);
+		putPrice(article, "enrolment", course.enrolment_fee, course.currency);
+		var highlights = Array.isArray(course.highlights) ? course.highlights.filter(Boolean).slice(0, 3) : [];
+		var list = article.querySelector('[data-listing="highlights"]');
+		if (list && highlights.length) {
+			list.innerHTML = "";
+			highlights.forEach(function (item) {
+				var row = document.createElement("li");
+				var icon = document.createElement("i");
+				icon.className = "fa-solid fa-check";
+				icon.setAttribute("aria-hidden", "true");
+				row.appendChild(icon);
+				row.appendChild(node("span", "", item));
+				list.appendChild(row);
+			});
+		}
+	}
 
 	function card(course) {
 		var article = node("article", "course-card featured-course");
@@ -43,6 +93,25 @@
 		price.setAttribute("data-price-amount", String(course.price_amount || 0));
 		price.setAttribute("data-price-currency", course.currency || "GHS");
 		side.appendChild(price);
+		var registration = Number(course.registration_fee);
+		var enrolment = Number(course.enrolment_fee);
+		if (registration > 0 || enrolment > 0) {
+			var fees = node("ul", "fee-list");
+			[["Registration fee", registration], ["Course fee", enrolment]].forEach(function (pair) {
+				var row = document.createElement("li");
+				row.appendChild(node("span", "", pair[0]));
+				var amount = node("strong", "", (course.currency || "GHS") + " " + (pair[1] || 0));
+				amount.setAttribute("data-price-amount", String(pair[1] || 0));
+				amount.setAttribute("data-price-currency", course.currency || "GHS");
+				row.appendChild(amount);
+				fees.appendChild(row);
+			});
+			side.appendChild(fees);
+		}
+		if (course.includes_note) side.appendChild(meta("fa-solid fa-check", course.includes_note));
+		if (course.fee_note) side.appendChild(node("p", "fee-note", course.fee_note));
+		if (course.duration_note) side.appendChild(meta("fa-regular fa-clock", course.duration_note));
+		if (course.cohort_label) side.appendChild(meta("fa-regular fa-calendar", "Next cohort starts " + course.cohort_label));
 		var view = node("a", "btn btn-brand enroll-button", "View course");
 		view.href = "course-details?course=" + encodeURIComponent(course.id);
 		side.appendChild(view);
@@ -50,6 +119,17 @@
 		article.appendChild(side);
 		return article;
 	}
+
+	client.rpc("public_course_listing", { p_course: "bookkeeping" }).then(function (result) {
+		if (result.error) return;
+		if (!result.data) {
+			var article = document.getElementById("bookkeeping");
+			if (article) article.remove();
+			return;
+		}
+		fillBookkeeping(result.data);
+		if (window.BryllaCurrency && BryllaCurrency.paint) BryllaCurrency.paint();
+	});
 
 	client.rpc("public_open_courses").then(function (result) {
 		var courses = Array.isArray(result.data) ? result.data : [];
