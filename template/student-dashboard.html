@@ -401,6 +401,11 @@
 		.lesson-preview-play svg { width: 12px; height: 12px; margin-left: 1px; }
 		.lesson-player { width: min(100%, 480px); aspect-ratio: 16 / 9; margin-top: 16px; overflow: hidden; border-radius: 12px; background: #041f3c; }
 		.lesson-player video, .lesson-player iframe { display: block; width: 100%; height: 100%; border: 0; background: #041f3c; }
+		.module-assignments { display: grid; gap: 12px; }
+		.module-assignments h2 { margin: 0; font-size: 18px; font-weight: 500; }
+		.module-assignments article { display: grid; gap: 6px; padding-top: 12px; border-top: 1px solid var(--color-border); }
+		.module-assignments p { margin: 0; }
+		.module-assignments .event-detail { color: var(--color-muted); font-size: 13px; }
 		.lesson-player strong, .lesson-player span { display: block; padding: 0 16px; color: #fff; }
 		.lesson-player strong { padding-top: 18%; font-size: 16px; font-weight: 500; }
 		.lesson-player span { margin-top: 6px; font-size: 13px; }
@@ -765,6 +770,8 @@
 		let lessonLengthSeconds = 0;
 		let playingTitle = "";
 		let playingItemId = "";
+		let postedAssignments = [];
+		let submittedWeeks = {};
 
 		const svgNs = "http://www.w3.org/2000/svg";
 		const iconPaths = {
@@ -917,7 +924,12 @@
 				data.lesson.title = playingTitle || progress.lessonTitle;
 				if (lessonLengthSeconds) data.lesson.minutesLeft = lessonLengthSeconds;
 			}
+			data.upcoming = (data.upcoming || []).filter(function (event) { return event.type !== "assignment"; });
+			if (data.stats) data.stats.assignmentsDue = visibleAssignments().filter(function (row) { return !submittedWeeks[String(row.module_week)]; }).length;
 			return data;
+		}
+		function visibleAssignments() {
+			return postedAssignments.filter(function (row) { return unlockedWeeks[String(row.module_week)]; });
 		}
 
 		function focusable(container) {
@@ -1215,6 +1227,38 @@
 			return section;
 		}
 
+		function renderModuleAssignments() {
+			const rows = visibleAssignments();
+			if (!rows.length) return null;
+			const section = el("section", "card module-assignments");
+			section.setAttribute("aria-labelledby", "module-assignments-title");
+			const heading = el("h2", null, "Module assignments");
+			heading.id = "module-assignments-title";
+			section.append(heading);
+			rows.forEach(function (row) {
+				const week = window.BryllaStudent ? BryllaStudent.modules.filter(function (module) { return module.week === Number(row.module_week); })[0] : null;
+				const article = document.createElement("article");
+				article.append(el("h3", "event-title", "Week " + row.module_week + (week ? ": " + week.title : "")));
+				if (row.title) article.append(el("p", null, row.title));
+				if (row.instructions) article.append(el("p", null, row.instructions));
+				const meta = [];
+				if (row.marks) meta.push(row.marks + " marks");
+				if (row.due_at) {
+					const due = new Date(row.due_at);
+					if (!isNaN(due.getTime())) meta.push("Due " + due.toLocaleString());
+				}
+				if (submittedWeeks[String(row.module_week)]) meta.push("Submitted");
+				if (meta.length) article.append(el("p", "event-detail", meta.join(" · ")));
+				if (!submittedWeeks[String(row.module_week)]) {
+					const link = el("a", "btn-fill", "Open assignment");
+					link.href = "course-watch.html?item=w" + row.module_week + "l1";
+					article.append(link);
+				}
+				section.append(article);
+			});
+			return section;
+		}
+
 		function renderLoading() {
 			mainEl.classList.add("is-loading");
 			mainEl.setAttribute("aria-busy", "true");
@@ -1412,6 +1456,24 @@
 				unlocksLoaded = true;
 			}).catch(function () { unlocksLoaded = true; });
 		}
+		function loadAssignments() {
+			const client = window.BryllaAuth && BryllaAuth.client;
+			if (!client) return Promise.resolve();
+			return client.auth.getSession().then(function (session) {
+				const user = session.data.session && session.data.session.user;
+				const submissions = user
+					? client.from("assignment_submissions").select("module_week").eq("user_id", user.id).eq("course_id", "bookkeeping")
+					: Promise.resolve({ data: [] });
+				return Promise.all([
+					client.from("course_assignments").select("module_week,kind,title,instructions,due_at,marks").eq("course_id", "bookkeeping").order("module_week"),
+					submissions
+				]).then(function (parts) {
+					postedAssignments = parts[0].error ? [] : (parts[0].data || []);
+					submittedWeeks = {};
+					(parts[1].error ? [] : (parts[1].data || [])).forEach(function (row) { submittedWeeks[String(row.module_week)] = true; });
+				});
+			}).catch(function () {});
+		}
 		function loadLessonMedia() {
 			const client = window.BryllaAuth && BryllaAuth.client;
 			if (!client) return Promise.resolve();
@@ -1472,6 +1534,8 @@
 			}
 			const lead = data.welcomeOnly || data.state === "new" ? renderWelcome() : renderContinue(data);
 			mainEl.append(renderBanner(data), lead);
+			const assignments = renderModuleAssignments();
+			if (assignments) mainEl.append(assignments);
 			if (!data.welcomeOnly && data.state !== "completed") mainEl.append(renderStats(data), renderUpcoming(data));
 			const player = document.getElementById(data.welcomeOnly || data.state === "new" ? "welcome-player" : "lesson-player");
 			if (player) mountPlayer(player, data.welcomeOnly || data.state === "new" ? introVideoUrl : lessonVideoUrl);
@@ -1561,7 +1625,9 @@
 		});
 		window.addEventListener("pageshow", function () { render(); });
 		function startDashboard() {
-			loadUnlocks().then(loadLessonMedia).then(render);
+			loadUnlocks().then(function () {
+				return Promise.all([loadLessonMedia(), loadAssignments()]);
+			}).then(render);
 		}
 		render();
 		if (window.BryllaAuth) BryllaAuth.ready.then(startDashboard);

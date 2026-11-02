@@ -514,7 +514,8 @@
 				? "<ul>" + downloads.map(function (file) { return '<li><a href="' + esc(file.url) + '" target="_blank" rel="noopener">' + esc(file.name) + "</a></li>"; }).join("") + "</ul>"
 				: "<p>Study materials will be available here.</p>") + "</section>";
 			var status = statusText ? '<p class="status" role="status">' + esc(statusText) + "</p>" : "";
-			$("main").innerHTML = '<div class="' + videoClass + '">' + video + "</div><div>" + head + '</div><div class="actions">' + actions + "</div>" + status + tabs + materials;
+			var assignmentBlock = can && sel.week ? moduleAssignment({ week: sel.week, title: sel.topic || ("Week " + sel.week) }) : "";
+			$("main").innerHTML = '<div class="' + videoClass + '">' + video + "</div><div>" + head + '</div><div class="actions">' + actions + "</div>" + status + tabs + assignmentBlock + materials;
 			var note = $("note");
 			if (note) {
 				try { note.value = localStorage.getItem("note:" + sel.id) || ""; } catch (error) { note.value = ""; }
