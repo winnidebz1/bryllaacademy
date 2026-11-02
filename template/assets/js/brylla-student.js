@@ -1,7 +1,7 @@
 (function () {
 	var PROFILE_KEY = "brylla-student-profile";
 	var PROGRESS_KEY = "brylla-course-progress";
-	var LESSON_MINUTES = 45;
+	var LESSON_MINUTES = 0;
 	var modules = [
 		{ week: 1, title: "Bookkeeping foundations", live: "Chart of accounts build-off", lessons: ["What a US bookkeeper does", "Debits, credits, and journal entries", "Chart of accounts"] },
 		{ week: 2, title: "QuickBooks Online", live: "The shoebox challenge", lessons: ["QuickBooks Online setup and navigation", "Bank feeds, bank rules, and categorizing", "Accounts receivable"] },

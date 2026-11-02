@@ -317,6 +317,9 @@
 				var linkStatus = document.createElement("p");
 				linkStatus.className = "mt-2 mb-0";
 				linkStatus.setAttribute("role", "status");
+				var lengthNote = document.createElement("p");
+				lengthNote.className = "text-muted mb-0";
+				lengthNote.textContent = module.duration_seconds ? "Video length " + formatLength(module.duration_seconds) : "";
 				linkSave.addEventListener("click", function () {
 					var url = linkInput.value.trim();
 					if (url && !/^https?:\/\//i.test(url)) {
@@ -329,6 +332,7 @@
 					client.from("course_modules").update({ video_url: url.slice(0, 500) }).eq("id", module.id).then(function (saved) {
 						if (saved.error) throw new Error(saved.error.message || "The video link could not be saved.");
 						module.video_url = url.slice(0, 500);
+						return client.from("course_video_links").update({ video_url: url.slice(0, 500) }).eq("course_id", courseId).ilike("title", module.title);
 						linkStatus.textContent = /drive\.google\.com/i.test(url)
 							? "Saved. Share that Drive file as Anyone with the link, or students see a blank player."
 							: "Saved. Students play this on the lesson page.";
@@ -344,6 +348,7 @@
 					linkInput,
 					linkSave,
 					linkStatus,
+					lengthNote,
 					mediaSection(module, "video", "Course videos", "Lesson recordings and demos. MP4, WebM or MOV, up to 500 MB each.", ".mp4,.webm,.mov", 500),
 					mediaSection(module, "material", "Course materials", "Slides, workbooks, and spreadsheets. PDF, Word, PowerPoint, Excel, CSV or ZIP, up to 50 MB each.", ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip", 50),
 					mediaSection(module, "study", "Study materials", "Reading and practice sheets. PDF, Word, EPUB, TXT, JPG or PNG, up to 50 MB each.", ".pdf,.doc,.docx,.epub,.txt,.jpg,.jpeg,.png", 50)
@@ -409,7 +414,7 @@
 	function loadTopics() {
 		return Promise.all([
 			client.from("course_topics").select("id,title,position").eq("course_id", courseId).order("position"),
-			client.from("course_modules").select("id,topic_id,title,video_url,position").eq("course_id", courseId).order("position")
+			client.from("course_modules").select("id,topic_id,title,video_url,duration_seconds,position").eq("course_id", courseId).order("position")
 		]).then(function (parts) {
 			var topics = parts[0].data || [];
 			var modules = parts[1].error ? [] : (parts[1].data || []);
@@ -425,10 +430,57 @@
 			renderFaqs(result.data || []);
 		});
 	}
+	function formatLength(seconds) {
+		var total = Math.round(Number(seconds) || 0);
+		if (!total || !isFinite(total)) return "";
+		var hours = Math.floor(total / 3600);
+		var minutes = Math.floor((total % 3600) / 60);
+		var secs = total % 60;
+		function pad(value) { return (value < 10 ? "0" : "") + value; }
+		if (hours) return hours + ":" + pad(minutes) + ":" + pad(secs);
+		return minutes + ":" + pad(secs);
+	}
+	function measureUrl(url) {
+		return new Promise(function (resolve) {
+			var video = document.createElement("video");
+			video.preload = "metadata";
+			video.onloadedmetadata = function () {
+				var seconds = Math.round(video.duration);
+				video.removeAttribute("src");
+				video.load();
+				resolve(seconds > 0 && isFinite(seconds) ? seconds : 0);
+			};
+			video.onerror = function () { resolve(0); };
+			video.src = url;
+		});
+	}
+	function rememberDurations() {
+		var pending = (fileRows || []).filter(function (file) {
+			if (file.kind !== "video" || !file.module_id || !file.storage_path) return false;
+			var known = false;
+			topicRows.forEach(function (topic) {
+				(topic.modules || []).forEach(function (module) {
+					if (module.id === file.module_id && module.duration_seconds) known = true;
+				});
+			});
+			return !known;
+		});
+		if (!pending.length) return Promise.resolve();
+		return client.storage.from("course-media").createSignedUrls(pending.map(function (file) { return file.storage_path; }), 600).then(function (signed) {
+			return Promise.all((signed.data || []).map(function (row, index) {
+				if (!row || !row.signedUrl) return null;
+				return measureUrl(row.signedUrl).then(function (seconds) {
+					if (!seconds) return null;
+					return client.from("course_modules").update({ duration_seconds: seconds }).eq("id", pending[index].module_id);
+				});
+			}));
+		}).then(function () { return loadTopics(); }).catch(function () {});
+	}
 	function loadFiles() {
 		return client.from("course_files").select("id,module_id,kind,file_name,storage_path").eq("course_id", courseId).order("created_at").then(function (result) {
 			fileRows = result.error ? [] : (result.data || []);
 			if (topicRows.length) renderTopics(topicRows);
+			return rememberDurations();
 		});
 	}
 	function renderVideoLinks(rows) {
@@ -531,27 +583,57 @@
 		return String(name || "file").split(/[/\\]/).pop().replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 80);
 	}
 
+	function measureDuration(file) {
+		return new Promise(function (resolve) {
+			var url = URL.createObjectURL(file);
+			var video = document.createElement("video");
+			function finish(seconds) {
+				URL.revokeObjectURL(url);
+				resolve(seconds);
+			}
+			video.preload = "metadata";
+			video.onloadedmetadata = function () {
+				var seconds = Math.round(video.duration);
+				finish(seconds > 0 && isFinite(seconds) ? seconds : 0);
+			};
+			video.onerror = function () { finish(0); };
+			video.src = url;
+		});
+	}
 	function uploadFiles(files, kind, moduleId) {
 		return keepCourse().then(function () {
 			return files.reduce(function (chain, file) {
 				return chain.then(function () {
 					var path = userId + "/" + courseId + "/" + Date.now() + "-" + safeName(file.name);
-					return client.storage.from("course-media").upload(path, file, { upsert: false }).then(function (uploaded) {
-						if (uploaded.error) throw new Error(file.name + " could not be uploaded.");
-						var row = {
-							course_id: courseId,
-							user_id: userId,
-							kind: kind,
-							storage_path: path,
-							file_name: file.name.slice(0, 180),
-							content_type: file.type || "application/octet-stream",
-							size_bytes: file.size
-						};
-						if (moduleId) row.module_id = moduleId;
-						return client.from("course_files").insert(row).then(function (saved) {
-							if (!saved.error) return;
-							return client.storage.from("course-media").remove([path]).then(function () {
-								throw new Error(file.name + " could not be saved on this module.");
+					var measured = kind === "video" ? measureDuration(file) : Promise.resolve(0);
+					return measured.then(function (seconds) {
+						return client.storage.from("course-media").upload(path, file, { upsert: false }).then(function (uploaded) {
+							if (uploaded.error) throw new Error(file.name + " could not be uploaded.");
+							var row = {
+								course_id: courseId,
+								user_id: userId,
+								kind: kind,
+								storage_path: path,
+								file_name: file.name.slice(0, 180),
+								content_type: file.type || "application/octet-stream",
+								size_bytes: file.size
+							};
+							if (moduleId) row.module_id = moduleId;
+							return client.from("course_files").insert(row).then(function (saved) {
+								if (saved.error) {
+									return client.storage.from("course-media").remove([path]).then(function () {
+										throw new Error(file.name + " could not be saved on this module.");
+									});
+								}
+								if (kind === "video" && moduleId && seconds) {
+									return client.from("course_modules").update({ duration_seconds: seconds }).eq("id", moduleId).then(function () {
+										topicRows.forEach(function (topic) {
+											(topic.modules || []).forEach(function (module) {
+												if (module.id === moduleId) module.duration_seconds = seconds;
+											});
+										});
+									});
+								}
 							});
 						});
 					});

@@ -263,9 +263,9 @@
 		BryllaStudent.modules.forEach(function (module) {
 			module.lessons.forEach(function (title, index) {
 				var id = "w" + module.week + "l" + (index + 1);
-				ALL.push({ id: id, kind: "lesson", week: module.week, moduleKey: String(module.week), topic: module.title, n: index + 1, title: title, min: BryllaStudent.lessonMinutes, preview: false, summary: SUMMARIES[id] || title });
+				ALL.push({ id: id, kind: "lesson", week: module.week, moduleKey: String(module.week), topic: module.title, n: index + 1, title: title, min: 0, lengthSeconds: 0, preview: false, summary: SUMMARIES[id] || title });
 			});
-			ALL.push({ id: "w" + module.week + "live", kind: "live", week: module.week, moduleKey: String(module.week), topic: module.title, n: 0, title: module.live, min: 60, preview: false, summary: "A live session with your instructor." });
+			ALL.push({ id: "w" + module.week + "live", kind: "live", week: module.week, moduleKey: String(module.week), topic: module.title, n: 0, title: module.live, min: 0, lengthSeconds: 0, preview: false, summary: "A live session with your instructor." });
 		});
 		if (courseKey === "bookkeeping") {
 			ALL.unshift(
@@ -333,7 +333,8 @@
 			var finished = isDone(item, sets);
 			var icon = finished ? "ti-circle-check" : current ? "ti-player-play-filled" : locked ? "ti-lock" : "ti-circle";
 			var color = finished && !current ? ' style="color:var(--green-fg)"' : "";
-			var extra = item.min ? '<span class="m">' + (item.kind === "live" ? "Live" : item.min + " min") + "</span>" : "";
+			var length = item.lengthSeconds ? formatLength(item.lengthSeconds) : (item.kind === "live" ? "Live" : "");
+			var extra = '<span class="m" data-length="' + esc(item.id) + '">' + esc(length) + "</span>";
 			var inner = '<i class="ti ' + icon + '"' + color + ' aria-hidden="true"></i><span class="nm">' + esc(item.kind === "live" ? "Live: " + item.title : item.title) + "</span>" + extra;
 			if (locked) return '<div class="lr lock">' + inner + "</div>";
 			return '<button class="lr' + (current ? " cur" : "") + '" type="button" data-id="' + esc(item.id) + '"' + (current ? ' aria-current="true"' : "") + ">" + inner + "</button>";
@@ -523,15 +524,27 @@
 			}
 		}
 
+		function fileVideo(url) {
+			return /\/object\/sign\//i.test(url || "") || /\.(mp4|webm|mov|m4v)(\?|$)/i.test(url || "");
+		}
+		function firstUploadedLesson() {
+			for (var index = 0; index < ALL.length; index += 1) {
+				var item = ALL[index];
+				if (!itemLocked(item) && fileVideo(item.videoUrl)) return item;
+			}
+			return null;
+		}
 		function render() {
 			var requested = itemById(new URLSearchParams(location.search).get("item"));
 			if (!sel || itemLocked(sel)) {
 				var current = itemById(BryllaStudent.summary().lessonId);
 				var resume = BryllaStudent.summary().started && current && !itemLocked(current) ? current : null;
-				sel = (requested && !itemLocked(requested) ? requested : null) || resume || itemById("welcome") || ALL[0];
+				var uploaded = firstUploadedLesson();
+				sel = (requested && !itemLocked(requested) ? requested : null) || (resume && fileVideo(resume.videoUrl) ? resume : null) || uploaded || resume || itemById("welcome") || ALL[0];
 			}
 			renderSide();
 			renderMain();
+			probeDurations();
 		}
 
 		document.addEventListener("click", function (event) {
@@ -693,6 +706,33 @@
 			$("avatar").setAttribute("aria-label", "Settings, " + studentName);
 		}
 		showStudent();
+		function formatLength(seconds) {
+			var total = Math.round(Number(seconds) || 0);
+			if (!total || !isFinite(total)) return "";
+			var hours = Math.floor(total / 3600);
+			var minutes = Math.floor((total % 3600) / 60);
+			var secs = total % 60;
+			function pad(value) { return (value < 10 ? "0" : "") + value; }
+			if (hours) return hours + ":" + pad(minutes) + ":" + pad(secs);
+			return minutes + ":" + pad(secs);
+		}
+		function probeDurations() {
+			ALL.forEach(function (item) {
+				if (!item || item.lengthSeconds || !fileVideo(item.videoUrl)) return;
+				var probe = document.createElement("video");
+				probe.preload = "metadata";
+				probe.addEventListener("loadedmetadata", function () {
+					var seconds = Math.round(probe.duration);
+					probe.removeAttribute("src");
+					probe.load();
+					if (!seconds || !isFinite(seconds)) return;
+					item.lengthSeconds = seconds;
+					var node = document.querySelector('[data-length="' + item.id + '"]');
+					if (node) node.textContent = formatLength(seconds);
+				});
+				probe.src = item.videoUrl;
+			});
+		}
 		function drivePreview(value) {
 			var file = String(value || "").match(/drive\.google\.com\/file\/d\/([\w-]+)/i);
 			var id = file ? file[1] : "";
@@ -727,7 +767,7 @@
 				ALL = modules.map(function (module) {
 					var week = topicOrder[module.topic_id] || 1;
 					counts[week] = (counts[week] || 0) + 1;
-					return { id: "mod-" + module.id, kind: "lesson", week: week, moduleKey: module.topic_id || module.id, moduleId: module.id, topic: topicName[module.topic_id] || "Lessons", n: counts[week], title: module.title, min: 0, preview: false, summary: module.title, videoUrl: module.video_url || "", downloads: [] };
+					return { id: "mod-" + module.id, kind: "lesson", week: week, moduleKey: module.topic_id || module.id, moduleId: module.id, topic: topicName[module.topic_id] || "Lessons", n: counts[week], title: module.title, min: 0, lengthSeconds: module.duration_seconds || 0, preview: false, summary: module.title, videoUrl: module.video_url || "", downloads: [] };
 				});
 				applyUploadedMedia(modules, media);
 				if (!ALL.some(function (item) { return item === sel; })) sel = ALL[0] || null;
@@ -750,7 +790,8 @@
 				var title = String(item.title || "").trim().toLowerCase();
 				var matched = item.moduleId ? null : (byTitle[title] || byTitle["live session: " + title]);
 				var moduleId = item.moduleId || (matched && matched.id);
-				if (!item.videoUrl && matched && matched.video_url) item.videoUrl = matched.video_url;
+				if (matched && matched.video_url) item.videoUrl = matched.video_url;
+				if (matched && matched.duration_seconds) item.lengthSeconds = matched.duration_seconds;
 				if (moduleId) {
 					var video = filesFor(moduleId, "video")[0];
 					if (video) {
@@ -812,7 +853,8 @@
 				return client.storage.from("course-media").createSignedUrls(ready.map(function (file) { return file.storage_path; }), 60 * 60).then(function (signed) {
 					var urls = {};
 					(signed.data || []).forEach(function (row, index) {
-						if (row && row.signedUrl && ready[index]) urls[ready[index].id] = row.signedUrl;
+						var address = row && (row.signedUrl || row.signedURL);
+						if (address && ready[index]) urls[ready[index].id] = address;
 					});
 					var byModule = {};
 					var loose = [];
@@ -829,7 +871,7 @@
 				return Promise.all([
 					client.from("courses").select("title,intro_video_url").eq("id", courseKey).maybeSingle(),
 					client.from("course_topics").select("id,title,position").eq("course_id", courseKey).order("position"),
-					client.from("course_modules").select("id,topic_id,title,video_url,position").eq("course_id", courseKey).order("position"),
+					client.from("course_modules").select("id,topic_id,title,video_url,duration_seconds,position").eq("course_id", courseKey).order("position"),
 					linksQuery(),
 					client.from("course_files").select("id,module_id,kind,file_name,storage_path").eq("course_id", courseKey).in("kind", ["video", "material", "study"]).order("created_at"),
 					client.from("course_assignments").select("module_week,kind,title,instructions,due_at,marks").eq("course_id", courseKey).order("updated_at")
