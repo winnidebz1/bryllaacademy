@@ -108,5 +108,6 @@
 		});
 	}
 
+	window.BryllaMaterialUpload = { setup: setup };
 	document.querySelectorAll(".material-upload").forEach(setup);
 })();

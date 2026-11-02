@@ -8,6 +8,8 @@
 	var listingReady = false;
 	var descriptionReady = false;
 	var loadedDescription = "";
+	var topicRows = [];
+	var fileRows = [];
 
 	function $(id) { return document.getElementById(id); }
 	function show(message, isError) {
@@ -196,6 +198,62 @@
 		box.textContent = "";
 	}
 
+	function savedFileList(module, kind) {
+		var saved = document.createElement("ul");
+		saved.className = "material-list";
+		(fileRows || []).filter(function (file) { return file.module_id === module.id && file.kind === kind; }).forEach(function (file) {
+			var item = document.createElement("li");
+			item.textContent = file.file_name;
+			var remove = document.createElement("button");
+			remove.type = "button";
+			remove.className = "material-remove";
+			remove.textContent = "Remove";
+			remove.addEventListener("click", function () {
+				client.storage.from("course-media").remove([file.storage_path]).then(function () {
+					return client.from("course_files").delete().eq("id", file.id);
+				}).then(function () { loadFiles(); });
+			});
+			item.appendChild(remove);
+			saved.appendChild(item);
+		});
+		return saved;
+	}
+	function mediaSection(module, kind, label, hint, accept, maxMb) {
+		var section = document.createElement("section");
+		section.className = "material-upload mt-3";
+		section.setAttribute("data-kind", kind);
+		section.setAttribute("data-module-id", module.id);
+		section.setAttribute("data-max-mb", String(maxMb));
+		var heading = document.createElement("h6");
+		heading.className = "mb-1";
+		heading.textContent = label;
+		var note = document.createElement("p");
+		note.className = "material-hint";
+		note.textContent = hint;
+		var inputId = "module-" + kind + "-" + module.id;
+		var drop = document.createElement("label");
+		drop.className = "material-drop";
+		drop.htmlFor = inputId;
+		drop.innerHTML = kind === "video"
+			? '<i class="isax isax-play-circle5" aria-hidden="true"></i><span>Choose videos or drag them here</span>'
+			: '<i class="isax isax-document-upload5" aria-hidden="true"></i><span>Choose files or drag them here</span>';
+		var input = document.createElement("input");
+		input.className = "visually-hidden";
+		input.type = "file";
+		input.id = inputId;
+		input.accept = accept;
+		input.multiple = true;
+		var error = document.createElement("p");
+		error.className = "material-error";
+		error.hidden = true;
+		error.setAttribute("role", "alert");
+		var pending = document.createElement("ul");
+		pending.className = "material-list";
+		pending.setAttribute("aria-live", "polite");
+		section.append(heading, note, drop, input, error, pending, savedFileList(module, kind));
+		if (window.BryllaMaterialUpload) BryllaMaterialUpload.setup(section);
+		return section;
+	}
 	function renderTopics(rows) {
 		var list = $("topic-list");
 		var empty = $("topic-empty");
@@ -218,12 +276,14 @@
 			});
 			head.appendChild(title);
 			head.appendChild(removeTopic);
-			var modules = document.createElement("ul");
-			modules.className = "list-unstyled mb-2 mt-2";
+			var modules = document.createElement("div");
+			modules.className = "mb-2 mt-2";
 			(topic.modules || []).forEach(function (module) {
-				var row = document.createElement("li");
-				row.className = "d-flex align-items-center justify-content-between gap-2 border rounded-2 px-2 py-1 mb-1";
-				var name = document.createElement("span");
+				var row = document.createElement("div");
+				row.className = "border rounded-2 p-3 mb-2";
+				var bar = document.createElement("div");
+				bar.className = "d-flex align-items-center justify-content-between gap-2";
+				var name = document.createElement("strong");
 				name.textContent = module.title;
 				var removeModule = document.createElement("button");
 				removeModule.type = "button";
@@ -232,8 +292,57 @@
 				removeModule.addEventListener("click", function () {
 					client.from("course_modules").delete().eq("id", module.id).then(function () { loadTopics(); });
 				});
-				row.appendChild(name);
-				row.appendChild(removeModule);
+				bar.append(name, removeModule);
+				var media = document.createElement("div");
+				media.className = "mt-3";
+				var mediaTitle = document.createElement("p");
+				mediaTitle.className = "fw-medium mb-2";
+				mediaTitle.textContent = "Course media";
+				var linkLabel = document.createElement("label");
+				linkLabel.className = "form-label";
+				linkLabel.textContent = "Video link";
+				var linkInput = document.createElement("input");
+				linkInput.type = "url";
+				linkInput.className = "form-control mb-2";
+				linkInput.maxLength = 500;
+				linkInput.placeholder = "https://";
+				linkInput.value = module.video_url || "";
+				var linkSave = document.createElement("button");
+				linkSave.type = "button";
+				linkSave.className = "btn btn-secondary btn-sm";
+				linkSave.textContent = "Save video link";
+				var linkStatus = document.createElement("p");
+				linkStatus.className = "mt-2 mb-0";
+				linkStatus.setAttribute("role", "status");
+				linkSave.addEventListener("click", function () {
+					var url = linkInput.value.trim();
+					if (url && !/^https?:\/\//i.test(url)) {
+						linkStatus.textContent = "The video link needs to start with http:// or https://.";
+						linkStatus.style.color = "#a12622";
+						return;
+					}
+					linkStatus.textContent = "Saving video link…";
+					linkStatus.style.color = "#078d87";
+					client.from("course_modules").update({ video_url: url.slice(0, 500) }).eq("id", module.id).then(function (saved) {
+						if (saved.error) throw new Error(saved.error.message || "The video link could not be saved.");
+						module.video_url = url.slice(0, 500);
+						linkStatus.textContent = "Saved. Students play this on the lesson page.";
+					}).catch(function (error) {
+						linkStatus.textContent = error.message || "The video link could not be saved.";
+						linkStatus.style.color = "#a12622";
+					});
+				});
+				media.append(
+					mediaTitle,
+					linkLabel,
+					linkInput,
+					linkSave,
+					linkStatus,
+					mediaSection(module, "video", "Course videos", "Lesson recordings and demos. MP4, WebM or MOV, up to 500 MB each.", ".mp4,.webm,.mov", 500),
+					mediaSection(module, "material", "Course materials", "Slides, workbooks, and spreadsheets. PDF, Word, PowerPoint, Excel, CSV or ZIP, up to 50 MB each.", ".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip", 50),
+					mediaSection(module, "study", "Study materials", "Reading and practice sheets. PDF, Word, EPUB, TXT, JPG or PNG, up to 50 MB each.", ".pdf,.doc,.docx,.epub,.txt,.jpg,.jpeg,.png", 50)
+				);
+				row.append(bar, media);
 				modules.appendChild(row);
 			});
 			var addModule = document.createElement("button");
@@ -249,11 +358,26 @@
 				var modal = document.getElementById("add-module");
 				if (modal && window.bootstrap) bootstrap.Modal.getOrCreateInstance(modal).show();
 			});
-			item.appendChild(head);
-			item.appendChild(modules);
-			item.appendChild(addModule);
+			item.append(head, modules, addModule);
 			list.appendChild(item);
 		});
+		var loose = (fileRows || []).filter(function (file) { return !file.module_id && file.kind !== "thumbnail"; });
+		if (loose.length) {
+			var box = document.createElement("div");
+			box.className = "border rounded-3 p-3 mb-3";
+			var looseTitle = document.createElement("p");
+			looseTitle.className = "fw-medium mb-2";
+			looseTitle.textContent = "Videos and files not attached to a module yet";
+			var looseList = document.createElement("ul");
+			looseList.className = "mb-0";
+			loose.forEach(function (file) {
+				var item = document.createElement("li");
+				item.textContent = file.file_name;
+				looseList.appendChild(item);
+			});
+			box.append(looseTitle, looseList);
+			list.appendChild(box);
+		}
 		if (empty) empty.hidden = rows && rows.length > 0;
 	}
 
@@ -276,29 +400,6 @@
 		if (empty) empty.hidden = rows && rows.length > 0;
 	}
 
-	function renderFiles(rows) {
-		["video", "material", "study", "thumbnail"].forEach(function (kind) {
-			var list = document.querySelector("[data-saved-files=\"" + kind + "\"]");
-			if (!list) return;
-			list.innerHTML = "";
-			(rows || []).filter(function (file) { return file.kind === kind; }).forEach(function (file) {
-				var item = document.createElement("li");
-				item.textContent = file.file_name;
-				var remove = document.createElement("button");
-				remove.type = "button";
-				remove.className = "material-remove";
-				remove.textContent = "Remove";
-				remove.addEventListener("click", function () {
-					client.storage.from("course-media").remove([file.storage_path]).then(function () {
-						return client.from("course_files").delete().eq("id", file.id);
-					}).then(function () { loadFiles(); });
-				});
-				item.appendChild(remove);
-				list.appendChild(item);
-			});
-		});
-	}
-
 	function loadTopics() {
 		return Promise.all([
 			client.from("course_topics").select("id,title,position").eq("course_id", courseId).order("position"),
@@ -309,7 +410,8 @@
 			topics.forEach(function (topic) {
 				topic.modules = modules.filter(function (module) { return module.topic_id === topic.id; });
 			});
-			renderTopics(topics);
+			topicRows = topics;
+			renderTopics(topicRows);
 		});
 	}
 	function loadFaqs() {
@@ -318,8 +420,9 @@
 		});
 	}
 	function loadFiles() {
-		return client.from("course_files").select("id,kind,file_name,storage_path").eq("course_id", courseId).order("created_at").then(function (result) {
-			renderFiles(result.data || []);
+		return client.from("course_files").select("id,module_id,kind,file_name,storage_path").eq("course_id", courseId).order("created_at").then(function (result) {
+			fileRows = result.error ? [] : (result.data || []);
+			if (topicRows.length) renderTopics(topicRows);
 		});
 	}
 	function renderVideoLinks(rows) {
@@ -422,14 +525,14 @@
 		return String(name || "file").split(/[/\\]/).pop().replace(/[^A-Za-z0-9._-]/g, "_").slice(0, 80);
 	}
 
-	function uploadFiles(files, kind) {
+	function uploadFiles(files, kind, moduleId) {
 		return keepCourse().then(function () {
 			return files.reduce(function (chain, file) {
 				return chain.then(function () {
 					var path = userId + "/" + courseId + "/" + Date.now() + "-" + safeName(file.name);
 					return client.storage.from("course-media").upload(path, file, { upsert: false }).then(function (uploaded) {
 						if (uploaded.error) throw new Error(file.name + " could not be uploaded.");
-						return client.from("course_files").insert({
+						var row = {
 							course_id: courseId,
 							user_id: userId,
 							kind: kind,
@@ -437,12 +540,14 @@
 							file_name: file.name.slice(0, 180),
 							content_type: file.type || "application/octet-stream",
 							size_bytes: file.size
-						});
+						};
+						if (moduleId) row.module_id = moduleId;
+						return client.from("course_files").insert(row);
 					});
 				});
 			}, Promise.resolve());
 		}).then(function () {
-			show("Files saved. They stay on this course after a refresh.");
+			show("Files saved. Students can play them from this module.");
 			return loadFiles();
 		}).catch(function (error) {
 			show(error.message || "A file could not be saved.", true);
@@ -451,11 +556,14 @@
 
 	function bindUploads() {
 		document.addEventListener("brylla-files-added", function (event) {
-			var input = event.target.querySelector && event.target.querySelector("input[type=file]");
+			var section = event.target;
+			var input = section.querySelector && section.querySelector("input[type=file]");
 			var id = input ? input.id : "";
-			var kind = id === "course-videos" || id === "lesson-video-file" ? "video" : id === "study-materials" ? "study" : id === "upload-img-input" ? "thumbnail" : "material";
+			var kind = section.getAttribute && section.getAttribute("data-kind");
+			if (!kind) kind = id === "course-videos" || id === "lesson-video-file" ? "video" : id === "study-materials" ? "study" : id === "upload-img-input" ? "thumbnail" : "material";
+			var moduleId = section.getAttribute ? section.getAttribute("data-module-id") : "";
 			var files = event.detail && event.detail.files ? event.detail.files : [];
-			if (files.length) uploadFiles(files, kind);
+			if (files.length) uploadFiles(files, kind, moduleId);
 		});
 		var image = $("upload-img-input");
 		if (image) image.addEventListener("change", function () {

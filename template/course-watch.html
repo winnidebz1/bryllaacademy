@@ -452,7 +452,7 @@
 					? '<iframe src="' + esc(sel.pageUrl) + '" title="' + esc(sel.title) + '"></iframe>'
 					: '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><strong>Welcome video</strong><small>A welcome from the founder will play here.</small></div>');
 			} else if (can && sel.kind === "lesson") {
-				video = embedVideo(sel.videoUrl) || '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><small>This lesson\'s video will play here when a link is added.</small></div>';
+				video = embedVideo(sel.videoUrl) || '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><small>This lesson\'s video will play here when a video is added under the module.</small></div>';
 			} else if (can && sel.kind === "live") {
 				video = '<div class="msg"><i class="ti ti-broadcast" aria-hidden="true"></i><strong>' + esc(sel.title) + '</strong><small>Live session. Mark attended after you join.</small></div>';
 			} else if (signedIn) {
@@ -494,7 +494,10 @@
 						return '<button class="tab" type="button" data-t="' + item[0] + '" aria-pressed="' + (tab === item[0]) + '">' + item[1] + "</button>";
 					}).join("") + "</div>" + body + "</div>"
 				: "";
-			var materials = '<section class="panel" id="study-materials"><h2>Study Materials</h2><p>Study materials will be available here.</p></section>';
+			var downloads = (sel && sel.downloads) || [];
+			var materials = '<section class="panel" id="study-materials"><h2>Study Materials</h2>' + (downloads.length
+				? "<ul>" + downloads.map(function (file) { return '<li><a href="' + esc(file.url) + '" target="_blank" rel="noopener">' + esc(file.name) + "</a></li>"; }).join("") + "</ul>"
+				: "<p>Study materials will be available here.</p>") + "</section>";
 			var status = statusText ? '<p class="status" role="status">' + esc(statusText) + "</p>" : "";
 			$("main").innerHTML = '<div class="' + videoClass + '">' + video + "</div><div>" + head + '</div><div class="actions">' + actions + "</div>" + status + tabs + materials;
 			var note = $("note");
@@ -685,7 +688,8 @@
 			if (/^https?:\/\//i.test(value)) return '<video controls autoplay playsinline src="' + esc(value) + '"></video>';
 			return "";
 		}
-		function applyCurriculum(topics, modules, links) {
+		function applyCurriculum(topics, modules, links, media) {
+			media = media || { byModule: {}, loose: [], urls: {} };
 			if (courseKey !== "bookkeeping" && modules && modules.length) {
 				var topicName = {};
 				var topicOrder = {};
@@ -697,12 +701,52 @@
 				ALL = modules.map(function (module) {
 					var week = topicOrder[module.topic_id] || 1;
 					counts[week] = (counts[week] || 0) + 1;
-					return { id: "mod-" + module.id, kind: "lesson", week: week, moduleKey: module.topic_id || module.id, topic: topicName[module.topic_id] || "Lessons", n: counts[week], title: module.title, min: 0, preview: false, summary: module.title, videoUrl: module.video_url || "" };
+					return { id: "mod-" + module.id, kind: "lesson", week: week, moduleKey: module.topic_id || module.id, moduleId: module.id, topic: topicName[module.topic_id] || "Lessons", n: counts[week], title: module.title, min: 0, preview: false, summary: module.title, videoUrl: module.video_url || "", downloads: [] };
 				});
+				applyUploadedMedia(modules, media);
 				if (!ALL.some(function (item) { return item === sel; })) sel = ALL[0] || null;
 				return;
 			}
 			applyLessonLinks(links);
+			applyUploadedMedia(modules, media);
+		}
+		function applyUploadedMedia(modules, media) {
+			var byTitle = {};
+			(modules || []).forEach(function (module) {
+				byTitle[String(module.title || "").trim().toLowerCase()] = module;
+			});
+			function filesFor(moduleId, kind) {
+				return (media.byModule[moduleId] || []).filter(function (file) { return file.kind === kind && media.urls[file.id]; });
+			}
+			var used = {};
+			ALL.forEach(function (item) {
+				if (item.kind !== "lesson" && item.kind !== "guide" && item.kind !== "live") return;
+				var title = String(item.title || "").trim().toLowerCase();
+				var matched = item.moduleId ? null : (byTitle[title] || byTitle["live session: " + title]);
+				var moduleId = item.moduleId || (matched && matched.id);
+				if (!item.videoUrl && matched && matched.video_url) item.videoUrl = matched.video_url;
+				if (moduleId) {
+					var video = filesFor(moduleId, "video")[0];
+					if (video) {
+						item.videoUrl = media.urls[video.id];
+						used[moduleId] = true;
+					}
+					item.downloads = (media.byModule[moduleId] || []).filter(function (file) {
+						return file.kind !== "video" && media.urls[file.id];
+					}).map(function (file) { return { name: file.file_name, url: media.urls[file.id] }; });
+				}
+			});
+			var loose = [];
+			Object.keys(media.byModule || {}).forEach(function (moduleId) {
+				if (used[moduleId]) return;
+				filesFor(moduleId, "video").forEach(function (file) { loose.push(file); });
+			});
+			(media.loose || []).forEach(function (file) {
+				if (file.kind === "video" && media.urls[file.id]) loose.push(file);
+			});
+			ALL.forEach(function (item) {
+				if (item.kind === "lesson" && !item.videoUrl && loose.length) item.videoUrl = media.urls[loose.shift().id];
+			});
 		}
 		function applyLessonLinks(rows) {
 			var links = (rows || []).slice();
@@ -719,7 +763,7 @@
 				for (var i = 0; i < links.length; i += 1) {
 					if (String(links[i].title || "").trim().toLowerCase() === item.title.toLowerCase()) { match = i; break; }
 				}
-				if (match >= 0) item.videoUrl = links.splice(match, 1)[0].video_url;
+				if (match >= 0 && !item.videoUrl) item.videoUrl = links.splice(match, 1)[0].video_url;
 			});
 			ALL.forEach(function (item) {
 				if (item.kind === "lesson" && !item.videoUrl && links.length) item.videoUrl = links.shift().video_url;
@@ -731,20 +775,46 @@
 			function linksQuery() {
 				return client.from("course_video_links").select("id,title,video_url,position").eq("course_id", courseKey).order("position");
 			}
+			function signFiles(files) {
+				var paths = files.map(function (file) { return file.storage_path; }).filter(Boolean);
+				var empty = { byModule: {}, loose: [], urls: {} };
+				if (!paths.length) return Promise.resolve(empty);
+				return client.storage.from("course-media").createSignedUrls(paths, 60 * 60).then(function (signed) {
+					var urls = {};
+					(signed.data || []).forEach(function (row, index) {
+						if (row && row.signedUrl && files[index]) urls[files[index].id] = row.signedUrl;
+					});
+					var byModule = {};
+					var loose = [];
+					files.forEach(function (file) {
+						if (file.module_id) {
+							if (!byModule[file.module_id]) byModule[file.module_id] = [];
+							byModule[file.module_id].push(file);
+						} else loose.push(file);
+					});
+					return { byModule: byModule, loose: loose, urls: urls };
+				}).catch(function () { return empty; });
+			}
 			function curriculumQuery() {
 				return Promise.all([
-					client.from("courses").select("title").eq("id", courseKey).maybeSingle(),
+					client.from("courses").select("title,intro_video_url").eq("id", courseKey).maybeSingle(),
 					client.from("course_topics").select("id,title,position").eq("course_id", courseKey).order("position"),
 					client.from("course_modules").select("id,topic_id,title,video_url,position").eq("course_id", courseKey).order("position"),
-					linksQuery()
+					linksQuery(),
+					client.from("course_files").select("id,module_id,kind,file_name,storage_path").eq("course_id", courseKey).in("kind", ["video", "material", "study"]).order("created_at")
 				]).then(function (parts) {
 					if (parts[0].data && parts[0].data.title) courseTitle = parts[0].data.title;
-					applyCurriculum(parts[1].data || [], parts[2].error ? [] : (parts[2].data || []), parts[3].error ? [] : (parts[3].data || []));
-				});
-			}
-			if (courseKey === "bookkeeping") {
-				return linksQuery().then(function (result) {
-					if (!result.error) applyLessonLinks(result.data || []);
+					var modules = parts[2].error ? [] : (parts[2].data || []);
+					var links = parts[3].error ? [] : (parts[3].data || []);
+					var files = parts[4].error ? [] : (parts[4].data || []);
+					return signFiles(files).then(function (media) {
+						applyCurriculum(parts[1].data || [], modules, links, media);
+						var intro = parts[0].data && parts[0].data.intro_video_url;
+						if (!intro) return;
+						for (var index = 0; index < ALL.length; index += 1) {
+							if (ALL[index].id === "welcome" && !ALL[index].videoUrl) ALL[index].videoUrl = intro;
+						}
+					});
 				});
 			}
 			return client.auth.getSession().then(function (session) {
@@ -755,7 +825,8 @@
 					client.from("course_access").select("course_id").eq("user_id", user.id).eq("course_id", courseKey).maybeSingle(),
 					curriculumQuery()
 				]).then(function (parts) {
-					enrolled = Boolean((parts[0].data) || (parts[1].data));
+					var dbEnrolled = Boolean((parts[0].data) || (parts[1].data));
+					enrolled = courseKey === "bookkeeping" ? enrolled || dbEnrolled : dbEnrolled;
 				});
 			});
 		}

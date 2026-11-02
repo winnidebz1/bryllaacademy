@@ -187,7 +187,7 @@
 											<span class="tickmark"><i class="fa-solid fa-check"></i></span>
 										</span>
 										<div class="step-section">
-											<p>Course Media</p>
+											<p>Curriculum</p>
 										</div>
 									</div>
 								</li>
@@ -198,17 +198,6 @@
 											<span class="tickmark"><i class="fa-solid fa-check"></i></span>
 										</span>
 										<div class="step-section">
-											<p>Curriculum</p>
-										</div>
-									</div>
-								</li>
-								<li>
-									<div class="profile-step">
-										<span class="dot-active mb-2">
-											<span class="number">04</span>
-											<span class="tickmark"><i class="fa-solid fa-check"></i></span>
-										</span>
-										<div class="step-section">
 											<p>Additional information</p>
 										</div>
 									</div>
@@ -216,7 +205,7 @@
 								<li>
 									<div class="profile-step">
 										<span class="dot-active mb-2">
-											<span class="number">05</span>
+											<span class="number">04</span>
 											<span class="tickmark"><i class="fa-solid fa-check"></i></span>
 										</span>
 										<div class="step-section">
@@ -267,7 +256,7 @@
 											<label class="form-label" for="course-short">Short Description<span
 													class="text-danger ms-1">*</span></label>
 											<input type="text" class="form-control" id="course-short" maxlength="300">
-											<p class="mt-2 mb-0 text-muted">This paragraph is the text on the homepage course card. Fees, highlights, and the cohort date are on the Pricing step. Weeks and lessons are on the Curriculum step.</p>
+											<p class="mt-2 mb-0 text-muted">This paragraph is the text on the homepage course card. Fees, highlights, and the cohort date are on the Pricing step. Weeks, lessons, and lesson videos are on the Curriculum step.</p>
 										</div>
 									</div>
 									<div class="col-md-12">
@@ -288,111 +277,10 @@
 							</fieldset>
 							<fieldset class="form-inner wizard-form-card">
 								<div class="title">
-									<h5>Course Media</h5>
-									<p>Add an intro video link, plus the videos and materials for this course.</p>
-								</div>
-								<div class="row">
-									<div class="col-md-12">
-										<div class="row">
-											<div class="col-md-4">
-												<div class="input-block-link">
-													<label class="form-label">Intro Video<span
-															class="text-danger ms-1">*</span></label>
-													<select class="select">
-														<option>External URL</option>
-														<option>Youtube</option>
-														<option>External</option>
-														<option>Vimeo</option>
-													</select>
-												</div>
-											</div>
-											<div class="col-md-8">
-												<div class="input-block-link">
-													<label class="form-label">&nbsp;</label>
-													<input type="text" class="form-control" id="course-intro"
-														placeholder="External URL Link">
-												</div>
-											</div>
-										</div>
-									</div>
-									<div class="col-md-12">
-										<hr class="mt-4 mb-4">
-										<h5 class="mb-1">Course files</h5>
-										<p class="mb-3">Upload everything students need for this course. You can add more files to a lesson in the Curriculum step.</p>
-									</div>
-									<div class="col-md-12">
-										<section class="material-upload" data-max-mb="500" aria-labelledby="course-videos-label">
-											<h6 class="mb-1" id="course-videos-label">Course videos</h6>
-											<p class="material-hint">Lesson recordings and demos. MP4, WebM or MOV, up to 500 MB each.</p>
-											<label class="material-drop" for="course-videos">
-												<i class="isax isax-play-circle5" aria-hidden="true"></i>
-												<span>Choose videos or drag them here</span>
-											</label>
-											<input class="visually-hidden" type="file" id="course-videos" name="course_videos" accept=".mp4,.webm,.mov" multiple>
-											<p class="material-error" role="alert" hidden></p>
-											<ul class="material-list" aria-live="polite"></ul>
-											<ul class="material-list" data-saved-files="video" aria-label="Saved course videos"></ul>
-											<form id="video-link-form" class="mt-3">
-												<h6 class="mb-1">Or add a lesson video link</h6>
-												<p class="material-hint">Paste a YouTube, Vimeo, or video file link. It plays on the lesson page for enrolled students.</p>
-												<label class="form-label" for="video-link-title">Lesson name</label>
-												<input class="form-control mb-2" id="video-link-title" type="text" maxlength="160" required>
-												<label class="form-label" for="video-link-url">Video link</label>
-												<input class="form-control mb-2" id="video-link-url" type="url" placeholder="https://" required>
-												<button class="btn btn-secondary" type="submit">Add video link</button>
-												<p id="video-link-status" class="mt-2 mb-0" role="status"></p>
-											</form>
-											<ul class="material-list" id="video-link-list" aria-label="Saved lesson video links"></ul>
-										</section>
-									</div>
-									<div class="col-md-12">
-										<section class="material-upload" data-max-mb="50" aria-labelledby="course-materials-label">
-											<h6 class="mb-1" id="course-materials-label">Course materials</h6>
-											<p class="material-hint">Slides, workbooks, templates and spreadsheets. PDF, Word, PowerPoint, Excel, CSV or ZIP, up to 50 MB each.</p>
-											<label class="material-drop" for="course-materials">
-												<i class="isax isax-document-upload5" aria-hidden="true"></i>
-												<span>Choose files or drag them here</span>
-											</label>
-											<input class="visually-hidden" type="file" id="course-materials" name="course_materials" accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.csv,.zip" multiple>
-											<p class="material-error" role="alert" hidden></p>
-											<ul class="material-list" aria-live="polite"></ul>
-											<ul class="material-list" data-saved-files="material" aria-label="Saved course materials"></ul>
-										</section>
-									</div>
-									<div class="col-md-12">
-										<section class="material-upload mb-0" data-max-mb="50" aria-labelledby="study-materials-label">
-											<h6 class="mb-1" id="study-materials-label">Study materials</h6>
-											<p class="material-hint">Reading, guides and practice sheets. PDF, Word, EPUB, TXT, JPG or PNG, up to 50 MB each.</p>
-											<label class="material-drop" for="study-materials">
-												<i class="isax isax-book5" aria-hidden="true"></i>
-												<span>Choose files or drag them here</span>
-											</label>
-											<input class="visually-hidden" type="file" id="study-materials" name="study_materials" accept=".pdf,.doc,.docx,.epub,.txt,.jpg,.jpeg,.png" multiple>
-											<p class="material-error" role="alert" hidden></p>
-											<ul class="material-list" aria-live="polite"></ul>
-											<ul class="material-list" data-saved-files="study" aria-label="Saved study materials"></ul>
-										</section>
-									</div>
-								</div>
-								<div class="add-form-btn widget-next-btn submit-btn">
-									<div class="btn-left">
-										<a href="javascript:void(0);"
-											class="btn btn-light main-btn prev_btns d-flex align-items-center"><i
-												class="isax isax-arrow-left-2 me-1"></i>Prev</a>
-									</div>
-									<div class="btn-left">
-										<a href="javascript:void(0);"
-											class="btn btn-secondary main-btn next_btns d-flex align-items-center">Next
-											<i class="isax isax-arrow-right-3 ms-1"></i></a>
-									</div>
-								</div>
-							</fieldset>
-							<fieldset class="form-inner wizard-form-card">
-								<div class="title">
 									<div class="row align-items-center row-gap-2">
 										<div class="col-md-6">
 											<h5 class="mb-0">Curriculum</h5>
-											<p class="mb-0 text-muted">Each topic is a week. The lines under a topic are the modules for that week.</p>
+											<p class="mb-0 text-muted">Each topic is a week. Under every module, add the video and files that play for students.</p>
 										</div>
 										<div class="col-md-6 text-md-end">
 											<a href="javascript:void(0);"
@@ -401,6 +289,11 @@
 													class="isax isax-add-circle5 me-1"></i> Add New Topic</a>
 										</div>
 									</div>
+								</div>
+								<div class="input-block mb-4">
+									<label class="form-label" for="course-intro">Intro video link</label>
+									<input type="text" class="form-control" id="course-intro" maxlength="400" placeholder="https://">
+									<p class="mt-2 mb-0 text-muted">Optional. This plays before the lessons. Each module below has its own video and files.</p>
 								</div>
 								<div id="topic-list"></div>
 								<p id="topic-empty" class="text-muted">No topics yet. Add a topic, then add the modules inside it.</p>
