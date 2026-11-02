@@ -601,14 +601,25 @@
 			field.addEventListener("input", function () { dirty = field.value !== savedText(); document.getElementById("module-status").textContent = dirty ? "Unsaved changes" : ""; });
 			document.getElementById("module-save").addEventListener("click", function () {
 				var error = document.getElementById("module-error");
-				if (!field.value.trim()) { error.hidden = false; error.textContent = "Enter instructions before saving."; return; }
+				var status = document.getElementById("module-status");
+				var text = field.value.trim();
+				if (!text) { error.hidden = false; error.textContent = "Enter instructions before saving."; return; }
 				error.hidden = true;
 				if (!data.instructions[course.id]) data.instructions[course.id] = {};
-				data.instructions[course.id][select.value] = field.value.trim();
+				data.instructions[course.id][select.value] = text;
 				save(data);
 				dirty = false;
-				document.getElementById("module-status").textContent = "Saved at " + timeOnly(new Date().toISOString());
-				toast("Instructions saved.");
+				status.textContent = "Saving for students…";
+				saveModuleInstructions(course.id, Number(select.value), text).then(function (result) {
+					if (!result.ok) {
+						error.hidden = false;
+						error.textContent = result.message;
+						status.textContent = "";
+						return;
+					}
+					status.textContent = "Saved at " + timeOnly(new Date().toISOString());
+					toast("Instructions saved. Students see them in this module.");
+				});
 			});
 		}
 		var yearSelect = document.getElementById("earnings-year");
@@ -892,7 +903,8 @@
 				'<label class="form-label" for="as-course">Course</label><select class="form-select mb-2" id="as-course">' + data.courses.map(function (course) { return '<option value="' + esc(course.id) + '">' + esc(course.title) + "</option>"; }).join("") + "</select>" +
 				'<label class="form-label" for="as-module">Module</label><select class="form-select mb-2" id="as-module"></select>' +
 				'<label class="form-label" for="as-due">Due date</label><input class="form-control mb-2" id="as-due" type="datetime-local">' +
-				'<label class="form-label" for="as-marks">Total marks</label><input class="form-control mb-3" id="as-marks" type="number" min="1" value="100">' +
+				'<label class="form-label" for="as-marks">Total marks</label><input class="form-control mb-2" id="as-marks" type="number" min="1" value="100">' +
+				'<label class="form-label" for="as-instructions">Instructions</label><textarea class="form-control mb-3" id="as-instructions" rows="4" maxlength="4000" required></textarea>' +
 				'<button class="btn btn-primary rounded-pill" type="submit">Save assignment</button></form></div></div>';
 			function fillModules() {
 				var course = courseById(data, document.getElementById("as-course").value);
@@ -916,11 +928,23 @@
 			document.getElementById("assignment-form").addEventListener("submit", function (event) {
 				event.preventDefault();
 				var moduleWeek = document.getElementById("as-module").value;
+				var courseId = document.getElementById("as-course").value;
+				var title = document.getElementById("as-title").value.trim();
+				var instructions = document.getElementById("as-instructions").value.trim();
+				var dueValue = document.getElementById("as-due").value;
+				var marks = Number(document.getElementById("as-marks").value);
 				if (!moduleWeek) { toast("Choose a course that has modules."); return; }
-				data.assignments.push({ id: "as-" + Date.now(), title: document.getElementById("as-title").value.trim(), courseId: document.getElementById("as-course").value, moduleWeek: Number(moduleWeek), due: document.getElementById("as-due").value, marks: Number(document.getElementById("as-marks").value), status: "draft" });
-				save(data);
-				toast("Assignment saved.");
-				draw();
+				if (!instructions) { toast("Enter the instructions students should follow."); return; }
+				var item = { id: "as-" + Date.now(), title: title, instructions: instructions, courseId: courseId, moduleWeek: Number(moduleWeek), due: dueValue, marks: marks, status: "published" };
+				toast("Saving the assignment…");
+				saveCourseAssignment(item).then(function (result) {
+					if (!result.ok) { toast(result.message); return; }
+					item.id = result.id || item.id;
+					data.assignments.push(item);
+					save(data);
+					toast("Assignment saved. Students see it in week " + item.moduleWeek + ".");
+					draw();
+				});
 			});
 			root.querySelectorAll("[data-grade-list]").forEach(function (button) {
 				button.addEventListener("click", function () {
@@ -1935,6 +1959,78 @@
 		}
 		return Array.isArray(files) ? files : [];
 	}
+	function saveModuleInstructions(courseId, week, text) {
+		var current = staffClient();
+		if (!current) return Promise.resolve({ ok: false, message: "Sign in again, then save the instructions." });
+		var row = {
+			course_id: courseId,
+			module_week: week,
+			kind: "instructions",
+			title: "Week " + week + " assignment",
+			instructions: text,
+			updated_at: new Date().toISOString()
+		};
+		return current.from("course_assignments").select("id").eq("course_id", courseId).eq("module_week", week).eq("kind", "instructions").maybeSingle().then(function (existing) {
+			if (existing.error) return { ok: false, message: existing.error.message || "The instructions could not be saved." };
+			var write = existing.data
+				? current.from("course_assignments").update(row).eq("id", existing.data.id)
+				: current.from("course_assignments").insert(row);
+			return write.then(function (saved) {
+				if (saved.error) return { ok: false, message: saved.error.message || "The instructions could not be saved." };
+				return { ok: true };
+			});
+		}).catch(function () {
+			return { ok: false, message: "The instructions could not be saved." };
+		});
+	}
+	function saveCourseAssignment(item) {
+		var current = staffClient();
+		if (!current) return Promise.resolve({ ok: false, message: "Sign in again, then save the assignment." });
+		return current.from("course_assignments").insert({
+			course_id: item.courseId,
+			module_week: item.moduleWeek,
+			kind: "assignment",
+			title: item.title.slice(0, 160),
+			instructions: item.instructions.slice(0, 4000),
+			due_at: item.due ? new Date(item.due).toISOString() : null,
+			marks: item.marks || null,
+			updated_at: new Date().toISOString()
+		}).select("id").maybeSingle().then(function (saved) {
+			if (saved.error) return { ok: false, message: saved.error.message || "The assignment could not be saved." };
+			return { ok: true, id: saved.data && saved.data.id };
+		}).catch(function () {
+			return { ok: false, message: "The assignment could not be saved." };
+		});
+	}
+	function loadCourseAssignments(data) {
+		var current = staffClient();
+		if (!current) return Promise.resolve();
+		return current.from("course_assignments").select("id,course_id,module_week,kind,title,instructions,due_at,marks").order("updated_at").then(function (result) {
+			if (result.error || !result.data) return;
+			var remoteAssignments = [];
+			result.data.forEach(function (row) {
+				if (row.kind === "instructions") {
+					if (!data.instructions[row.course_id]) data.instructions[row.course_id] = {};
+					data.instructions[row.course_id][row.module_week] = row.instructions || "";
+					return;
+				}
+				remoteAssignments.push({
+					id: row.id,
+					title: row.title,
+					instructions: row.instructions || "",
+					courseId: row.course_id,
+					moduleWeek: row.module_week,
+					due: row.due_at || "",
+					marks: row.marks || 0,
+					status: "published"
+				});
+			});
+			var localOnly = (data.assignments || []).filter(function (item) {
+				return !remoteAssignments.some(function (row) { return row.id === item.id; });
+			});
+			data.assignments = remoteAssignments.concat(localOnly);
+		}).catch(function () {});
+	}
 	function openPage(page) {
 		var data = state();
 		document.body.innerHTML = shell(page, data);
@@ -1956,7 +2052,9 @@
 			return;
 		}
 		root.innerHTML = '<p class="mb-0">Loading submissions…</p>';
-		loadAssignmentSubmissions(data.submissions).then(function (rows) {
+		loadCourseAssignments(data).then(function () {
+			return loadAssignmentSubmissions(data.submissions);
+		}).then(function (rows) {
 			data.submissions = rows;
 			PAGES[page](root, data);
 		});

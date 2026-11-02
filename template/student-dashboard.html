@@ -399,6 +399,11 @@
 			color: var(--color-primary);
 		}
 		.lesson-preview-play svg { width: 12px; height: 12px; margin-left: 1px; }
+		.lesson-player { width: min(100%, 480px); aspect-ratio: 16 / 9; margin-top: 16px; overflow: hidden; border-radius: 12px; background: #041f3c; }
+		.lesson-player video, .lesson-player iframe { display: block; width: 100%; height: 100%; border: 0; background: #041f3c; }
+		.lesson-player strong, .lesson-player span { display: block; padding: 0 16px; color: #fff; }
+		.lesson-player strong { padding-top: 18%; font-size: 16px; font-weight: 500; }
+		.lesson-player span { margin-top: 6px; font-size: 13px; }
 		.continue-title { font-size: 16px; font-weight: 500; line-height: 1.4; }
 		.continue-meta { margin-top: var(--space-1); color: var(--color-muted); font-size: 14px; }
 		.title-row { display: flex; align-items: center; gap: var(--space-2); }
@@ -755,6 +760,8 @@
 		let runtimeState = null;
 		let unlockedWeeks = {};
 		let unlocksLoaded = false;
+		let introVideoUrl = "";
+		let lessonVideoUrl = "";
 
 		const svgNs = "http://www.w3.org/2000/svg";
 		const iconPaths = {
@@ -1052,9 +1059,8 @@
 			const heading = el("h2", "continue-title", "Welcome to Brylla Academy");
 			heading.id = "continue-title";
 			section.setAttribute("aria-labelledby", "continue-title");
-			const stage = el("div", "welcome-stage");
-			stage.append(el("strong", null, "Welcome video"));
-			stage.append(el("span", null, "A welcome from the founder will play here."));
+			const stage = el("div", "lesson-player");
+			stage.id = "welcome-player";
 			const button = el("a", "btn-fill", "Watch welcome");
 			button.href = "course-watch.html";
 			section.append(heading, el("p", "continue-meta", "A welcome from the founder."), stage, button);
@@ -1090,6 +1096,9 @@
 			titleRow.append(heading);
 			if (data.state !== "new" && data.state !== "completed") copy.append(el("p", "continue-label", "Continue learning"));
 			copy.append(titleRow);
+			const player = el("div", "lesson-player");
+			player.id = "lesson-player";
+			copy.append(player);
 			if (data.state !== "new" && data.state !== "completed") {
 				copy.append(el("p", "continue-minutes", data.lesson.minutesLeft + " min left"));
 				const progress = el("div", "progress-block");
@@ -1269,6 +1278,114 @@
 			return section;
 		}
 
+		function mountPlayer(container, url) {
+			container.replaceChildren();
+			if (!url) {
+				container.append(el("strong", null, "Lesson video"), el("span", null, "This lesson's video will play here when it is added under the module."));
+				return;
+			}
+			const value = String(url);
+			const youtube = value.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
+			const vimeo = value.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
+			const driveFile = value.match(/drive\.google\.com\/file\/d\/([\w-]+)/i);
+			const driveQuery = value.match(/[?&]id=([\w-]+)/i);
+			const driveId = driveFile ? driveFile[1] : (driveQuery && /drive\.google\.com/i.test(value) ? driveQuery[1] : "");
+			if (youtube || vimeo || driveId) {
+				const frame = document.createElement("iframe");
+				frame.title = "Lesson video";
+				frame.allow = "autoplay; encrypted-media; picture-in-picture; fullscreen";
+				frame.allowFullscreen = true;
+				frame.src = driveId
+					? "https://drive.google.com/file/d/" + encodeURIComponent(driveId) + "/preview"
+					: youtube
+						? "https://www.youtube.com/embed/" + encodeURIComponent(youtube[1]) + "?rel=0"
+						: "https://player.vimeo.com/video/" + vimeo[1];
+				container.append(frame);
+				return;
+			}
+			if (!/\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(value) && !/\/object\/sign\//i.test(value)) {
+				const frame = document.createElement("iframe");
+				frame.title = "Lesson video";
+				frame.allow = "autoplay; fullscreen";
+				frame.allowFullscreen = true;
+				frame.src = value;
+				container.append(frame);
+				return;
+			}
+			const video = document.createElement("video");
+			video.controls = true;
+			video.playsInline = true;
+			video.src = url;
+			container.append(video);
+		}
+		function signedMedia(files) {
+			const client = window.BryllaAuth && BryllaAuth.client;
+			const ready = (files || []).filter(function (file) { return file.storage_path; });
+			const empty = { byModule: {}, loose: [], urls: {} };
+			if (!client || !ready.length) return Promise.resolve(empty);
+			return client.storage.from("course-media").createSignedUrls(ready.map(function (file) { return file.storage_path; }), 60 * 60).then(function (signed) {
+				const urls = {};
+				(signed.data || []).forEach(function (row, index) {
+					if (row && row.signedUrl && ready[index]) urls[ready[index].id] = row.signedUrl;
+				});
+				const byModule = {};
+				const loose = [];
+				files.forEach(function (file) {
+					if (file.module_id) {
+						if (!byModule[file.module_id]) byModule[file.module_id] = [];
+						byModule[file.module_id].push(file);
+					} else loose.push(file);
+				});
+				return { byModule: byModule, loose: loose, urls: urls };
+			}).catch(function () { return empty; });
+		}
+		function videoForLesson(title, modules, links, media) {
+			const key = String(title || "").trim().toLowerCase();
+			let matched = null;
+			(modules || []).forEach(function (module) {
+				const name = String(module.title || "").trim().toLowerCase();
+				if (name === key || name === "live session: " + key) matched = module;
+			});
+			if (matched) {
+				const uploaded = (media.byModule[matched.id] || []).filter(function (file) { return file.kind === "video" && media.urls[file.id]; })[0];
+				if (uploaded) return media.urls[uploaded.id];
+				if (matched.video_url) return matched.video_url;
+			}
+			const link = (links || []).filter(function (item) { return String(item.title || "").trim().toLowerCase() === key; })[0];
+			return link && link.video_url ? link.video_url : "";
+		}
+		function loadUnlocks() {
+			const client = window.BryllaAuth && BryllaAuth.client;
+			if (!client) {
+				unlocksLoaded = true;
+				return Promise.resolve();
+			}
+			return client.from("course_module_unlocks").select("module_key").eq("course_id", "bookkeeping").then(function (result) {
+				unlockedWeeks = {};
+				(result.data || []).forEach(function (row) { unlockedWeeks[String(row.module_key)] = true; });
+				unlocksLoaded = true;
+			}).catch(function () { unlocksLoaded = true; });
+		}
+		function loadLessonMedia() {
+			const client = window.BryllaAuth && BryllaAuth.client;
+			if (!client) return Promise.resolve();
+			return Promise.all([
+				client.from("courses").select("intro_video_url").eq("id", "bookkeeping").maybeSingle(),
+				client.from("course_modules").select("id,title,video_url,position").eq("course_id", "bookkeeping").order("position"),
+				client.from("course_video_links").select("title,video_url").eq("course_id", "bookkeeping"),
+				client.from("course_files").select("id,module_id,kind,storage_path").eq("course_id", "bookkeeping").eq("kind", "video").order("created_at")
+			]).then(function (parts) {
+				introVideoUrl = (parts[0].data && parts[0].data.intro_video_url) || "";
+				const modules = parts[1].error ? [] : (parts[1].data || []);
+				const links = parts[2].error ? [] : (parts[2].data || []);
+				const files = parts[3].error ? [] : (parts[3].data || []);
+				return signedMedia(files).then(function (media) {
+					const progress = window.BryllaStudent ? BryllaStudent.summary() : null;
+					lessonVideoUrl = videoForLesson(progress && progress.lessonTitle, modules, links, media);
+				});
+			}).catch(function () {});
+		}
+
 		function render() {
 			const data = viewModel();
 			renderHeader(data);
@@ -1284,7 +1401,11 @@
 				renderError();
 				return;
 			}
-			mainEl.append(renderBanner(data), renderWelcome());
+			const lead = data.welcomeOnly || data.state === "new" ? renderWelcome() : renderContinue(data);
+			mainEl.append(renderBanner(data), lead);
+			if (!data.welcomeOnly && data.state !== "completed") mainEl.append(renderStats(data), renderUpcoming(data));
+			const player = document.getElementById(data.welcomeOnly || data.state === "new" ? "welcome-player" : "lesson-player");
+			if (player) mountPlayer(player, data.welcomeOnly || data.state === "new" ? introVideoUrl : lessonVideoUrl);
 		}
 
 		function openMenu() {
@@ -1370,8 +1491,12 @@
 			if (event.key === "brylla-course-progress" || event.key === "brylla-student-profile") render();
 		});
 		window.addEventListener("pageshow", function () { render(); });
+		function startDashboard() {
+			Promise.all([loadUnlocks(), loadLessonMedia()]).then(render);
+		}
 		render();
-		if (window.BryllaAuth) BryllaAuth.ready.then(render);
+		if (window.BryllaAuth) BryllaAuth.ready.then(startDashboard);
+		else startDashboard();
 	</script>
 </body>
 </html>

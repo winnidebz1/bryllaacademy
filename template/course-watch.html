@@ -292,6 +292,7 @@
 		var assignmentForm = $("assignment-form");
 		var ASSIGNMENT_KEY = "brylla-module-assignment-instructions";
 		var assignmentInstructions = {};
+		var moduleAssignments = {};
 		var assignmentStorageError = "";
 		var submittedWeeks = {};
 		try {
@@ -339,9 +340,21 @@
 		}
 
 		function moduleAssignment(module) {
-			var instructions = assignmentInstructions[String(module.week)] || "";
-			var displayedInstructions = instructions
-				? '<div class="module-assignment-instructions">' + esc(instructions) + "</div>"
+			var rows = (moduleAssignments[String(module.week)] || []).slice();
+			var local = assignmentInstructions[String(module.week)] || "";
+			if (!rows.length && local) rows = [{ title: "Assignment", instructions: local }];
+			var displayedInstructions = rows.length
+				? rows.map(function (row) {
+					var meta = [];
+					if (row.marks) meta.push(row.marks + " marks");
+					if (row.due_at) {
+						var due = new Date(row.due_at);
+						if (!isNaN(due.getTime())) meta.push("Due " + due.toLocaleString());
+					}
+					return '<div class="module-assignment-instructions"><strong>' + esc(row.title || "Assignment") + "</strong>" +
+						(meta.length ? "<p>" + esc(meta.join(" · ")) + "</p>" : "") +
+						(row.instructions ? "<p>" + esc(row.instructions) + "</p>" : "") + "</div>";
+				}).join("")
 				: '<div class="module-assignment-instructions module-assignment-empty">Your instructor has not posted instructions for this module yet.</div>';
 			var error = assignmentStorageError
 				? '<p class="status" role="status">' + esc(assignmentStorageError) + "</p>"
@@ -454,14 +467,15 @@
 			} else if (can && sel.kind === "lesson") {
 				video = embedVideo(sel.videoUrl) || '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><small>This lesson\'s video will play here when a video is added under the module.</small></div>';
 			} else if (can && sel.kind === "live") {
-				video = '<div class="msg"><i class="ti ti-broadcast" aria-hidden="true"></i><strong>' + esc(sel.title) + '</strong><small>Live session. Mark attended after you join.</small></div>';
+				video = embedVideo(sel.videoUrl) || '<div class="msg"><i class="ti ti-broadcast" aria-hidden="true"></i><strong>' + esc(sel.title) + '</strong><small>Live session. Mark attended after you join.</small></div>';
 			} else if (signedIn) {
 				video = '<div class="msg"><i class="ti ti-player-play" aria-hidden="true"></i><strong>Welcome video</strong><small>A welcome from the founder will play here.</small></div>';
 			} else {
 				video = '<div class="msg"><i class="ti ti-lock" aria-hidden="true"></i><strong>Sign in to watch the welcome</strong><small><a href="login">Sign in</a> to see the welcome from the founder.</small></div>';
 			}
+			var driveNote = can && drivePreview(sel.videoUrl) ? "<p class=\"sub\">If the player is blank, share that Google Drive file as Anyone with the link.</p>" : "";
 			var head = can
-				? "<h1>" + esc(sel.title) + "</h1><p class=\"sub\">" + (sel.week ? "Week " + sel.week + (sel.kind === "live" ? ", live session" : ", lesson " + sel.n) : "Start here") + "</p>"
+				? "<h1>" + esc(sel.title) + "</h1><p class=\"sub\">" + (sel.week ? "Week " + sel.week + (sel.kind === "live" ? ", live session" : ", lesson " + sel.n) : "Start here") + "</p>" + driveNote
 				: "<h1>Study Materials</h1><p class=\"sub\">Bookkeeping course resources</p>";
 			var actions = "";
 			if (signedIn && sel.kind === "guide") {
@@ -679,13 +693,25 @@
 			$("avatar").setAttribute("aria-label", "Settings, " + studentName);
 		}
 		showStudent();
+		function drivePreview(value) {
+			var file = String(value || "").match(/drive\.google\.com\/file\/d\/([\w-]+)/i);
+			var id = file ? file[1] : "";
+			if (!id) {
+				var query = String(value || "").match(/[?&]id=([\w-]+)/i);
+				if (query && /drive\.google\.com/i.test(value)) id = query[1];
+			}
+			return id ? "https://drive.google.com/file/d/" + encodeURIComponent(id) + "/preview" : "";
+		}
 		function embedVideo(url) {
 			var value = String(url || "").trim();
 			var youtube = value.match(/(?:youtube\.com\/(?:watch\?v=|embed\/|shorts\/)|youtu\.be\/)([\w-]{6,})/i);
-			if (youtube) return '<iframe src="https://www.youtube.com/embed/' + encodeURIComponent(youtube[1]) + '?autoplay=1&rel=0" title="Lesson video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
+			if (youtube) return '<iframe src="https://www.youtube.com/embed/' + encodeURIComponent(youtube[1]) + '?rel=0" title="Lesson video" allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe>';
 			var vimeo = value.match(/vimeo\.com\/(?:video\/)?(\d+)/i);
-			if (vimeo) return '<iframe src="https://player.vimeo.com/video/' + vimeo[1] + '?autoplay=1" title="Lesson video" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>';
-			if (/^https?:\/\//i.test(value)) return '<video controls autoplay playsinline src="' + esc(value) + '"></video>';
+			if (vimeo) return '<iframe src="https://player.vimeo.com/video/' + vimeo[1] + '" title="Lesson video" allow="autoplay; fullscreen; picture-in-picture" allowfullscreen></iframe>';
+			var drive = drivePreview(value);
+			if (drive) return '<iframe src="' + esc(drive) + '" title="Lesson video" allow="autoplay; fullscreen" allowfullscreen></iframe>';
+			if (/\.(mp4|webm|mov|m4v|ogg)(\?|$)/i.test(value) || /\/object\/sign\//i.test(value)) return '<video controls playsinline src="' + esc(value) + '"></video>';
+			if (/^https?:\/\//i.test(value)) return '<iframe src="' + esc(value) + '" title="Lesson video" allow="autoplay; fullscreen" allowfullscreen></iframe>';
 			return "";
 		}
 		function applyCurriculum(topics, modules, links, media) {
@@ -758,15 +784,19 @@
 				return;
 			}
 			ALL.forEach(function (item) {
-				if (item.kind !== "lesson") return;
+				if (item.kind !== "lesson" || item.videoUrl) return;
+				var title = item.title.toLowerCase();
+				var topic = String(item.topic || "").trim().toLowerCase();
 				var match = -1;
 				for (var i = 0; i < links.length; i += 1) {
-					if (String(links[i].title || "").trim().toLowerCase() === item.title.toLowerCase()) { match = i; break; }
+					if (String(links[i].title || "").trim().toLowerCase() === title) { match = i; break; }
 				}
-				if (match >= 0 && !item.videoUrl) item.videoUrl = links.splice(match, 1)[0].video_url;
-			});
-			ALL.forEach(function (item) {
-				if (item.kind === "lesson" && !item.videoUrl && links.length) item.videoUrl = links.shift().video_url;
+				if (match < 0 && item.n === 1 && topic) {
+					for (var j = 0; j < links.length; j += 1) {
+						if (String(links[j].title || "").trim().toLowerCase() === topic) { match = j; break; }
+					}
+				}
+				if (match >= 0) item.videoUrl = links.splice(match, 1)[0].video_url;
 			});
 		}
 		function loadLessonLinks() {
@@ -776,13 +806,13 @@
 				return client.from("course_video_links").select("id,title,video_url,position").eq("course_id", courseKey).order("position");
 			}
 			function signFiles(files) {
-				var paths = files.map(function (file) { return file.storage_path; }).filter(Boolean);
+				var ready = (files || []).filter(function (file) { return file.storage_path; });
 				var empty = { byModule: {}, loose: [], urls: {} };
-				if (!paths.length) return Promise.resolve(empty);
-				return client.storage.from("course-media").createSignedUrls(paths, 60 * 60).then(function (signed) {
+				if (!ready.length) return Promise.resolve(empty);
+				return client.storage.from("course-media").createSignedUrls(ready.map(function (file) { return file.storage_path; }), 60 * 60).then(function (signed) {
 					var urls = {};
 					(signed.data || []).forEach(function (row, index) {
-						if (row && row.signedUrl && files[index]) urls[files[index].id] = row.signedUrl;
+						if (row && row.signedUrl && ready[index]) urls[ready[index].id] = row.signedUrl;
 					});
 					var byModule = {};
 					var loose = [];
@@ -801,9 +831,16 @@
 					client.from("course_topics").select("id,title,position").eq("course_id", courseKey).order("position"),
 					client.from("course_modules").select("id,topic_id,title,video_url,position").eq("course_id", courseKey).order("position"),
 					linksQuery(),
-					client.from("course_files").select("id,module_id,kind,file_name,storage_path").eq("course_id", courseKey).in("kind", ["video", "material", "study"]).order("created_at")
+					client.from("course_files").select("id,module_id,kind,file_name,storage_path").eq("course_id", courseKey).in("kind", ["video", "material", "study"]).order("created_at"),
+					client.from("course_assignments").select("module_week,kind,title,instructions,due_at,marks").eq("course_id", courseKey).order("updated_at")
 				]).then(function (parts) {
 					if (parts[0].data && parts[0].data.title) courseTitle = parts[0].data.title;
+					moduleAssignments = {};
+					(parts[5].error ? [] : (parts[5].data || [])).forEach(function (row) {
+						var key = String(row.module_week);
+						if (!moduleAssignments[key]) moduleAssignments[key] = [];
+						moduleAssignments[key].push(row);
+					});
 					var modules = parts[2].error ? [] : (parts[2].data || []);
 					var links = parts[3].error ? [] : (parts[3].data || []);
 					var files = parts[4].error ? [] : (parts[4].data || []);

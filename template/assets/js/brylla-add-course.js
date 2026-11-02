@@ -301,6 +301,9 @@
 				var linkLabel = document.createElement("label");
 				linkLabel.className = "form-label";
 				linkLabel.textContent = "Video link";
+				var linkHelp = document.createElement("p");
+				linkHelp.className = "text-muted mb-2";
+				linkHelp.textContent = "A Google Drive video has to be shared as Anyone with the link. A private Drive file stays blank on the student page.";
 				var linkInput = document.createElement("input");
 				linkInput.type = "url";
 				linkInput.className = "form-control mb-2";
@@ -326,7 +329,9 @@
 					client.from("course_modules").update({ video_url: url.slice(0, 500) }).eq("id", module.id).then(function (saved) {
 						if (saved.error) throw new Error(saved.error.message || "The video link could not be saved.");
 						module.video_url = url.slice(0, 500);
-						linkStatus.textContent = "Saved. Students play this on the lesson page.";
+						linkStatus.textContent = /drive\.google\.com/i.test(url)
+							? "Saved. Share that Drive file as Anyone with the link, or students see a blank player."
+							: "Saved. Students play this on the lesson page.";
 					}).catch(function (error) {
 						linkStatus.textContent = error.message || "The video link could not be saved.";
 						linkStatus.style.color = "#a12622";
@@ -335,6 +340,7 @@
 				media.append(
 					mediaTitle,
 					linkLabel,
+					linkHelp,
 					linkInput,
 					linkSave,
 					linkStatus,
@@ -542,7 +548,12 @@
 							size_bytes: file.size
 						};
 						if (moduleId) row.module_id = moduleId;
-						return client.from("course_files").insert(row);
+						return client.from("course_files").insert(row).then(function (saved) {
+							if (!saved.error) return;
+							return client.storage.from("course-media").remove([path]).then(function () {
+								throw new Error(file.name + " could not be saved on this module.");
+							});
+						});
 					});
 				});
 			}, Promise.resolve());
