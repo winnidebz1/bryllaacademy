@@ -63,7 +63,7 @@
 		] },
 		{ label: "Courses", items: [
 			{ label: "All courses", href: "admin-courses.html", icon: "isax isax-teacher5", page: "admin-courses" },
-			{ label: "Add course", href: "add-course.html", icon: "isax isax-add-circle5", page: "add-course" },
+			{ label: "Add course", href: "add-course.html?from=admin", icon: "isax isax-add-circle5", page: "add-course" },
 			{ label: "Course performance", href: "admin-performance.html", icon: "isax isax-book", page: "admin-performance" },
 			{ label: "Open modules", href: "admin-dashboard.html#module-unlocks", icon: "isax isax-book", page: "module-unlocks" }
 		] },
@@ -1200,6 +1200,56 @@
 		document.getElementById("preview-profile").addEventListener("click", function () {
 			document.getElementById("profile-preview").innerHTML = '<div class="border rounded p-3"><p class="h5">' + esc(instructorName(data)) + '</p><p>' + esc(person.bio || "No bio yet.") + "</p><p class=\"mb-0\">" + esc(person.email || "No email yet.") + "</p></div>";
 		});
+		if (currentArea() === "admin") bindFounderPassword(root);
+	}
+
+	function bindFounderPassword(root) {
+		var card = document.createElement("div");
+		card.className = "card mt-3";
+		card.innerHTML = '<div class="card-body"><h2 class="h6 fw-bold">Change login password</h2><p>This updates the password you use to sign in to the founder dashboard.</p><form id="founder-password-form">' +
+			'<label class="form-label" for="current-password">Current password</label><input class="form-control mb-2" id="current-password" type="password" autocomplete="current-password" required>' +
+			'<label class="form-label" for="new-password">New password</label><input class="form-control mb-2" id="new-password" type="password" autocomplete="new-password" minlength="8" required>' +
+			'<label class="form-label" for="confirm-password">Confirm new password</label><input class="form-control mb-3" id="confirm-password" type="password" autocomplete="new-password" minlength="8" required>' +
+			'<button class="btn btn-primary rounded-pill" type="submit">Update password</button><p id="password-status" class="mt-2 mb-0" role="status"></p></form></div>';
+		root.appendChild(card);
+		document.getElementById("founder-password-form").addEventListener("submit", function (event) {
+			event.preventDefault();
+			var status = document.getElementById("password-status");
+			var currentPassword = document.getElementById("current-password").value;
+			var nextPassword = document.getElementById("new-password").value;
+			var confirmPassword = document.getElementById("confirm-password").value;
+			var current = staffClient();
+			if (!current) {
+				status.textContent = "Sign in again before changing the password.";
+				return;
+			}
+			if (nextPassword.length < 8) {
+				status.textContent = "Use at least 8 characters.";
+				return;
+			}
+			if (nextPassword !== confirmPassword) {
+				status.textContent = "The two new passwords do not match.";
+				return;
+			}
+			status.textContent = "Updating password…";
+			current.auth.getSession().then(function (result) {
+				var session = result.data && result.data.session;
+				var email = session && session.user && session.user.email;
+				if (!email) throw new Error("Sign in again before changing the password.");
+				return current.auth.signInWithPassword({ email: email, password: currentPassword }).then(function (signed) {
+					if (signed.error) throw new Error("The current password is not correct.");
+					return current.auth.updateUser({ password: nextPassword });
+				});
+			}).then(function (updated) {
+				if (updated.error) throw new Error(updated.error.message || "The password could not be changed.");
+				document.getElementById("current-password").value = "";
+				document.getElementById("new-password").value = "";
+				document.getElementById("confirm-password").value = "";
+				status.textContent = "Password updated. Use it the next time you sign in.";
+			}).catch(function (error) {
+				status.textContent = error.message || "The password could not be changed.";
+			});
+		});
 	}
 
 	function bindEarnings(root, data) {
@@ -1237,7 +1287,7 @@
 	}
 	function quickActions() {
 		return '<div class="card h-100"><div class="card-body"><h2 class="h5 fw-bold">Quick actions</h2><div class="d-flex flex-wrap gap-2">' +
-			'<a class="btn btn-primary rounded-pill" href="add-course.html">Add course</a>' +
+			'<a class="btn btn-primary rounded-pill" href="add-course.html?from=admin">Add course</a>' +
 			'<a class="btn btn-light rounded-pill" href="admin-courses.html">Manage courses</a>' +
 			'<a class="btn btn-light rounded-pill" href="admin-instructors.html#add-instructor">Add instructor</a>' +
 			'<a class="btn btn-light rounded-pill" href="admin-reports.html">View reports</a></div></div></div>';
@@ -1506,7 +1556,8 @@
 		});
 	}
 	function courseEditLink(course) {
-		return '<a class="btn btn-light btn-sm" href="add-course.html?course=' + encodeURIComponent(course.id) + '">Edit</a>';
+		var href = currentArea() === "admin" ? "add-course.html?from=admin&course=" : "add-course.html?course=";
+		return '<a class="btn btn-light btn-sm" href="' + href + encodeURIComponent(course.id) + '">Edit</a>';
 	}
 	function courseDeleteButton(course) {
 		return '<button class="btn btn-light btn-sm" type="button" data-delete-course="' + esc(course.id) + '" data-delete-title="' + esc(course.title) + '">Delete</button>';

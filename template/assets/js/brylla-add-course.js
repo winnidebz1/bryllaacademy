@@ -31,6 +31,17 @@
 	}
 	function field(id) { return $(id) ? $(id).value.trim() : ""; }
 
+	function dashboardHref() {
+		var fromAdmin = new URLSearchParams(location.search).get("from") === "admin";
+		return fromAdmin || staffRole === "founder" ? "admin-dashboard.html" : "instructor-dashboard.html";
+	}
+	function pointDashboardLinks() {
+		["course-return-link", "course-dashboard-link"].forEach(function (id) {
+			var link = $(id);
+			if (link) link.setAttribute("href", dashboardHref());
+		});
+	}
+
 	function requireStaff() {
 		client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
 		if (!client) return Promise.reject(new Error("Sign in as an instructor or founder to save a course."));
@@ -42,6 +53,7 @@
 		}).then(function (profile) {
 			staffRole = profile.data && profile.data.role;
 			if (staffRole !== "instructor" && staffRole !== "founder") throw new Error("Only an instructor or the founder can add a course.");
+			pointDashboardLinks();
 		});
 	}
 
@@ -901,6 +913,7 @@
 		draw();
 	}
 
+	pointDashboardLinks();
 	bindTopics();
 	bindModules();
 	bindFaqs();
