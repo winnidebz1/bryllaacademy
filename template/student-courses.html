@@ -182,44 +182,7 @@
 		"assignmentsDue": 0,
 		"openingSoon": 3,
 		"browseUrl": "/#courses",
-		"courses": [
-			{
-				"id": "bookkeeping",
-				"title": "Bookkeeping",
-				"icon": "ti-calculator",
-				"weeksTotal": 6,
-				"nextLesson": "Week 1, What a US bookkeeper does",
-				"enrollUrl": "register",
-				"continueUrl": "course-watch.html"
-			},
-			{
-				"id": "digital-marketing",
-				"title": "Digital Marketing",
-				"icon": "ti-speakerphone",
-				"status": "upcoming",
-				"startLabel": "Coming soon",
-				"enrollUrl": "register",
-				"detailsUrl": "/#courses"
-			},
-			{
-				"id": "project-management",
-				"title": "Project Management",
-				"icon": "ti-layout-kanban",
-				"status": "upcoming",
-				"startLabel": "Coming soon",
-				"enrollUrl": "register",
-				"detailsUrl": "/#courses"
-			},
-			{
-				"id": "podcast-management",
-				"title": "Podcast Management",
-				"icon": "ti-microphone",
-				"status": "upcoming",
-				"startLabel": "Coming soon",
-				"enrollUrl": "/#courses",
-				"detailsUrl": "/#courses"
-			}
-		]
+		"courses": []
 	}
 	</script>
 	<a class="skip-link" href="#main">Skip to main content</a>
@@ -230,7 +193,7 @@
 	<footer class="site-footer">
 		<div class="footer-wrap">
 			<div class="footer-inner">
-				<a class="footer-brand" href="index-4.html">
+				<a class="footer-brand" href="index.html">
 					<span class="footer-brand-mark"><img src="assets/img/logo.png" alt=""></span>
 					<span><strong>Brylla Academy</strong><span>Practical professional skills taught for the remote world.</span></span>
 				</a>
@@ -249,7 +212,6 @@
 	<script src="assets/js/brylla-notifications.js"></script>
 	<script>
 		const data = JSON.parse(document.getElementById("courses-data").textContent);
-		const catalog = data.courses.slice();
 		const headerEl = document.getElementById("site-header");
 		const navEl = document.getElementById("dashboard-nav");
 		const mainEl = document.getElementById("main");
@@ -259,6 +221,8 @@
 		let filter = "all";
 		let shown = 6;
 		let runtimeState = null;
+		let catalogReady = false;
+		let catalogError = false;
 		const iconPaths = {
 			menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
 			close: '<path d="M6 6l12 12M18 6 6 18"/>',
@@ -284,11 +248,11 @@
 			{ label: "Main", items: [{ label: "Dashboard", href: "student-dashboard.html", icon: "dashboard" }] },
 			{ label: "Learning", items: [
 				{ label: "My courses", href: "student-courses.html", icon: "courses", current: true },
-				{ label: "Quizes", href: "student-quiz.html", icon: "assignments" }
+				{ label: "Quizzes", href: "student-quiz.html", icon: "assignments" }
 			] },
 			{ label: "Account", items: [
-				{ label: "Help", href: "index-4.html#faqs", icon: "help", mobileOnly: true },
-				{ label: "Sign out", href: "index-4.html", icon: "signout", tone: "danger" }
+				{ label: "Help", href: "/#faqs", icon: "help", mobileOnly: true },
+				{ label: "Sign out", href: "login", icon: "signout", tone: "danger" }
 			] }
 		];
 
@@ -321,7 +285,13 @@
 			return weekday + " " + date.getDate() + " " + months[date.getMonth()];
 		}
 		function money(amount) { return "GHS " + amount; }
-		function pageState() { return runtimeState || new URLSearchParams(location.search).get("state"); }
+		function pageState() {
+			const forced = runtimeState || new URLSearchParams(location.search).get("state");
+			if (forced) return forced;
+			if (!catalogReady) return "loading";
+			if (catalogError) return "error";
+			return "";
+		}
 		function rank(status) { return { in_progress: 0, upcoming: 1, unenrolled: 2, completed: 3 }[status]; }
 		function sortedCourses() {
 			return data.courses.slice().sort(function (a, b) {
@@ -454,11 +424,19 @@
 			top.append(tile, identity);
 			card.append(top);
 			if (course.status === "in_progress") {
-				card.append(progressBar(course, "Week " + course.currentWeek + " of " + course.totalWeeks, course.progress));
+				if (course.progress > 0 || course.totalWeeks) {
+					const label = course.totalWeeks ? ("Week " + course.currentWeek + " of " + course.totalWeeks) : "Progress";
+					card.append(progressBar(course, label, course.progress));
+				}
 				card.append(el("div", "note", "Next: " + course.nextLesson));
-				const button = el("a", course.id === filledId ? "btn primary" : "btn", "Continue course");
+				const button = el("a", course.id === filledId ? "btn primary" : "btn", course.progress > 0 ? "Continue course" : "Start course");
 				button.href = course.continueUrl;
-				button.setAttribute("aria-label", "Continue " + course.title);
+				button.setAttribute("aria-label", (course.progress > 0 ? "Continue " : "Start ") + course.title);
+				if (course.id === "bookkeeping") {
+					button.addEventListener("click", function () {
+						if (window.BryllaStudent) BryllaStudent.startCourse();
+					});
+				}
 				card.append(button);
 			} else if (course.status === "upcoming") {
 				card.append(el("div", "note", "You are enrolled. Lessons unlock when the course starts."));
@@ -467,21 +445,11 @@
 				button.setAttribute("aria-label", "View details for " + course.title);
 				card.append(button);
 			} else {
-				card.append(progressBar(course, course.finished || "Finished", 100));
-				card.append(el("div", "note"));
-				const actions = el("div", "card-actions");
-				const certificate = el("a", "btn");
-				certificate.href = course.certificateUrl;
-				certificate.setAttribute("aria-label", "View certificate for " + course.title);
-				const mark = document.createElement("i");
-				mark.className = "ti ti-certificate";
-				mark.setAttribute("aria-hidden", "true");
-				certificate.append(mark, document.createTextNode("Certificate"));
-				const review = el("a", "btn", "Review");
+				card.append(progressBar(course, "Completed", 100));
+				const review = el("a", "btn primary", "Review course");
 				review.href = course.reviewUrl;
 				review.setAttribute("aria-label", "Review " + course.title);
-				actions.append(certificate, review);
-				card.append(actions);
+				card.append(review);
 			}
 			return card;
 		}
@@ -573,47 +541,134 @@
 			retry.type = "button";
 			retry.addEventListener("click", function () {
 				runtimeState = null;
+				catalogReady = false;
+				catalogError = false;
 				const url = new URL(location.href);
 				url.searchParams.delete("state");
 				history.replaceState(null, "", url.pathname + url.search);
 				render();
+				loadCourses();
 			});
 			panel.append(retry);
 			mainEl.append(panel);
 		}
-		function applyBookkeepingProgress() {
-			if (!window.BryllaStudent) return;
-			data.courses = catalog.filter(function (item) { return BryllaStudent.courseRecord(item.id).enrolled; });
-			const summary = BryllaStudent.summary();
-			const profile = BryllaStudent.loadProfile();
-			if (profile) {
-				data.student.name = profile.name;
-				data.student.email = profile.email;
-				data.student.initials = profile.name.trim().split(/\s+/).slice(0, 2).map(function (part) { return part.charAt(0); }).join("").toUpperCase();
+		function watchHref(courseId, lessonId) {
+			if (courseId === "bookkeeping" && lessonId) return "course-watch.html?item=" + encodeURIComponent(lessonId);
+			if (courseId === "bookkeeping") return "course-watch.html";
+			return "course-watch.html?course=" + encodeURIComponent(courseId);
+		}
+		function rememberCourse(map, course) {
+			if (!course || !course.id) return;
+			const current = map[course.id] || {};
+			map[course.id] = {
+				id: course.id,
+				title: course.title || current.title || "Course",
+				summary: course.short_description || course.description || current.summary || ""
+			};
+		}
+		function learningCounts(courseId, rows, modules) {
+			if (courseId === "bookkeeping" && window.BryllaStudent) {
+				const summary = BryllaStudent.summary();
+				return {
+					done: summary.lessonsDone || 0,
+					total: BryllaStudent.lessons.length,
+					week: summary.weekCurrent || 0,
+					weeks: summary.weeksTotal || 0,
+					next: summary.lessonTitle ? ("Week " + (summary.weekCurrent || 1) + ", " + summary.lessonTitle) : "Open the first lesson",
+					lessonId: summary.lessonId || ""
+				};
 			}
-			const course = data.courses.filter(function (item) { return item.id === "bookkeeping"; })[0];
-			if (!course) return;
-			if (!summary.started) {
-				course.progress = 0;
-				course.currentWeek = 0;
-				course.totalWeeks = 0;
-				course.nextLesson = "Week 1, " + summary.lessonTitle;
-				course.status = "in_progress";
+			const seen = {};
+			(rows || []).forEach(function (row) {
+				if (row.course_id === courseId && row.kind !== "live" && row.item_id) seen[row.item_id] = true;
+			});
+			const done = Object.keys(seen).length;
+			const total = (modules || []).filter(function (row) { return row.course_id === courseId; }).length;
+			return {
+				done: done,
+				total: total,
+				week: 0,
+				weeks: 0,
+				next: done ? "Continue where you left off" : "Open the course to begin",
+				lessonId: ""
+			};
+		}
+		function toCard(record, counts) {
+			const completed = counts.total > 0 && counts.done >= counts.total;
+			const percent = completed ? 100 : (counts.total > 0 && counts.done > 0 ? Math.round((counts.done / counts.total) * 100) : 0);
+			return {
+				id: record.id,
+				title: record.title || "Course",
+				icon: record.id === "bookkeeping" ? "ti-calculator" : "ti-book",
+				status: completed ? "completed" : "in_progress",
+				progress: percent,
+				currentWeek: counts.week,
+				totalWeeks: counts.weeks,
+				nextLesson: counts.next,
+				continueUrl: watchHref(record.id, counts.lessonId),
+				reviewUrl: watchHref(record.id, counts.lessonId)
+			};
+		}
+		function loadCourses() {
+			const auth = window.BryllaAuth;
+			if (!auth || !auth.client) {
+				catalogError = true;
+				catalogReady = true;
+				render();
 				return;
 			}
-			course.progress = summary.percentComplete;
-			course.currentWeek = summary.weekCurrent;
-			course.totalWeeks = summary.weeksTotal;
-			course.nextLesson = "Week " + summary.weekCurrent + ", " + summary.lessonTitle;
-			course.status = summary.completed ? "completed" : "in_progress";
-			if (summary.completed) {
-				course.finished = "Finished " + formatShort(new Date().toISOString().slice(0, 10)) + ", grade " + summary.percentComplete + "%";
-				course.certificateUrl = "student-certificates.html";
-				course.reviewUrl = "course-watch.html";
-			}
+			auth.ready.then(function (state) {
+				if (!state || !state.user) {
+					catalogError = true;
+					catalogReady = true;
+					render();
+					return;
+				}
+				const profile = window.BryllaStudent ? BryllaStudent.loadProfile() : null;
+				if (profile && profile.name) {
+					data.student.name = profile.name;
+					data.student.email = profile.email || "";
+					data.student.initials = profile.name.trim().split(/\s+/).filter(Boolean).slice(0, 2).map(function (part) { return part.charAt(0); }).join("").toUpperCase() || "ST";
+				}
+				const client = auth.client;
+				return Promise.all([
+					client.from("enrollments").select("course_id,courses(id,title,short_description,description)").eq("user_id", state.user.id).eq("status", "active"),
+					client.from("course_access").select("course_id,courses(id,title,short_description,description)").eq("user_id", state.user.id),
+					client.from("lesson_progress").select("course_id,item_id,kind").eq("user_id", state.user.id)
+				]).then(function (parts) {
+					if (parts[0].error || parts[1].error) throw parts[0].error || parts[1].error;
+					const courses = {};
+					const owned = {};
+					(parts[0].data || []).forEach(function (row) {
+						if (row.courses) rememberCourse(courses, row.courses);
+						owned[row.course_id] = true;
+					});
+					(parts[1].data || []).forEach(function (row) {
+						if (row.courses) rememberCourse(courses, row.courses);
+						owned[row.course_id] = true;
+					});
+					const ids = Object.keys(owned);
+					const modulesPromise = ids.length
+						? client.from("course_modules").select("id,course_id").in("course_id", ids)
+						: Promise.resolve({ data: [] });
+					return modulesPromise.then(function (modules) {
+						const rows = parts[2].error ? [] : (parts[2].data || []);
+						const moduleRows = modules.error ? [] : (modules.data || []);
+						data.courses = ids.map(function (id) {
+							return toCard(courses[id] || { id: id, title: "Course" }, learningCounts(id, rows, moduleRows));
+						}).sort(function (a, b) { return a.title.localeCompare(b.title); });
+						catalogError = false;
+						catalogReady = true;
+						render();
+					});
+				});
+			}).catch(function () {
+				catalogError = true;
+				catalogReady = true;
+				render();
+			});
 		}
 		function render() {
-			applyBookkeepingProgress();
 			renderHeader();
 			renderNav();
 			mainEl.removeAttribute("aria-busy");
@@ -660,10 +715,10 @@
 			closeMenu();
 		});
 		window.addEventListener("storage", function (event) {
-			if (event.key === "brylla-course-progress" || event.key === "brylla-student-profile") render();
+			if (event.key === "brylla-course-progress" || event.key === "brylla-student-profile") loadCourses();
 		});
 		render();
-		if (window.BryllaAuth) BryllaAuth.ready.then(render);
+		loadCourses();
 	</script>
 	</body>
 </html>

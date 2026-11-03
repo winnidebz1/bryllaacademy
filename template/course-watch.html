@@ -180,10 +180,10 @@
 		<a href="student-dashboard.html"><i class="ti ti-layout-dashboard" aria-hidden="true"></i>Dashboard</a>
 		<p class="grp">Learning</p>
 		<a href="student-courses.html"><i class="ti ti-school" aria-hidden="true"></i>My courses</a>
-		<a href="student-quiz.html"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Quizes</a>
+		<a href="student-quiz.html"><i class="ti ti-clipboard-check" aria-hidden="true"></i>Quizzes</a>
 		<p class="grp">Account</p>
 		<a href="student-profile.html"><i class="ti ti-user" aria-hidden="true"></i>Profile</a>
-		<a class="out" href="index-4.html"><i class="ti ti-logout" aria-hidden="true"></i>Sign out</a>
+		<a class="out" href="login"><i class="ti ti-logout" aria-hidden="true"></i>Sign out</a>
 							</nav>
 
 	<div class="lay">
@@ -494,7 +494,6 @@
 			} else {
 				actions = '<a class="btn primary" href="#study-materials">View here</a>';
 			}
-			if (summary.completed) actions += '<a class="btn" href="student-certificates.html">View certificate</a>';
 			var tabs = can ? '<div class="panel">' + esc(sel.summary) + "</div>" : "";
 			var downloads = (sel && sel.downloads) || [];
 			var materials = '<section class="panel" id="study-materials"><h2>Study Materials</h2>' + (downloads.length

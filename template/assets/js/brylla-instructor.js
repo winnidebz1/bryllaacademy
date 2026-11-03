@@ -53,7 +53,7 @@
 		{ label: "Account", items: [
 			{ label: "My profile", href: "instructor-profile.html", icon: "isax isax-user", page: "profile" },
 			{ label: "Help", href: "instructor-help.html", icon: "isax isax-messages-35", page: "help" },
-			{ label: "Logout", href: "index-4.html", icon: "isax isax-logout5", page: "logout", danger: true }
+			{ label: "Logout", href: "instructor-login", icon: "isax isax-logout5", page: "logout", danger: true }
 		] }
 	];
 	var ADMIN_MENU = [
@@ -77,7 +77,7 @@
 		{ label: "Account", items: [
 			{ label: "My profile", href: "admin-profile.html", icon: "isax isax-user", page: "profile" },
 			{ label: "Platform settings", href: "admin-settings.html", icon: "isax isax-setting-25", page: "admin-settings" },
-			{ label: "Logout", href: "index-4.html", icon: "isax isax-logout5", page: "logout", danger: true }
+			{ label: "Logout", href: "admin-login", icon: "isax isax-logout5", page: "logout", danger: true }
 		] }
 	];
 	var dirty = false;
@@ -1159,14 +1159,8 @@
 		draw();
 	}
 
-	function renderCertificates(root, data) {
-		root.innerHTML = '<h1 class="h5 fw-bold">Certificates</h1><div class="row">' + data.courses.map(function (course) {
-			return '<div class="col-md-6 mb-3"><div class="card h-100"><div class="card-body"><p class="text-muted mb-1">Certificate template</p><h2 class="h5">' + esc(course.title) + '</h2><p>Issued when the student meets the pass mark and 100% of lessons are done.</p><div class="border rounded p-3"><p class="mb-1">Brylla Academy</p><p class="mb-0">' + esc(course.title) + "</p><p class=\"mb-0\">Student name</p></div></div></div></div>";
-		}).join("") + '</div><h2 class="h5 fw-bold mt-2">Issued certificates</h2>' +
-			(data.issued.length ? table([{ label: "Student" }, { label: "Course" }, { label: "Date" }, { label: "Download" }], data.issued.map(function (row) {
-				var course = courseById(data, row.courseId);
-				return "<tr>" + cell("Student", esc(row.student)) + cell("Course", esc(course ? course.title : "")) + cell("Date", formatDate(row.date)) + cell("Download", '<a href="' + esc(row.url || "#") + '">Download</a>') + "</tr>";
-			})) : empty("No certificates issued yet. A certificate appears here after a student qualifies."));
+	function renderCertificates(root) {
+		root.innerHTML = '<h1 class="h5 fw-bold">Certificates</h1>' + empty("Certificates are not issued yet. Lesson progress stays on each student's course page.");
 	}
 
 	function renderProfile(root, data) {
@@ -1206,7 +1200,7 @@
 	function bindFounderPassword(root) {
 		var card = document.createElement("div");
 		card.className = "card mt-3";
-		card.innerHTML = '<div class="card-body"><h2 class="h6 fw-bold">Change login password</h2><p>This updates the password you use to sign in to the founder dashboard.</p><form id="founder-password-form">' +
+		card.innerHTML = '<div class="card-body"><h2 class="h6 fw-bold">Change login password</h2><p>This updates the password you use to sign in.</p><form id="founder-password-form">' +
 			'<label class="form-label" for="current-password">Current password</label><input class="form-control mb-2" id="current-password" type="password" autocomplete="current-password" required>' +
 			'<label class="form-label" for="new-password">New password</label><input class="form-control mb-2" id="new-password" type="password" autocomplete="new-password" minlength="8" required>' +
 			'<label class="form-label" for="confirm-password">Confirm new password</label><input class="form-control mb-3" id="confirm-password" type="password" autocomplete="new-password" minlength="8" required>' +
@@ -1905,9 +1899,14 @@
 		certificates: renderCertificates,
 		profile: renderProfile,
 		analytics: renderAnalytics,
-		help: function (root) { renderEmptyPage(root, "Help", "Help articles will be added here. For now, use the menu to open courses, grading and students."); },
+		help: function (root) {
+			root.innerHTML = '<h1 class="h5 fw-bold">Help</h1><div class="card"><div class="card-body"><p>Open courses, assignments, students, and announcements from the menu.</p><ul class="mb-0"><li><a href="/#faqs">Questions on the academy site</a></li><li><a href="contact-us">Contact Brylla Academy</a></li><li><a href="instructor-profile.html">Update your profile</a></li></ul></div></div>';
+		},
 		messages: renderMessages,
-		settings: function (root) { renderEmptyPage(root, "Settings", "Account settings will be connected later."); },
+		settings: function (root) {
+			root.innerHTML = '<h1 class="h5 fw-bold">Settings</h1><p>Your name and profile details are on <a href="' + (currentArea() === "admin" ? "admin-profile.html" : "instructor-profile.html") + '">My profile</a>.</p>';
+			bindFounderPassword(root);
+		},
 		notifications: renderNotifications,
 		"admin-dashboard": renderAdminDashboard,
 		"admin-earnings": renderAdminEarnings,
