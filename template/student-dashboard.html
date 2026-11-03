@@ -280,7 +280,9 @@
 			display: flex;
 			flex-direction: column;
 			gap: var(--block-gap);
-			padding: var(--space-4);
+			width: min(1180px, calc(100% - 32px));
+			margin: 0 auto;
+			padding: var(--space-4) 0 var(--space-5);
 		}
 		.banner {
 			position: relative;
@@ -513,6 +515,60 @@
 
 		.error-card p { font-size: 14px; }
 
+		.dash-block { display: grid; gap: 12px; }
+		.dash-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+		.dash-head h2 { font-size: 18px; font-weight: 500; }
+		.dash-link { color: var(--color-accent-text); font-size: 14px; font-weight: 500; text-decoration: none; }
+		.dash-link:hover { text-decoration: underline; }
+		.overview-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+		.learn-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 250px), 1fr)); gap: 16px; }
+		.learn-card {
+			display: flex;
+			flex-direction: column;
+			min-width: 0;
+			overflow: hidden;
+			background: var(--color-surface);
+			border: 1px solid var(--color-border);
+			border-radius: 12px;
+			box-shadow: 0 8px 24px rgba(7, 59, 112, 0.06);
+		}
+		.learn-cover {
+			display: grid;
+			place-items: end start;
+			aspect-ratio: 16 / 9;
+			padding: 14px;
+			background: linear-gradient(145deg, #073b70 0%, #04635e 100%);
+			color: #fff;
+			text-decoration: none;
+		}
+		.learn-card:nth-child(3n) .learn-cover { background: linear-gradient(145deg, #0c4a86 0%, #13b8ad 100%); }
+		.learn-card:nth-child(3n + 2) .learn-cover { background: linear-gradient(160deg, #062b52 0%, #078d87 100%); }
+		.learn-mark { font-size: 28px; font-weight: 500; line-height: 1; }
+		.learn-body { display: flex; flex-direction: column; gap: 8px; flex: 1; padding: 14px 14px 16px; }
+		.learn-title { font-size: 16px; font-weight: 500; line-height: 1.35; }
+		.learn-title a { color: inherit; text-decoration: none; }
+		.learn-title a:hover { color: var(--color-accent-text); }
+		.learn-summary, .learn-meta, .learn-status { color: var(--color-muted); font-size: 13px; }
+		.learn-summary { display: -webkit-box; overflow: hidden; -webkit-box-orient: vertical; -webkit-line-clamp: 3; }
+		.learn-status { color: var(--color-text); font-weight: 500; }
+		.learn-price { font-size: 15px; font-weight: 500; }
+		.learn-progress { display: grid; gap: 6px; }
+		.learn-progress .progress-labels { display: flex; }
+		.learn-progress .progress-track { display: block; }
+		.learn-body .btn-fill { align-self: flex-start; margin-top: auto; min-height: 40px; }
+		.empty-enrol {
+			display: grid;
+			gap: 8px;
+			padding: 18px;
+		}
+		.empty-enrol h2 { font-size: 18px; font-weight: 500; }
+		.empty-enrol p { color: var(--color-muted); }
+		.activity-card { overflow: hidden; }
+		.activity-row { display: block; padding: 12px 16px; color: inherit; text-decoration: none; }
+		.activity-row + .activity-row { border-top: 1px solid var(--color-border); }
+		.activity-row:hover { background: var(--color-hover); }
+		.sk-card { height: 280px; }
+
 		.sk {
 			background: #e6edf5;
 			border-radius: var(--radius-control);
@@ -606,6 +662,8 @@
 			.payment-banner .btn-outline { width: 100%; height: 44px; }
 			.payment-banner { flex-direction: column; align-items: stretch; }
 			.stat-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; }
+			.overview-grid { grid-template-columns: 1fr; }
+			.dashboard { width: min(560px, calc(100% - 24px)); }
 			.stat-card { flex-direction: column; align-items: center; padding: 12px 6px; text-align: center; }
 			.stat-card.stat-attended { display: flex; }
 			.stat-icon { width: 32px; height: 32px; flex-basis: 32px; }
@@ -772,6 +830,7 @@
 		let playingItemId = "";
 		let postedAssignments = [];
 		let submittedWeeks = {};
+		let catalog = { status: "loading", enrolled: [], available: [], activity: [], error: "" };
 
 		const svgNs = "http://www.w3.org/2000/svg";
 		const iconPaths = {
@@ -1044,14 +1103,10 @@
 			const heading = el("h1", null, "Welcome, " + firstName);
 			heading.id = "student-name";
 			const meta = el("p", "banner-meta");
-			if (data.welcomeOnly) {
-				meta.append(el("span", "banner-course", "Brylla Academy"));
-			} else if (!data.course.weeksTotal) {
-				meta.append(el("span", "banner-course", data.course.name));
-			} else {
-				meta.append(el("span", "banner-course", data.course.name + ", "));
-				meta.append(document.createTextNode("Week " + data.course.weekCurrent + " of " + data.course.weeksTotal));
-			}
+			const enrolledCount = catalog.status === "ready" ? catalog.enrolled.length : 0;
+			meta.textContent = enrolledCount
+				? "Continue where you left off, or explore another course."
+				: "Explore the courses that are open for enrolment.";
 			copy.append(heading, meta);
 			section.append(wrap, copy);
 			return section;
@@ -1283,15 +1338,13 @@
 		function renderError() {
 			const section = el("section", "card error-card");
 			section.setAttribute("role", "alert");
-			section.append(el("p", null, "We couldn't load your dashboard."));
+			section.append(el("p", null, catalog.error || "We couldn't load your dashboard."));
 			const retry = el("button", "btn-fill", "Try again");
 			retry.type = "button";
 			retry.addEventListener("click", function () {
-				runtimeState = "learning";
-				const url = new URL(location.href);
-				url.searchParams.delete("state");
-				history.replaceState(null, "", url.pathname + url.search);
+				catalog = { status: "loading", enrolled: [], available: [], activity: [], error: "" };
 				render();
+				startDashboard();
 			});
 			section.append(retry);
 			mainEl.append(section);
@@ -1517,6 +1570,332 @@
 			}).catch(function () {});
 		}
 
+		function clipText(value) {
+			const text = String(value || "").replace(/\s+/g, " ").trim();
+			if (text.length <= 160) return text;
+			return text.slice(0, 157).trim() + "…";
+		}
+		function moneyLabel(amount, currency) {
+			const number = Number(amount);
+			if (!isFinite(number)) return "";
+			const rounded = Math.round(number * 100) / 100;
+			const text = Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(2);
+			return (currency || "GHS") + " " + text;
+		}
+		function formatWhen(iso) {
+			const date = new Date(iso);
+			if (!iso || isNaN(date.getTime())) return "";
+			return date.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+		}
+		function learningState(done, total) {
+			if (total > 0 && done >= total) return { status: "Completed", action: "Review Course", showBar: true, percent: 100 };
+			if (done > 0 && total > 0) return { status: "In Progress", action: "Continue Learning", showBar: true, percent: Math.round((done / total) * 100) };
+			if (done > 0) return { status: "In Progress", action: "Continue Learning", showBar: false, percent: 0 };
+			return { status: "Not Started", action: "Start Learning", showBar: false, percent: 0 };
+		}
+		function lessonName(courseId, itemId) {
+			if (courseId !== "bookkeeping" || !window.BryllaStudent) return "";
+			const lesson = BryllaStudent.lessonById(itemId);
+			if (lesson) return lesson.title;
+			const live = BryllaStudent.lives.filter(function (item) { return item.id === itemId; })[0];
+			return live ? live.title : "";
+		}
+		function courseHref(course, owned) {
+			if (!owned) return course.id === "bookkeeping" ? "course-details.html" : "course-details.html?course=" + encodeURIComponent(course.id);
+			if (course.id === "bookkeeping" && course.lessonId) return "course-watch.html?item=" + encodeURIComponent(course.lessonId);
+			if (course.id === "bookkeeping") return "course-watch.html";
+			return "course-watch.html?course=" + encodeURIComponent(course.id);
+		}
+		function rememberCourse(map, course) {
+			if (!course || !course.id) return;
+			const current = map[course.id] || { id: course.id };
+			map[course.id] = {
+				id: course.id,
+				title: course.title || current.title || "Course",
+				summary: clipText(course.short_description || course.summary || course.description || current.summary || ""),
+				price_amount: course.price_amount != null ? course.price_amount : current.price_amount,
+				currency: course.currency || current.currency || "GHS"
+			};
+		}
+		function asList(value) {
+			if (Array.isArray(value)) return value;
+			if (typeof value === "string") {
+				try { const parsed = JSON.parse(value); return Array.isArray(parsed) ? parsed : []; } catch (error) { return []; }
+			}
+			return [];
+		}
+		function progressFor(courseId, rows, modules) {
+			if (courseId === "bookkeeping" && window.BryllaStudent) {
+				const summary = BryllaStudent.summary();
+				const total = BryllaStudent.lessons.length;
+				const done = summary.lessonsDone || 0;
+				const state = learningState(done, total);
+				return { state: state, lessonTitle: done ? summary.lessonTitle : "", lessonId: summary.lessonId || "" };
+			}
+			const seen = {};
+			(rows || []).forEach(function (row) {
+				if (row.course_id === courseId && row.kind !== "live" && row.item_id) seen[row.item_id] = true;
+			});
+			const total = (modules || []).filter(function (row) { return row.course_id === courseId; }).length;
+			return { state: learningState(Object.keys(seen).length, total), lessonTitle: "", lessonId: "" };
+		}
+		function shapeCourse(record, owned, progress) {
+			const state = progress.state;
+			return {
+				id: record.id,
+				title: record.title || "Course",
+				summary: record.summary || "",
+				mark: String(record.title || "C").trim().charAt(0).toUpperCase() || "C",
+				owned: owned,
+				status: owned ? state.status : "",
+				action: owned ? state.action : "Enroll Now",
+				showBar: Boolean(owned && state.showBar),
+				percent: owned ? state.percent : 0,
+				lessonTitle: owned ? progress.lessonTitle : "",
+				lessonId: owned ? progress.lessonId : "",
+				price: owned ? "" : moneyLabel(record.price_amount, record.currency),
+				href: ""
+			};
+		}
+		function loadCatalog() {
+			const auth = window.BryllaAuth;
+			if (!auth || !auth.client || !auth.ready) {
+				catalog = { status: "error", enrolled: [], available: [], activity: [], error: "Your courses could not be loaded." };
+				return Promise.resolve();
+			}
+			return auth.ready.then(function (state) {
+				if (!state || !state.user) {
+					catalog = { status: "ready", enrolled: [], available: [], activity: [] };
+					return;
+				}
+				const client = auth.client;
+				return Promise.all([
+					client.from("enrollments").select("course_id,started_at,courses(id,title,short_description,description,price_amount,currency)").eq("user_id", state.user.id).eq("status", "active"),
+					client.from("course_access").select("course_id,courses(id,title,short_description,description,price_amount,currency)").eq("user_id", state.user.id),
+					client.from("courses").select("id,title,short_description,description,price_amount,currency").eq("status", "published").eq("visibility", "public").eq("approval_status", "approved"),
+					client.rpc("public_open_courses"),
+					client.rpc("public_course_listing", { p_course: "bookkeeping" }),
+					client.from("lesson_progress").select("course_id,item_id,kind,completed_at").eq("user_id", state.user.id),
+					client.from("notifications").select("type,title,message,created_at,destination_url").order("created_at", { ascending: false }).limit(6)
+				]).then(function (parts) {
+					if (parts[0].error || parts[1].error) throw parts[0].error || parts[1].error;
+					const courses = {};
+					(parts[2].error ? [] : parts[2].data || []).forEach(function (course) { rememberCourse(courses, course); });
+					asList(parts[3].data).forEach(function (course) { rememberCourse(courses, course); });
+					if (parts[4].data && parts[4].data.id) rememberCourse(courses, parts[4].data);
+					const owned = {};
+					(parts[0].data || []).forEach(function (row) {
+						if (row.courses) rememberCourse(courses, row.courses);
+						owned[row.course_id] = true;
+					});
+					(parts[1].data || []).forEach(function (row) {
+						if (row.courses) rememberCourse(courses, row.courses);
+						owned[row.course_id] = true;
+					});
+					const progressRows = parts[5].error ? [] : (parts[5].data || []);
+					const notices = parts[6].error ? [] : (parts[6].data || []);
+					const ownedIds = Object.keys(owned);
+					const modulesPromise = ownedIds.length
+						? client.from("course_modules").select("id,course_id,title").in("course_id", ownedIds)
+						: Promise.resolve({ data: [] });
+					return modulesPromise.then(function (modules) {
+						const moduleRows = modules.error ? [] : (modules.data || []);
+						const enrolled = ownedIds.filter(function (id) { return courses[id] || id; }).map(function (id) {
+							const record = courses[id] || { id: id, title: "Course" };
+							const shaped = shapeCourse(record, true, progressFor(id, progressRows, moduleRows));
+							shaped.href = courseHref(shaped, true);
+							return shaped;
+						}).sort(function (a, b) { return a.title.localeCompare(b.title); });
+						const available = Object.keys(courses).filter(function (id) { return !owned[id]; }).map(function (id) {
+							const shaped = shapeCourse(courses[id], false, { state: learningState(0, 0), lessonTitle: "", lessonId: "" });
+							shaped.href = courseHref(shaped, false);
+							return shaped;
+						}).sort(function (a, b) { return a.title.localeCompare(b.title); });
+						const activity = [];
+						progressRows.slice().sort(function (a, b) {
+							return String(b.completed_at || "").localeCompare(String(a.completed_at || ""));
+						}).forEach(function (row) {
+							const title = lessonName(row.course_id, row.item_id);
+							if (!title || activity.length >= 3) return;
+							const when = formatWhen(row.completed_at);
+							activity.push({
+								title: title,
+								detail: "Completed" + (when ? " " + when : ""),
+								href: row.course_id === "bookkeeping" ? "course-watch.html?item=" + encodeURIComponent(row.item_id) : "course-watch.html?course=" + encodeURIComponent(row.course_id)
+							});
+						});
+						notices.forEach(function (row) {
+							if (row.type !== "announcement" && row.type !== "message") return;
+							if (!row.title) return;
+							const when = formatWhen(row.created_at);
+							activity.push({
+								title: row.title,
+								detail: (row.type === "announcement" ? "Announcement" : "Message") + (when ? " · " + when : ""),
+								href: row.destination_url || "student-notifications.html"
+							});
+						});
+						catalog = { status: "ready", enrolled: enrolled, available: available, activity: activity, progressRows: progressRows };
+					});
+				});
+			}).catch(function () {
+				catalog = { status: "error", enrolled: [], available: [], activity: [], error: "Your courses could not be loaded." };
+			});
+		}
+		function learnCard(course) {
+			const article = el("article", "learn-card");
+			const cover = el("a", "learn-cover");
+			cover.href = course.href;
+			cover.append(el("span", "learn-mark", course.mark));
+			const body = el("div", "learn-body");
+			const title = el("h3", "learn-title");
+			const titleLink = el("a", null, course.title);
+			titleLink.href = course.href;
+			title.append(titleLink);
+			body.append(title);
+			if (course.summary) body.append(el("p", "learn-summary", course.summary));
+			if (course.lessonTitle && course.status === "In Progress") body.append(el("p", "learn-meta", "Current lesson: " + course.lessonTitle));
+			if (course.price) body.append(el("p", "learn-price", course.price));
+			if (course.status) body.append(el("p", "learn-status", course.status));
+			if (course.showBar) {
+				const progress = el("div", "learn-progress");
+				const labels = el("div", "progress-labels");
+				labels.append(el("span", null, "Progress"), el("strong", null, course.percent + "%"));
+				const track = el("div", "progress-track");
+				track.setAttribute("role", "progressbar");
+				track.setAttribute("aria-label", course.title + " progress");
+				track.setAttribute("aria-valuemin", "0");
+				track.setAttribute("aria-valuemax", "100");
+				track.setAttribute("aria-valuenow", String(course.percent));
+				const fill = el("span");
+				fill.style.width = course.percent + "%";
+				track.append(fill);
+				progress.append(labels, track);
+				body.append(progress);
+			}
+			const button = el("a", "btn-fill", course.action);
+			button.href = course.href;
+			if (course.owned && course.id === "bookkeeping") {
+				button.addEventListener("click", function () {
+					if (window.BryllaStudent) BryllaStudent.startCourse();
+				});
+			}
+			body.append(button);
+			article.append(cover, body);
+			return article;
+		}
+		function sectionHead(title, linkHref, linkLabel) {
+			const head = el("div", "dash-head");
+			head.append(el("h2", null, title));
+			if (linkHref) {
+				const link = el("a", "dash-link", linkLabel);
+				link.href = linkHref;
+				head.append(link);
+			}
+			return head;
+		}
+		function renderOverview(courses) {
+			const section = el("section", "dash-block");
+			section.setAttribute("aria-label", "Learning overview");
+			const completed = courses.filter(function (course) { return course.status === "Completed"; }).length;
+			const active = courses.filter(function (course) { return course.status === "In Progress"; }).length;
+			const grid = el("div", "overview-grid");
+			[["Enrolled courses", String(courses.length)], ["In progress", String(active)], ["Completed courses", String(completed)]].forEach(function (item) {
+				const card = el("article", "card stat-card");
+				const copy = document.createElement("div");
+				copy.append(el("p", "stat-label", item[0]), el("p", "stat-value", item[1]));
+				card.append(copy);
+				grid.append(card);
+			});
+			section.append(grid);
+			return section;
+		}
+		function renderFeatured(courses) {
+			const active = courses.filter(function (course) { return course.status !== "Completed"; }).sort(function (a, b) {
+				const rank = function (course) { return course.status === "In Progress" ? 0 : 1; };
+				return rank(a) - rank(b) || b.percent - a.percent;
+			});
+			if (!active.length) return null;
+			const shown = active.slice(0, 3);
+			const section = el("section", "dash-block");
+			section.setAttribute("aria-labelledby", "continue-heading");
+			const heading = sectionHead("Continue learning", active.length > 3 ? "student-courses.html" : "", "View all");
+			heading.querySelector("h2").id = "continue-heading";
+			const grid = el("div", "learn-grid");
+			shown.forEach(function (course) { grid.append(learnCard(course)); });
+			section.append(heading, grid);
+			return section;
+		}
+		function renderEnrolled(courses) {
+			const section = el("section", "dash-block");
+			section.setAttribute("aria-labelledby", "enrolled-heading");
+			const heading = sectionHead("My enrolled courses", "", "");
+			heading.querySelector("h2").id = "enrolled-heading";
+			const grid = el("div", "learn-grid");
+			courses.forEach(function (course) { grid.append(learnCard(course)); });
+			section.append(heading, grid);
+			return section;
+		}
+		function renderExplore(courses) {
+			const section = el("section", "dash-block");
+			section.setAttribute("aria-labelledby", "explore-heading");
+			const heading = sectionHead("Explore courses", "", "");
+			heading.querySelector("h2").id = "explore-heading";
+			const grid = el("div", "learn-grid");
+			courses.forEach(function (course) { grid.append(learnCard(course)); });
+			section.append(heading, grid);
+			return section;
+		}
+		function renderEmptyEnrolment(hasCourses) {
+			const section = el("section", "card empty-enrol");
+			section.append(el("h2", null, "You have not enrolled in a course yet"));
+			section.append(el("p", null, hasCourses
+				? "When you enrol, the course appears here with your progress. Browse the courses below to get started."
+				: "There are no courses open for enrolment right now."));
+			return section;
+		}
+		function renderActivity(items) {
+			const rows = (items || []).slice(0, 6);
+			const hasBookkeeping = catalog.enrolled.some(function (course) { return course.id === "bookkeeping"; });
+			if (hasBookkeeping) visibleAssignments().forEach(function (row) {
+				if (submittedWeeks[String(row.module_week)]) return;
+				const when = formatWhen(row.due_at);
+				rows.push({
+					title: row.title || ("Week " + row.module_week + " assignment"),
+					detail: "Assignment" + (when ? " · Due " + when : ""),
+					href: "course-watch.html?item=w" + row.module_week + "l1"
+				});
+			});
+			if (!rows.length) return null;
+			const section = el("section", "dash-block");
+			section.setAttribute("aria-labelledby", "activity-heading");
+			const heading = sectionHead("Recent learning", "", "");
+			heading.querySelector("h2").id = "activity-heading";
+			const card = el("div", "card activity-card");
+			rows.slice(0, 6).forEach(function (item) {
+				const link = el("a", "activity-row");
+				link.href = item.href;
+				link.append(el("h3", "event-title", item.title));
+				if (item.detail) link.append(el("p", "event-detail", item.detail));
+				card.append(link);
+			});
+			section.append(heading, card);
+			return section;
+		}
+		function renderCatalogLoading() {
+			mainEl.classList.add("is-loading");
+			mainEl.setAttribute("aria-busy", "true");
+			const status = el("p", "sr-only", "Loading your courses");
+			status.setAttribute("role", "status");
+			const banner = el("div", "banner sk-banner");
+			banner.setAttribute("aria-hidden", "true");
+			const lines = el("div");
+			lines.append(el("div", "sk-line"), el("div", "sk-line sk-line-short"));
+			banner.append(el("div", "sk-avatar"), lines);
+			const grid = el("div", "learn-grid");
+			grid.setAttribute("aria-hidden", "true");
+			for (let i = 0; i < 3; i += 1) grid.append(el("div", "card sk sk-card"));
+			mainEl.append(status, banner, grid);
+		}
 		function render() {
 			const data = viewModel();
 			renderHeader(data);
@@ -1524,21 +1903,26 @@
 			mainEl.classList.remove("is-loading");
 			mainEl.removeAttribute("aria-busy");
 			mainEl.replaceChildren();
-			if (data.state === "loading") {
-				renderLoading();
+			if (catalog.status === "loading") {
+				renderCatalogLoading();
 				return;
 			}
-			if (data.state === "error") {
+			if (catalog.status === "error") {
+				mainEl.append(renderBanner(data));
 				renderError();
 				return;
 			}
-			const lead = data.welcomeOnly || data.state === "new" ? renderWelcome() : renderContinue(data);
-			mainEl.append(renderBanner(data), lead);
-			const assignments = renderModuleAssignments();
-			if (assignments) mainEl.append(assignments);
-			if (!data.welcomeOnly && data.state !== "completed") mainEl.append(renderStats(data), renderUpcoming(data));
-			const player = document.getElementById(data.welcomeOnly || data.state === "new" ? "welcome-player" : "lesson-player");
-			if (player) mountPlayer(player, data.welcomeOnly || data.state === "new" ? introVideoUrl : lessonVideoUrl);
+			mainEl.append(renderBanner(data));
+			if (!catalog.enrolled.length) mainEl.append(renderEmptyEnrolment(catalog.available.length > 0));
+			else {
+				mainEl.append(renderOverview(catalog.enrolled));
+				const featured = renderFeatured(catalog.enrolled);
+				if (featured) mainEl.append(featured);
+				mainEl.append(renderEnrolled(catalog.enrolled));
+			}
+			if (catalog.available.length) mainEl.append(renderExplore(catalog.available));
+			const activity = renderActivity(catalog.activity);
+			if (activity && catalog.enrolled.length) mainEl.append(activity);
 		}
 
 		function openMenu() {
@@ -1621,13 +2005,13 @@
 		});
 
 		window.addEventListener("storage", function (event) {
-			if (event.key === "brylla-course-progress" || event.key === "brylla-student-profile") render();
+			if (event.key === "brylla-course-progress" || event.key === "brylla-student-profile") startDashboard();
 		});
-		window.addEventListener("pageshow", function () { render(); });
+		window.addEventListener("pageshow", function (event) {
+			if (event.persisted && catalog.status === "ready") startDashboard();
+		});
 		function startDashboard() {
-			loadUnlocks().then(function () {
-				return Promise.all([loadLessonMedia(), loadAssignments()]);
-			}).then(render);
+			Promise.all([loadUnlocks(), loadCatalog(), loadAssignments()]).then(render);
 		}
 		render();
 		if (window.BryllaAuth) BryllaAuth.ready.then(startDashboard);
