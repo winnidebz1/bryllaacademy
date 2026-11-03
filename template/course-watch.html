@@ -390,12 +390,11 @@
 			return groups;
 		}
 		function renderSide() {
-			var summary = BryllaStudent.summary();
 			var sets = progressSets();
 			var lessonItems = ALL.filter(function (item) { return item.kind === "lesson"; });
-			var total = courseKey === "bookkeeping" ? BryllaStudent.lessons.length : lessonItems.length;
-			var doneCount = courseKey === "bookkeeping" ? (enrolled ? summary.lessonsDone : 0) : lessonItems.filter(function (item) { return sets.done[item.id]; }).length;
-			var pct = courseKey === "bookkeeping" ? (enrolled ? summary.percentComplete : 0) : (total ? Math.round(doneCount / total * 100) : 0);
+			var total = lessonItems.length;
+			var doneCount = lessonItems.filter(function (item) { return sets.done[item.id]; }).length;
+			var pct = total ? Math.round(doneCount / total * 100) : 0;
 			$("ctitle").textContent = courseTitle;
 			$("pfill").style.width = pct + "%";
 			$("pbar").setAttribute("aria-valuenow", String(pct));
@@ -496,19 +495,7 @@
 				actions = '<a class="btn primary" href="#study-materials">View here</a>';
 			}
 			if (summary.completed) actions += '<a class="btn" href="student-certificates.html">View certificate</a>';
-			if (!can) tab = "r";
-			else if (tab === "r") tab = "o";
-			var body;
-			if (tab === "o") body = '<div class="panel">' + esc(sel.summary) + "</div>";
-			else if (tab === "n") body = '<div class="panel"><textarea id="note" rows="4" aria-label="Your note for this lesson" placeholder="Add a note for this lesson"></textarea></div>';
-			else body = "";
-			var tabItems = can ? [["o", "Overview"], ["n", "Notes"]] : [];
-			var tabs = can
-				? '<div><div class="tabs" role="group" aria-label="Lesson sections">' +
-					tabItems.map(function (item) {
-						return '<button class="tab" type="button" data-t="' + item[0] + '" aria-pressed="' + (tab === item[0]) + '">' + item[1] + "</button>";
-					}).join("") + "</div>" + body + "</div>"
-				: "";
+			var tabs = can ? '<div class="panel">' + esc(sel.summary) + "</div>" : "";
 			var downloads = (sel && sel.downloads) || [];
 			var materials = '<section class="panel" id="study-materials"><h2>Study Materials</h2>' + (downloads.length
 				? "<ul>" + downloads.map(function (file) { return '<li><a href="' + esc(file.url) + '" target="_blank" rel="noopener">' + esc(file.name) + "</a></li>"; }).join("") + "</ul>"
@@ -516,13 +503,6 @@
 			var status = statusText ? '<p class="status" role="status">' + esc(statusText) + "</p>" : "";
 			var assignmentBlock = can && sel.week ? moduleAssignment({ week: sel.week, title: sel.topic || ("Week " + sel.week) }) : "";
 			$("main").innerHTML = '<div class="' + videoClass + '">' + video + "</div><div>" + head + '</div><div class="actions">' + actions + "</div>" + status + tabs + assignmentBlock + materials;
-			var note = $("note");
-			if (note) {
-				try { note.value = localStorage.getItem("note:" + sel.id) || ""; } catch (error) { note.value = ""; }
-				note.addEventListener("input", function () {
-					try { localStorage.setItem("note:" + sel.id, note.value); } catch (error) { /* notes stay on this page until storage is available */ }
-				});
-			}
 		}
 
 		function fileVideo(url) {

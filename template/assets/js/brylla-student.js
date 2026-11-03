@@ -71,9 +71,9 @@
 
 	function summary() {
 		var progress = loadProgress();
-		var started = Boolean(progress.enrolled && progress.started);
-		var current = currentLesson(progress);
 		var completed = doneCount(progress);
+		var started = Boolean(progress.enrolled && progress.started) || completed > 0;
+		var current = currentLesson(progress);
 		var allDone = completed >= lessons.length;
 		return {
 			enrolled: Boolean(progress.enrolled),
