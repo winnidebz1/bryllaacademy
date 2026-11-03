@@ -181,7 +181,7 @@
 		"notifications": 0,
 		"assignmentsDue": 0,
 		"openingSoon": 3,
-		"browseUrl": "/#courses",
+		"browseUrl": "student-dashboard.html",
 		"courses": []
 	}
 	</script>
@@ -463,7 +463,7 @@
 			heading.id = "courses-title";
 			const inProgress = courses.filter(function (course) { return course.status === "in_progress"; }).length;
 			titles.append(heading, el("p", "section-sub", courses.length + " enrolled, " + inProgress + " in progress"));
-			const browse = el("a", "text-link", "Browse all courses");
+			const browse = el("a", "text-link", "Dashboard");
 			browse.href = data.browseUrl;
 			browse.append(icon("arrow"));
 			head.append(titles, browse);
@@ -519,8 +519,8 @@
 		function renderEmpty() {
 			const panel = el("section", "empty-panel");
 			panel.append(el("h2", null, "You haven't enrolled in a course yet"));
-			panel.append(el("p", "course-meta", "Choose a short course and start when the lessons open."));
-			const link = el("a", "btn primary", "Browse courses");
+			panel.append(el("p", "course-meta", "Open your dashboard and click to enroll in the course that is open."));
+			const link = el("a", "btn primary", "Go to dashboard");
 			link.href = data.browseUrl;
 			panel.append(link);
 			mainEl.append(panel);

@@ -421,6 +421,7 @@
 			justify-content: center;
 			flex: 0 0 auto;
 			border-radius: var(--radius-pill);
+			font-family: inherit;
 			font-size: 14px;
 			font-weight: 500;
 			line-height: 1;
@@ -1600,8 +1601,7 @@
 			const live = BryllaStudent.lives.filter(function (item) { return item.id === itemId; })[0];
 			return live ? live.title : "";
 		}
-		function courseHref(course, owned) {
-			if (!owned) return course.id === "bookkeeping" ? "course-details.html" : "course-details.html?course=" + encodeURIComponent(course.id);
+		function courseHref(course) {
 			if (course.id === "bookkeeping" && course.lessonId) return "course-watch.html?item=" + encodeURIComponent(course.lessonId);
 			if (course.id === "bookkeeping") return "course-watch.html";
 			return "course-watch.html?course=" + encodeURIComponent(course.id);
@@ -1647,13 +1647,14 @@
 				summary: record.summary || "",
 				mark: String(record.title || "C").trim().charAt(0).toUpperCase() || "C",
 				owned: owned,
-				status: owned ? state.status : "",
-				action: owned ? state.action : "Enroll Now",
+				status: owned ? state.status : "Open now",
+				action: owned ? state.action : "Click to enroll",
 				showBar: Boolean(owned && state.showBar),
 				percent: owned ? state.percent : 0,
 				lessonTitle: owned ? progress.lessonTitle : "",
 				lessonId: owned ? progress.lessonId : "",
-				price: owned ? "" : moneyLabel(record.price_amount, record.currency),
+				price: "",
+				open: !owned,
 				href: ""
 			};
 		}
@@ -1703,12 +1704,12 @@
 						const enrolled = ownedIds.filter(function (id) { return courses[id] || id; }).map(function (id) {
 							const record = courses[id] || { id: id, title: "Course" };
 							const shaped = shapeCourse(record, true, progressFor(id, progressRows, moduleRows));
-							shaped.href = courseHref(shaped, true);
+							shaped.href = courseHref(shaped);
 							return shaped;
 						}).sort(function (a, b) { return a.title.localeCompare(b.title); });
 						const available = Object.keys(courses).filter(function (id) { return !owned[id]; }).map(function (id) {
 							const shaped = shapeCourse(courses[id], false, { state: learningState(0, 0), lessonTitle: "", lessonId: "" });
-							shaped.href = courseHref(shaped, false);
+							shaped.href = courseHref(shaped);
 							return shaped;
 						}).sort(function (a, b) { return a.title.localeCompare(b.title); });
 						const activity = [];
@@ -1741,20 +1742,46 @@
 				catalog = { status: "error", enrolled: [], available: [], activity: [], error: "Your courses could not be loaded." };
 			});
 		}
+		function enrolOpen(course, button) {
+			const auth = window.BryllaAuth;
+			if (!auth || !auth.client) return;
+			button.disabled = true;
+			button.textContent = "Enrolling…";
+			auth.client.rpc("enrol_open_course", { p_course: course.id }).then(function (result) {
+				if (result.error) {
+					button.disabled = false;
+					button.textContent = "Click to enroll";
+					let note = button.parentElement.querySelector(".enrol-error");
+					if (!note) {
+						note = el("p", "learn-meta enrol-error", "");
+						button.before(note);
+					}
+					note.textContent = result.error.message || "The course could not be opened.";
+					return;
+				}
+				if (course.id === "bookkeeping" && window.BryllaStudent) BryllaStudent.startCourse();
+				location.assign(courseHref(course));
+			}).catch(function () {
+				button.disabled = false;
+				button.textContent = "Click to enroll";
+			});
+		}
 		function learnCard(course) {
 			const article = el("article", "learn-card");
-			const cover = el("a", "learn-cover");
-			cover.href = course.href;
+			const cover = course.open ? el("div", "learn-cover") : el("a", "learn-cover");
+			if (!course.open) cover.href = course.href;
 			cover.append(el("span", "learn-mark", course.mark));
 			const body = el("div", "learn-body");
 			const title = el("h3", "learn-title");
-			const titleLink = el("a", null, course.title);
-			titleLink.href = course.href;
-			title.append(titleLink);
+			if (course.open) title.textContent = course.title;
+			else {
+				const titleLink = el("a", null, course.title);
+				titleLink.href = course.href;
+				title.append(titleLink);
+			}
 			body.append(title);
 			if (course.summary) body.append(el("p", "learn-summary", course.summary));
 			if (course.lessonTitle && course.status === "In Progress") body.append(el("p", "learn-meta", "Current lesson: " + course.lessonTitle));
-			if (course.price) body.append(el("p", "learn-price", course.price));
 			if (course.status) body.append(el("p", "learn-status", course.status));
 			if (course.showBar) {
 				const progress = el("div", "learn-progress");
@@ -1772,12 +1799,17 @@
 				progress.append(labels, track);
 				body.append(progress);
 			}
-			const button = el("a", "btn-fill", course.action);
-			button.href = course.href;
-			if (course.owned && course.id === "bookkeeping") {
-				button.addEventListener("click", function () {
-					if (window.BryllaStudent) BryllaStudent.startCourse();
-				});
+			const button = course.open ? el("button", "btn-fill", course.action) : el("a", "btn-fill", course.action);
+			if (course.open) {
+				button.type = "button";
+				button.addEventListener("click", function () { enrolOpen(course, button); });
+			} else {
+				button.href = course.href;
+				if (course.id === "bookkeeping") {
+					button.addEventListener("click", function () {
+						if (window.BryllaStudent) BryllaStudent.startCourse();
+					});
+				}
 			}
 			body.append(button);
 			article.append(cover, body);
@@ -1838,7 +1870,7 @@
 		function renderExplore(courses) {
 			const section = el("section", "dash-block");
 			section.setAttribute("aria-labelledby", "explore-heading");
-			const heading = sectionHead("Explore courses", "", "");
+			const heading = sectionHead("Open now", "", "");
 			heading.querySelector("h2").id = "explore-heading";
 			const grid = el("div", "learn-grid");
 			courses.forEach(function (course) { grid.append(learnCard(course)); });
@@ -1849,7 +1881,7 @@
 			const section = el("section", "card empty-enrol");
 			section.append(el("h2", null, "You have not enrolled in a course yet"));
 			section.append(el("p", null, hasCourses
-				? "When you enrol, the course appears here with your progress. Browse the courses below to get started."
+				? "The course that is open is below. Click to enroll, and your lessons will start."
 				: "There are no courses open for enrolment right now."));
 			return section;
 		}
