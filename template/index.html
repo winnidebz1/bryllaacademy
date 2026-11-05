@@ -142,7 +142,15 @@
 		.course-meta { display: flex; align-items: flex-start; gap: var(--space-2); margin: 0 0 var(--space-2); color: #40566b; font-size: 14px; line-height: 1.5; }
 		.course-meta i { width: 16px; flex: 0 0 16px; margin-top: 4px; color: var(--teal-dark); text-align: center; }
 		.course-meta strong { color: var(--ink); font-weight: 650; }
-		.courses-section .enroll-button { display: flex; min-height: 48px; align-items: center; justify-content: center; margin-top: var(--space-2); border-radius: 8px; font-size: 14px; }
+		.courses-section .enroll-button { display: flex; min-height: 48px; align-items: center; justify-content: center; margin-top: var(--space-2); border-radius: 8px; font-size: 14px; text-decoration: none; }
+		.complete-enrollment { color: #6d7f92; background: #d7e0e8; border: 1px solid #d7e0e8; }
+		.complete-enrollment:hover, .complete-enrollment:focus-visible { color: #fff; background: var(--navy); border-color: var(--navy); }
+		.pay-choice { display: grid; gap: 8px; }
+		.pay-choice + .pay-choice { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+		.pay-choice-label { margin: 0; color: var(--navy-deep); font-size: 14px; font-weight: 750; }
+		.momo-pay { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; }
+		.momo-pay img { width: 36px; height: 36px; }
+		.momo-pay strong { font-weight: 800; }
 		.course-syllabus-link { align-self: center; margin-top: var(--space-2); padding: 4px 8px; border: 0; background: transparent; color: #075f5a; font: inherit; font-size: 13px; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
 		.coming-soon-group { display: grid; gap: var(--space-2); }
 		.coming-soon-heading { margin: 0; color: #53677a; font-size: 14px; font-weight: 650; letter-spacing: .01em; }
@@ -433,11 +441,11 @@
 								<p class="tuition-label">Open Now</p>
 							</div>
 							<h3 id="bookkeeping-title" data-listing="title">Bookkeeping</h3>
-							<p class="featured-course-copy" data-listing="summary">US bookkeeping training over six weeks, with about eight weeks of learning and support. Record transactions, work in QuickBooks Online and Xero, reconcile accounts, and close a client's books.</p>
+							<p class="featured-course-copy" data-listing="summary">An eight-week US bookkeeping training programme, featuring six weeks of intensive bookkeeping instruction, followed by dedicated time for catch-up, practical consolidation, and mentorship. Learn to record financial transactions, work with QuickBooks Online and Xero, reconcile accounts, and manage clients' books.</p>
 							<ul class="course-list" data-listing="highlights">
 								<li><i class="fa-solid fa-check" aria-hidden="true"></i><span>Debits, credits, and the chart of accounts</span></li>
-								<li><i class="fa-solid fa-check" aria-hidden="true"></i><span>QuickBooks Online, payables, and reconciliations</span></li>
-								<li><i class="fa-solid fa-check" aria-hidden="true"></i><span>Xero, merchant payouts, and month-end reports</span></li>
+								<li><i class="fa-solid fa-check" aria-hidden="true"></i><span>QuickBooks Online, accounts payable, and reconciliations</span></li>
+								<li><i class="fa-solid fa-check" aria-hidden="true"></i><span>Xero, merchant payouts, and month-end reporting</span></li>
 							</ul>
 						</div>
 						<div class="featured-course-enrollment" aria-label="Bookkeeping fees">
@@ -449,9 +457,10 @@
 							</ul>
 							<p class="course-meta"><i class="fa-solid fa-check" aria-hidden="true"></i><span data-listing="includes">Includes bookkeeping training and mentorship.</span></p>
 							<p class="fee-note" data-listing="fee-note">Pay the GHS 50 registration fee first. The remaining GHS 550 covers enrolment in the course.</p>
-							<p class="course-meta"><i class="fa-regular fa-clock" aria-hidden="true"></i><span data-listing="duration">6 weeks of training, about 8 weeks with support</span></p>
-							<p class="course-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Next cohort starts <strong data-listing="cohort">4 January 2027</strong></span></p>
+							<p class="course-meta"><i class="fa-regular fa-clock" aria-hidden="true"></i><span data-listing="duration">Eight weeks, from 4 January 2027 to 1 March 2027</span></p>
+							<p class="course-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Cohort: <strong data-listing="cohort">4 January 2027 to 1 March 2027</strong></span></p>
 							<button class="btn btn-brand enroll-button" type="button" data-bookkeeping-pay>Register</button>
+							<a class="btn enroll-button complete-enrollment" href="https://selar.com/1246a06832" target="_blank" rel="noopener">Complete Enrollment</a>
 							<a class="course-syllabus-link" href="course-details">View more</a>
 						</div>
 					</article>
@@ -489,9 +498,17 @@
 						<p class="mb-0" id="bookkeeping-pay-title">Choose how you want to pay</p>
 						<button class="course-dialog-close" type="button" data-dialog-close aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 					</div>
-					<div class="d-grid gap-2">
-						<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">International payment</a>
-						<a class="btn btn-outline-brand" href="bookkeeping-registration">Ghanaian payment</a>
+					<div class="pay-choice">
+						<p class="pay-choice-label">International payment</p>
+						<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">Registration fee</a>
+						<a class="btn complete-enrollment" href="https://selar.com/1246a06832" target="_blank" rel="noopener">Complete Enrollment</a>
+					</div>
+					<div class="pay-choice">
+						<p class="pay-choice-label">Ghanaian payment</p>
+						<a class="btn btn-outline-brand momo-pay" href="bookkeeping-registration">
+							<img src="assets/img/mtn-momo.svg" alt="MTN MoMo" width="36" height="36">
+							<strong>Pay with MTN MoMo</strong>
+						</a>
 					</div>
 				</div>
 			</dialog>
@@ -501,7 +518,7 @@
 						<h3 id="course-syllabus-title">Bookkeeping syllabus</h3>
 						<button class="course-dialog-close" type="button" data-dialog-close aria-label="Close syllabus"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 					</div>
-					<p class="syllabus-intro">The bookkeeping training lasts six weeks. The full learning and support period is about eight weeks. Weeks 1 to 6 each have recorded lessons and a practical assignment.</p>
+					<p class="syllabus-intro">The programme runs for eight weeks, from 4 January 2027 to 1 March 2027. Six weeks are intensive bookkeeping instruction. The remaining time is for catch-up, practical consolidation, and mentorship.</p>
 					<div class="syllabus-module">
 						<h4>Week 1: Bookkeeping foundations</h4>
 						<ul class="syllabus-list">

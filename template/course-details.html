@@ -4,7 +4,7 @@
 	<script src="assets/js/brylla-errors.js"></script>
 	<meta charset="utf-8">
 	<meta name="viewport" content="width=device-width, initial-scale=1">
-	<meta name="description" content="Bookkeeping at Brylla Academy: six weeks of lessons and practical assignments, a catch-up week, and a mentorship week. The next cohort starts 4 January 2027.">
+	<meta name="description" content="Bookkeeping at Brylla Academy: an eight-week programme from 4 January 2027 to 1 March 2027.">
 	<meta name="theme-color" content="#073b70">
 	<title>Bookkeeping course details | Brylla Academy</title>
 	<link rel="icon" type="image/png" href="assets/img/logo.png">
@@ -37,6 +37,14 @@
 		.btn { border-radius: 8px; font-weight: 700; padding: 12px 20px; }
 		.btn-brand { color: #fff; background: var(--navy); border: 1px solid var(--navy); text-decoration: none; }
 		.btn-brand:hover, .btn-brand:focus { color: #fff; background: var(--navy-deep); }
+		.complete-enrollment { color: #6d7f92; background: #d7e0e8; border: 1px solid #d7e0e8; text-decoration: none; }
+		.complete-enrollment:hover, .complete-enrollment:focus-visible { color: #fff; background: var(--navy); border-color: var(--navy); }
+		.pay-choice { display: grid; gap: 8px; }
+		.pay-choice + .pay-choice { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--line); }
+		.pay-choice-label { margin: 0 0 2px; color: var(--navy-deep); font-size: 14px; font-weight: 750; }
+		.momo-pay { display: flex; align-items: center; justify-content: center; gap: 10px; min-height: 52px; text-decoration: none; }
+		.momo-pay img { width: 36px; height: 36px; }
+		.momo-pay strong { font-weight: 800; }
 		.btn-accent { color: var(--navy-deep); background: var(--teal); border: 1px solid var(--teal); text-decoration: none; }
 		.btn-outline-brand { color: var(--navy); border: 1px solid #bfd0df; background: #fff; text-decoration: none; }
 		.pay-dialog { width: min(440px, calc(100% - 32px)); padding: 0; border: 1px solid #cfdae3; border-radius: 12px; background: #fff; color: var(--ink); }
@@ -166,7 +174,7 @@
 			<article class="detail-card">
 				<p class="eyebrow">Open now</p>
 				<h1 data-listing="title">Bookkeeping</h1>
-				<p class="lead" data-listing="summary">US bookkeeping training over six weeks, with about eight weeks of learning and support. Record transactions, work in QuickBooks Online and Xero, reconcile accounts, and close a client's books.</p>
+				<p class="lead" data-listing="summary">An eight-week US bookkeeping training programme, featuring six weeks of intensive bookkeeping instruction, followed by dedicated time for catch-up, practical consolidation, and mentorship. Learn to record financial transactions, work with QuickBooks Online and Xero, reconcile accounts, and manage clients' books.</p>
 				<ul class="facts">
 					<li>Total course fee <span data-listing="price" data-price-amount="600" data-price-currency="GHS">GHS 600</span></li>
 					<li>Registration fee <span data-listing="registration" data-price-amount="50" data-price-currency="GHS">GHS 50</span>, paid first</li>
@@ -175,13 +183,14 @@
 					<li>Weeks 1–6: lessons and practical assignments</li>
 					<li>Week 7: catch-up for outstanding assignments</li>
 					<li>Week 8: mentorship</li>
-					<li>Next cohort: <strong data-listing="cohort">4 January 2027</strong></li>
+					<li>Cohort: <strong data-listing="cohort">4 January 2027 to 1 March 2027</strong></li>
 				</ul>
 				<div class="actions">
 					<button class="btn btn-brand" type="button" data-bookkeeping-pay>Register</button>
+					<a class="btn complete-enrollment" href="https://selar.com/1246a06832" target="_blank" rel="noopener">Complete Enrollment</a>
 					<a class="btn btn-outline-brand" href="/#courses">All courses</a>
 				</div>
-				<p class="syllabus-intro">The bookkeeping training lasts six weeks. The full learning and support period is about eight weeks. Weeks 1 to 6 cover recorded lessons and practical assignments. Week 7 is for catching up on outstanding assignments. Week 8 is mentorship.</p>
+				<p class="syllabus-intro">The programme runs for eight weeks, from 4 January 2027 to 1 March 2027. Six weeks are intensive bookkeeping instruction. The remaining time is for catch-up, practical consolidation, and mentorship.</p>
 				<section class="syllabus-module" aria-labelledby="week-1">
 					<h2 id="week-1">Week 1: Bookkeeping foundations</h2>
 					<ul class="syllabus-list">
@@ -269,9 +278,17 @@
 				<p id="bookkeeping-pay-title">Choose how you want to pay</p>
 				<button class="pay-dialog-close" type="button" data-pay-close aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
 			</div>
-			<div class="actions">
-				<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">International payment</a>
-				<a class="btn btn-outline-brand" href="bookkeeping-registration">Ghanaian payment</a>
+			<div class="pay-choice">
+				<p class="pay-choice-label">International payment</p>
+				<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">Registration fee</a>
+				<a class="btn complete-enrollment" href="https://selar.com/1246a06832" target="_blank" rel="noopener">Complete Enrollment</a>
+			</div>
+			<div class="pay-choice">
+				<p class="pay-choice-label">Ghanaian payment</p>
+				<a class="btn btn-outline-brand momo-pay" href="bookkeeping-registration">
+					<img src="assets/img/mtn-momo.svg" alt="MTN MoMo" width="36" height="36">
+					<strong>Pay with MTN MoMo</strong>
+				</a>
 			</div>
 		</div>
 	</dialog>
