@@ -1090,73 +1090,165 @@
 		refresh();
 	}
 
-	function renderQuiz(root, data) {
-		var query = "";
-		var focusId = "";
-		function draw() {
-			var list = data.quizzes.filter(function (quiz) { return quiz.title.toLowerCase().indexOf(query.toLowerCase()) !== -1; });
-			root.innerHTML = '<h1 class="h5 fw-bold">Quiz</h1><div class="d-flex justify-content-end mb-3"><a class="btn btn-primary rounded-pill" href="#add-quiz">Add quiz</a></div>' +
-				'<div class="instructor-tools d-flex flex-wrap gap-2 mb-3"><label class="visually-hidden" for="quiz-search">Search quizzes</label><input class="form-control" id="quiz-search" placeholder="Search quizzes" value="' + esc(query) + '"></div>' +
-				(list.length ? table(
-					[{ label: "Quiz", sort: "title" }, { label: "Course" }, { label: "Module" }, { label: "Questions" }, { label: "Time limit" }, { label: "Pass mark" }, { label: "Actions" }],
-					list.map(function (quiz) {
-						var course = courseById(data, quiz.courseId);
-						var module = course && course.modules ? course.modules.filter(function (item) { return item.week === Number(quiz.moduleWeek); })[0] : null;
-						return "<tr>" + cell("Quiz", esc(quiz.title)) + cell("Course", esc(course ? course.title : "")) + cell("Module", module ? "Week " + module.week + ": " + esc(module.title) : "Not set") +
-							cell("Questions", String(quiz.questions || 0)) + cell("Time limit", quiz.timeLimit ? quiz.timeLimit + " min" : "Not set") + cell("Pass mark", quiz.passMark == null ? "Not set" : quiz.passMark + "%") +
-							cell("Actions", '<a class="btn btn-light btn-sm" href="instructor-quiz-results.html?quiz=' + esc(quiz.id) + '" aria-label="View results for ' + esc(quiz.title) + '" title="View results">View results</a>') + "</tr>";
-					})
-				) : empty(data.quizzes.length ? "No quizzes match." : "No quizzes yet. Add a week quiz for a course.")) +
-				'<div class="card mt-4" id="add-quiz"><div class="card-body"><h2 class="h5 fw-bold">Add quiz</h2><form id="quiz-form"><label class="form-label" for="quiz-course">Course</label><select class="form-select mb-2" id="quiz-course">' +
-				data.courses.map(function (course) { return '<option value="' + esc(course.id) + '">' + esc(course.title) + "</option>"; }).join("") + '</select><label class="form-label" for="quiz-week">Module</label><select class="form-select mb-3" id="quiz-week"></select><button class="btn btn-primary rounded-pill" type="submit">Save quiz</button></form></div></div>';
-			if (focusId) restoreField(focusId);
-			document.getElementById("quiz-search").addEventListener("input", function (event) { query = event.target.value; focusId = "quiz-search"; draw(); });
-			function fill() {
-				var course = courseById(data, document.getElementById("quiz-course").value);
-				var select = document.getElementById("quiz-week");
-				select.innerHTML = course && course.modules.length ? course.modules.map(function (module) { return '<option value="' + module.week + '">Week ' + module.week + "</option>"; }).join("") : '<option value="">No modules yet</option>';
+	function renderQuiz(root) {
+		var current = staffClient();
+		root.innerHTML = '<h1 class="h5 fw-bold">Quizzes</h1><p role="status">Loading quizzes…</p>';
+		if (!current) {
+			root.innerHTML = '<h1 class="h5 fw-bold">Quizzes</h1>' + empty("Sign in again to add quiz questions.");
+			return;
+		}
+		function questionFields(question) {
+			var choices = question && Array.isArray(question.choices) ? question.choices : ["", "", "", ""];
+			while (choices.length < 4) choices.push("");
+			var correct = question && question.correct_index != null ? question.correct_index : 0;
+			return '<fieldset class="border rounded-3 p-3 mb-3"><label class="form-label">Question</label><textarea class="form-control mb-2" data-prompt rows="2" required>' + esc(question && question.prompt || "") + '</textarea>' +
+				choices.slice(0, 4).map(function (choice, index) {
+					return '<label class="form-label">Answer ' + String.fromCharCode(65 + index) + '</label><input class="form-control mb-2" data-choice value="' + esc(choice) + '" required>';
+				}).join("") +
+				'<label class="form-label">Correct answer</label><select class="form-select mb-2" data-correct>' +
+				[0, 1, 2, 3].map(function (index) { return '<option value="' + index + '"' + (index === correct ? " selected" : "") + ">Answer " + String.fromCharCode(65 + index) + "</option>"; }).join("") +
+				'</select><label class="form-label">Explanation, optional</label><input class="form-control mb-2" data-explanation value="' + esc(question && question.explanation || "") + '">' +
+				'<button class="btn btn-light btn-sm" type="button" data-remove-question>Remove question</button></fieldset>';
+		}
+		function draw(quizzes) {
+			var modules = [{ key: "getting-started", title: "Getting started" }].concat(BOOKKEEPING_MODULES.map(function (module) {
+				return { key: String(module.week), title: "Week " + module.week + ": " + module.title };
+			}));
+			root.innerHTML = '<h1 class="h5 fw-bold">Quizzes</h1><p class="mb-3">Add the questions and the correct answers for a module. Set how many minutes students have. The score is calculated when they submit.</p>' +
+				(quizzes.length ? "<ul class=\"list-unstyled mb-4\">" + quizzes.map(function (quiz) {
+					var module = modules.filter(function (item) { return item.key === quiz.module_key; })[0];
+					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span><strong>' + esc(quiz.title) + "</strong><br><small>" + esc(module ? module.title : quiz.module_key) + " · " + (quiz.questions || []).length + " questions · " + quiz.minutes + " min · pass " + quiz.pass_percent + '%</small></span><span class="d-inline-flex gap-2"><button class="btn btn-light btn-sm" type="button" data-edit-quiz="' + esc(quiz.id) + '">Edit</button><button class="btn btn-light btn-sm" type="button" data-delete-quiz="' + esc(quiz.id) + '">Delete</button></span></li>';
+				}).join("") + "</ul>" : '<p class="mb-4">No quizzes yet.</p>') +
+				'<div class="card" id="quiz-editor"><div class="card-body"><h2 class="h5 fw-bold">Quiz questions</h2><form id="quiz-form">' +
+				'<label class="form-label" for="quiz-course">Course</label><select class="form-select mb-2" id="quiz-course"><option value="bookkeeping">Bookkeeping</option></select>' +
+				'<label class="form-label" for="quiz-module">Module</label><select class="form-select mb-2" id="quiz-module">' + modules.map(function (module) { return '<option value="' + esc(module.key) + '">' + esc(module.title) + "</option>"; }).join("") + "</select>" +
+				'<label class="form-label" for="quiz-title">Title</label><input class="form-control mb-2" id="quiz-title" required>' +
+				'<label class="form-label" for="quiz-minutes">Time limit in minutes</label><input class="form-control mb-2" id="quiz-minutes" type="number" min="1" max="180" value="10" required>' +
+				'<label class="form-label" for="quiz-pass">Pass mark (%)</label><input class="form-control mb-3" id="quiz-pass" type="number" min="1" max="100" value="70" required>' +
+				'<div id="quiz-questions"></div><button class="btn btn-light rounded-pill me-2" type="button" id="add-question">Add question</button>' +
+				'<button class="btn btn-primary rounded-pill" type="submit">Save quiz</button><p id="quiz-status" class="mt-2 mb-0" role="status"></p></form></div></div>';
+			var box = document.getElementById("quiz-questions");
+			function addQuestion(question) { box.insertAdjacentHTML("beforeend", questionFields(question)); }
+			addQuestion();
+			document.getElementById("add-question").addEventListener("click", function () { addQuestion(); });
+			box.addEventListener("click", function (event) {
+				var button = event.target.closest("[data-remove-question]");
+				if (!button || box.querySelectorAll("fieldset").length < 2) return;
+				button.closest("fieldset").remove();
+			});
+			function fill(quiz) {
+				document.getElementById("quiz-module").value = quiz.module_key;
+				document.getElementById("quiz-title").value = quiz.title;
+				document.getElementById("quiz-minutes").value = String(quiz.minutes || 10);
+				document.getElementById("quiz-pass").value = String(quiz.pass_percent || 70);
+				box.innerHTML = "";
+				(quiz.questions || []).forEach(addQuestion);
+				if (!quiz.questions || !quiz.questions.length) addQuestion();
+				document.getElementById("quiz-editor").scrollIntoView({ block: "start" });
 			}
-			document.getElementById("quiz-course").addEventListener("change", fill);
-			fill();
+			root.querySelectorAll("[data-edit-quiz]").forEach(function (button) {
+				button.addEventListener("click", function () {
+					var quiz = quizzes.filter(function (item) { return item.id === button.getAttribute("data-edit-quiz"); })[0];
+					if (quiz) fill(quiz);
+				});
+			});
+			root.querySelectorAll("[data-delete-quiz]").forEach(function (button) {
+				button.addEventListener("click", function () {
+					confirmAction("Delete this quiz and its questions?").then(function (ok) {
+						if (!ok) return;
+						current.rpc("delete_course_quiz", { p_quiz: button.getAttribute("data-delete-quiz") }).then(function (result) {
+							if (result.error) toast(result.error.message || "The quiz could not be deleted.");
+							else load();
+						});
+					});
+				});
+			});
 			document.getElementById("quiz-form").addEventListener("submit", function (event) {
 				event.preventDefault();
-				var week = document.getElementById("quiz-week").value;
-				if (!week) { toast("This course has no modules yet."); return; }
-				var courseId = document.getElementById("quiz-course").value;
-				data.quizzes.push({ id: courseId + "-w" + week + "-" + Date.now(), courseId: courseId, moduleWeek: Number(week), title: "Week " + week + " quiz", questions: 0, timeLimit: null, passMark: null, status: "draft" });
-				save(data);
-				toast("Quiz saved.");
-				draw();
+				var status = document.getElementById("quiz-status");
+				var questions = Array.prototype.map.call(box.querySelectorAll("fieldset"), function (field) {
+					return {
+						prompt: field.querySelector("[data-prompt]").value.trim(),
+						choices: Array.prototype.map.call(field.querySelectorAll("[data-choice]"), function (input) { return input.value.trim(); }),
+						correct_index: Number(field.querySelector("[data-correct]").value),
+						explanation: field.querySelector("[data-explanation]").value.trim()
+					};
+				});
+				status.textContent = "Saving quiz…";
+				current.rpc("save_course_quiz", {
+					p_course: document.getElementById("quiz-course").value,
+					p_module: document.getElementById("quiz-module").value,
+					p_title: document.getElementById("quiz-title").value.trim(),
+					p_minutes: Number(document.getElementById("quiz-minutes").value),
+					p_pass: Number(document.getElementById("quiz-pass").value),
+					p_questions: questions
+				}).then(function (result) {
+					if (result.error) {
+						status.textContent = result.error.message || "The quiz could not be saved.";
+						return;
+					}
+					toast("Quiz saved. Students are scored automatically when they submit.");
+					load();
+				});
 			});
 		}
-		draw();
+		function load() {
+			current.rpc("staff_course_quizzes").then(function (result) {
+				if (!document.body.contains(root)) return;
+				if (result.error) {
+					root.innerHTML = '<h1 class="h5 fw-bold">Quizzes</h1>' + empty(result.error.message || "Quizzes could not be loaded.");
+					return;
+				}
+				draw(result.data || []);
+			});
+		}
+		load();
 	}
 
-	function renderResults(root, data) {
+	function renderResults(root) {
 		var quizFilter = new URLSearchParams(location.search).get("quiz") || "all";
 		var resultFilter = "all";
-		function draw() {
-			var list = data.results.filter(function (row) {
-				if (quizFilter !== "all" && row.quizId !== quizFilter) return false;
-				if (resultFilter === "pass" && !row.passed) return false;
-				if (resultFilter === "fail" && row.passed) return false;
-				return true;
-			});
-			root.innerHTML = '<h1 class="h5 fw-bold">Quiz results</h1><div class="d-flex flex-wrap gap-2 mb-3"><label class="form-label mb-0" for="result-quiz">Quiz</label><select class="form-select w-auto" id="result-quiz"><option value="all">All quizzes</option>' +
-				data.quizzes.map(function (quiz) { return '<option value="' + esc(quiz.id) + '"' + (quiz.id === quizFilter ? " selected" : "") + ">" + esc(quiz.title) + "</option>"; }).join("") +
-				'</select><label class="form-label mb-0" for="result-status">Result</label><select class="form-select w-auto" id="result-status"><option value="all">All results</option><option value="pass">Pass</option><option value="fail">Not passed</option></select></div>' +
-				(list.length ? table(
-					[{ label: "Student" }, { label: "Quiz" }, { label: "Score" }, { label: "Percentage" }, { label: "Result" }, { label: "Attempt" }, { label: "Date" }],
-					list.map(function (row) {
-						var quiz = data.quizzes.filter(function (item) { return item.id === row.quizId; })[0];
-						return "<tr>" + cell("Student", esc(row.student)) + cell("Quiz", esc(quiz ? quiz.title : row.quizId)) + cell("Score", esc(row.score)) + cell("Percentage", rate(row.percent)) + cell("Result", statusBadge(row.passed ? "pass" : "not passed")) + cell("Attempt", String(row.attempt || 1)) + cell("Date", formatDate(row.date)) + "</tr>";
-					})
-				) : empty("No quiz results yet. They appear here after a student submits a quiz."));
-			document.getElementById("result-quiz").addEventListener("change", function (event) { quizFilter = event.target.value; draw(); });
-			document.getElementById("result-status").value = resultFilter;
-			document.getElementById("result-status").addEventListener("change", function (event) { resultFilter = event.target.value; draw(); });
+		var current = staffClient();
+		root.innerHTML = '<h1 class="h5 fw-bold">Quiz results</h1><p role="status">Loading results…</p>';
+		if (!current) {
+			root.innerHTML = '<h1 class="h5 fw-bold">Quiz results</h1>' + empty("Sign in again to see quiz scores.");
+			return;
 		}
-		draw();
+		current.rpc("staff_quiz_results").then(function (result) {
+			if (!document.body.contains(root)) return;
+			if (result.error) {
+				root.innerHTML = '<h1 class="h5 fw-bold">Quiz results</h1>' + empty(result.error.message || "Quiz results could not be loaded.");
+				return;
+			}
+			var rows = result.data || [];
+			function draw() {
+				var list = rows.filter(function (row) {
+					if (quizFilter !== "all" && row.quiz_id !== quizFilter) return false;
+					if (resultFilter === "pass" && !row.passed) return false;
+					if (resultFilter === "fail" && row.passed) return false;
+					return true;
+				});
+				var seen = {};
+				var options = rows.filter(function (row) {
+					if (seen[row.quiz_id]) return false;
+					seen[row.quiz_id] = true;
+					return true;
+				});
+				root.innerHTML = '<h1 class="h5 fw-bold">Quiz results</h1><div class="d-flex flex-wrap gap-2 mb-3"><label class="form-label mb-0" for="result-quiz">Quiz</label><select class="form-select w-auto" id="result-quiz"><option value="all">All quizzes</option>' +
+					options.map(function (quiz) { return '<option value="' + esc(quiz.quiz_id) + '"' + (quiz.quiz_id === quizFilter ? " selected" : "") + ">" + esc(quiz.quiz_title) + "</option>"; }).join("") +
+					'</select><label class="form-label mb-0" for="result-status">Result</label><select class="form-select w-auto" id="result-status"><option value="all">All results</option><option value="pass">Pass</option><option value="fail">Not passed</option></select></div>' +
+					(list.length ? table(
+						[{ label: "Student" }, { label: "Quiz" }, { label: "Percentage" }, { label: "Result" }, { label: "Attempt" }, { label: "Date" }],
+						list.map(function (row) {
+							return "<tr>" + cell("Student", esc(row.student)) + cell("Quiz", esc(row.quiz_title)) + cell("Percentage", rate(row.percent)) + cell("Result", statusBadge(row.passed ? "pass" : "not passed")) + cell("Attempt", String(row.attempt || 1)) + cell("Date", formatDate(row.submitted_at)) + "</tr>";
+						})
+					) : empty("No quiz results yet. They appear here after a student submits a quiz."));
+				document.getElementById("result-quiz").addEventListener("change", function (event) { quizFilter = event.target.value; draw(); });
+				document.getElementById("result-status").value = resultFilter;
+				document.getElementById("result-status").addEventListener("change", function (event) { resultFilter = event.target.value; draw(); });
+			}
+			draw();
+		});
 	}
 
 	function renderCertificates(root) {
@@ -1194,13 +1286,13 @@
 		document.getElementById("preview-profile").addEventListener("click", function () {
 			document.getElementById("profile-preview").innerHTML = '<div class="border rounded p-3"><p class="h5">' + esc(instructorName(data)) + '</p><p>' + esc(person.bio || "No bio yet.") + "</p><p class=\"mb-0\">" + esc(person.email || "No email yet.") + "</p></div>";
 		});
-		if (currentArea() === "admin") bindFounderPassword(root);
+		bindFounderPassword(root);
 	}
 
 	function bindFounderPassword(root) {
 		var card = document.createElement("div");
 		card.className = "card mt-3";
-		card.innerHTML = '<div class="card-body"><h2 class="h6 fw-bold">Change login password</h2><p>This updates the password you use to sign in.</p><form id="founder-password-form">' +
+		card.innerHTML = '<div class="card-body"><h2 class="h6 fw-bold">Change login password</h2><p>If you were given a temporary password, set your own password here. This is also where you change it later.</p><form id="founder-password-form">' +
 			'<label class="form-label" for="current-password">Current password</label><input class="form-control mb-2" id="current-password" type="password" autocomplete="current-password" required>' +
 			'<label class="form-label" for="new-password">New password</label><input class="form-control mb-2" id="new-password" type="password" autocomplete="new-password" minlength="8" required>' +
 			'<label class="form-label" for="confirm-password">Confirm new password</label><input class="form-control mb-3" id="confirm-password" type="password" autocomplete="new-password" minlength="8" required>' +
@@ -1293,13 +1385,13 @@
 		return '<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>';
 	}
 	function moduleUnlockCard() {
-		return '<div class="card mb-3" id="module-unlocks"><div class="card-body"><h2 class="h5 fw-bold">Open course modules</h2><p class="mb-3">Open a module when students should see it. This applies to Bookkeeping and to every course added later.</p><div id="module-unlock-list"><p role="status">Loading modules…</p></div></div></div>';
+		return '<div class="card mb-3" id="module-unlocks"><div class="card-body"><h2 class="h5 fw-bold">Open course modules</h2><p class="mb-3">Getting started opens at midnight on 4 January 2027. Week 1 opens at midnight on 5 January 2027. Each following week opens at midnight, one week later. You can still open a module early or close it.</p><div id="module-unlock-list"><p role="status">Loading modules…</p></div></div></div>';
 	}
 	function modulesForCourse(course, topics, modules) {
 		if (course.id === "bookkeeping") {
-			return BOOKKEEPING_MODULES.map(function (module) {
+			return [{ key: "getting-started", title: "Getting started" }].concat(BOOKKEEPING_MODULES.map(function (module) {
 				return { key: String(module.week), title: "Week " + module.week + ": " + module.title };
-			});
+			}));
 		}
 		var courseTopics = topics.filter(function (topic) { return topic.course_id === course.id; });
 		if (courseTopics.length) {
@@ -1344,20 +1436,31 @@
 			});
 		}
 		Promise.all([
+			current.rpc("sync_scheduled_unlocks"),
 			current.from("courses").select("id,title").order("title"),
 			current.from("course_topics").select("id,course_id,title,position").order("position"),
 			current.from("course_modules").select("id,course_id,title,position").order("position"),
-			current.from("course_module_unlocks").select("course_id,module_key")
+			current.from("course_module_unlocks").select("course_id,module_key"),
+			current.from("course_module_schedule").select("course_id,module_key,opens_at"),
+			current.rpc("founder_module_holds")
 		]).then(function (parts) {
-			var courses = (parts[0].data || []).slice();
+			var courses = (parts[1].data || []).slice();
 			if (!courses.some(function (course) { return course.id === "bookkeeping"; })) {
 				courses.unshift({ id: "bookkeeping", title: "Bookkeeping" });
 			}
-			var topics = parts[1].error ? [] : (parts[1].data || []);
-			var modules = parts[2].error ? [] : (parts[2].data || []);
+			var topics = parts[2].error ? [] : (parts[2].data || []);
+			var modules = parts[3].error ? [] : (parts[3].data || []);
 			var open = {};
-			(parts[3].error ? [] : (parts[3].data || [])).forEach(function (row) {
+			(parts[4].error ? [] : (parts[4].data || [])).forEach(function (row) {
 				open[row.course_id + ":" + row.module_key] = true;
+			});
+			var schedule = {};
+			(parts[5].error ? [] : (parts[5].data || [])).forEach(function (row) {
+				schedule[row.course_id + ":" + row.module_key] = row.opens_at;
+			});
+			var held = {};
+			(parts[6].error ? [] : (parts[6].data || [])).forEach(function (row) {
+				held[row.course_id + ":" + row.module_key] = true;
 			});
 			if (!courses.length) {
 				list.innerHTML = "<p class=\"mb-0\">No courses yet.</p>";
@@ -1366,8 +1469,11 @@
 			list.innerHTML = courses.map(function (course) {
 				var items = modulesForCourse(course, topics, modules);
 				var rows = items.length ? items.map(function (module) {
-					var isOpen = Boolean(open[course.id + ":" + module.key]);
-					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(module.title) + '</span><button class="' + (isOpen ? "btn btn-primary" : "btn btn-light") + '" type="button" data-course-id="' + esc(course.id) + '" data-module-key="' + esc(module.key) + '" aria-pressed="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close" : "Open") + "</button></li>";
+					var token = course.id + ":" + module.key;
+					var isOpen = Boolean(open[token]);
+					var when = schedule[token] ? new Intl.DateTimeFormat("en-GB", { timeZone: "Africa/Accra", day: "numeric", month: "long", year: "numeric" }).format(new Date(schedule[token])) : "";
+					var note = isOpen ? "Open" : (held[token] ? "Closed" : (when ? "Opens " + when + " at midnight" : "Closed"));
+					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(module.title) + '<br><small>' + esc(note) + '</small></span><button class="' + (isOpen ? "btn btn-primary" : "btn btn-light") + '" type="button" data-course-id="' + esc(course.id) + '" data-module-key="' + esc(module.key) + '" aria-pressed="' + (isOpen ? "true" : "false") + '">' + (isOpen ? "Close" : "Open") + "</button></li>";
 				}).join("") : '<li class="py-2 text-muted">No modules have been added to this course yet.</li>';
 				return '<section class="mb-3"><div class="d-flex justify-content-between align-items-center gap-2 mb-2"><h3 class="h6 fw-bold mb-0">' + esc(course.title) + "</h3>" + courseActions(course) + '</div><ul class="list-unstyled mb-0">' + rows + "</ul></section>";
 			}).join("");

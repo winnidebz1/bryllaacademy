@@ -66,62 +66,91 @@ button,input{font-family:inherit}
 <script src="assets/js/brylla-student.js"></script>
 <script>
 (function(){
-var BANK_REC=[
-{q:"What is the main purpose of a bank reconciliation?",o:["Match your cash book to your bank statement","Work out the profit for the year","Record sales to customers","Prepare staff payroll"],c:0,e:"A reconciliation compares your own records with the bank's, so you can find and explain any differences."},
-{q:"A cheque you have written that the bank has not yet paid is called:",o:["A dishonoured cheque","An unpresented cheque","A direct debit","A bank charge"],c:1,e:"Until the payee banks it, the money is still in your account even though your cash book shows it as paid."},
-{q:"Bank charges appear on the statement but not in your cash book. What should you do?",o:["Ignore them until next year","Ask the bank to remove them","Record them in the cash book","Record them as sales"],c:2,e:"The bank has already taken the money, so your cash book must be updated to match."},
-{q:"A deposit made late in the day shows in your cash book but not yet on the statement. This is called:",o:["An overdraft","A standing order","An accrual","A deposit in transit"],c:3,e:"The money is on its way and will appear on the statement in the next day or so."},
-{q:"After reconciling, your adjusted cash book balance should equal:",o:["Last month's balance","The adjusted bank statement balance","Total sales for the month","Zero"],c:1,e:"When both sides agree after adjustments, the reconciliation is complete."}
-];
-var QUESTIONS={3:{topic:"Bank reconciliation",items:BANK_REC}};
 var MODULES=(window.BryllaStudent&&BryllaStudent.modules)||[];
-var QUIZZES=MODULES.map(function(m){var set=QUESTIONS[m.week];return {id:"w"+m.week,week:m.week,subject:m.title,topic:set?set.topic:"",Q:set?set.items:null,att:0};});
-var PASS=70,MAX=2,TIME=600;
-var st={s:"list",quiz:null,i:0,a:[],t:TIME,iv:null};
+var MAX=2;
+var st={s:"list",quiz:null,i:0,a:[],t:0,iv:null,attempt:null,review:null,result:null};
 var root=document.getElementById("body");
 var Q=[];
-function esc(v){return String(v).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
-function fmt(t){var m=Math.floor(t/60),s=t%60;return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;}
+var QUIZZES=[];
+function api(){return window.BryllaAuth&&BryllaAuth.client;}
+function esc(v){return String(v==null?"":v).replace(/[&<>"']/g,function(ch){return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[ch];});}
+function fmt(t){var m=Math.floor(Math.max(t,0)/60),s=Math.max(t,0)%60;return (m<10?"0":"")+m+":"+(s<10?"0":"")+s;}
 function stop(){clearInterval(st.iv);st.iv=null;}
-function score(){var n=0;Q.forEach(function(x,i){if(st.a[i]===x.c)n++;});return n;}
 function unans(){var n=0;for(var i=0;i<Q.length;i++){if(st.a[i]===undefined)n++;}return n;}
-function open(id){var quiz=QUIZZES.filter(function(x){return x.id===id&&x.Q;})[0];if(!quiz)return;stop();st.quiz=quiz;Q=quiz.Q;st.s="intro";draw();}
-function toList(){stop();st.s="list";st.quiz=null;Q=[];draw();}
-function begin(){if(st.quiz.att>=MAX)return;st.s="q";st.i=0;st.a=[];st.t=TIME;stop();st.iv=setInterval(tick,1000);draw();}
-function tick(){st.t--;var el=document.getElementById("tm");if(el){el.textContent=fmt(st.t);el.style.color=st.t<=60?"var(--text-warning)":"";}if(st.t<=0){submit();}}
-function submit(){stop();st.quiz.att++;st.s="r";draw();}
+function catalog(remote){
+ var by={};
+ (remote||[]).forEach(function(quiz){by[String(quiz.module_key)]=quiz;});
+ var rows=[{key:"getting-started",week:0,subject:"Getting started"}].concat(MODULES.map(function(module){return {key:String(module.week),week:module.week,subject:module.title};}));
+ QUIZZES=rows.map(function(row){
+  var live=by[row.key];
+  return {id:live?live.id:null,key:row.key,week:row.week,subject:row.subject,topic:live?live.title:"",minutes:live?Number(live.minutes)||0:0,pass:live?live.pass_percent:70,count:live?Number(live.question_count)||0:0,att:live?Number(live.attempts_used)||0:0,ready:Boolean(live&&Number(live.question_count)>0)};
+ });
+}
+function open(id){
+ var quiz=QUIZZES.filter(function(item){return item.id===id&&item.ready;})[0];
+ if(!quiz||!api())return;
+ stop();
+ root.innerHTML='<p style="color:var(--text-secondary)">Loading questions…</p>';
+ api().rpc("student_quiz_questions",{p_quiz:quiz.id}).then(function(result){
+  if(result.error||!result.data){root.innerHTML='<div class="card">'+(result.error?esc(result.error.message):"This quiz is not available.")+'</div>';return;}
+  Q=result.data.map(function(item){return {q:item.prompt,o:item.choices||[]};});
+  st.quiz=quiz;st.s="intro";st.review=null;st.result=null;draw();
+ });
+}
+function toList(){stop();st.s="list";st.quiz=null;Q=[];load();}
+function begin(){
+ if(!st.quiz||st.quiz.att>=MAX||!api())return;
+ api().rpc("start_quiz_attempt",{p_quiz:st.quiz.id}).then(function(result){
+  if(result.error||!result.data){root.innerHTML='<div class="card">'+(result.error?esc(result.error.message):"The quiz could not be started.")+' <button type="button" class="lnk" data-a="list">Back to quizzes</button></div>';return;}
+  st.attempt=result.data.attempt_id;
+  st.t=Number(result.data.seconds_left)||st.quiz.minutes*60;
+  st.s="q";st.i=0;st.a=[];
+  stop();st.iv=setInterval(tick,1000);draw();
+ });
+}
+function tick(){st.t--;var el=document.getElementById("tm");if(el){el.textContent=fmt(st.t);el.style.color=st.t<=60?"var(--text-warning)":"";}if(st.t<=0)submit();}
+function submit(){
+ stop();
+ if(!api()||!st.attempt)return;
+ var answers=Q.map(function(_,index){return st.a[index]===undefined?-1:st.a[index];});
+ root.innerHTML='<p style="color:var(--text-secondary)">Scoring your quiz…</p>';
+ api().rpc("submit_quiz_attempt",{p_attempt:st.attempt,p_answers:answers}).then(function(result){
+  if(result.error||!result.data){root.innerHTML='<div class="card">'+(result.error?esc(result.error.message):"The quiz could not be scored.")+'</div>';return;}
+  st.result=result.data;st.review=result.data.review||[];st.quiz.att+=1;st.s="r";draw();
+ });
+}
 function list(){
- var items=QUIZZES.map(function(x){
-  var label='<span class="qw">Week '+x.week+'</span><span class="qs">'+esc(x.subject)+'</span>';
-  if(!x.Q)return '<li><div class="qi off" aria-disabled="true">'+label+'<span class="qm">Not open yet</span></div></li>';
-  var meta=esc(x.topic)+' · '+x.Q.length+' questions · '+Math.round(TIME/60)+' minutes';
-  return '<li><button type="button" class="qi" data-a="open" data-id="'+x.id+'">'+label+'<span class="qm">'+meta+'</span><i class="ti ti-chevron-right qc" aria-hidden="true"></i></button></li>';
+ var items=QUIZZES.map(function(item){
+  var label='<span class="qw">'+(item.week?"Week "+item.week:"Start")+'</span><span class="qs">'+esc(item.subject)+'</span>';
+  if(!item.ready)return '<li><div class="qi off" aria-disabled="true">'+label+'<span class="qm">Not open yet</span></div></li>';
+  var meta=esc(item.topic)+' · '+item.count+' questions · '+item.minutes+' minutes';
+  return '<li><button type="button" class="qi" data-a="open" data-id="'+item.id+'">'+label+'<span class="qm">'+meta+'</span><i class="ti ti-chevron-right qc" aria-hidden="true"></i></button></li>';
  }).join("");
  return '<h2 id="hd" tabindex="-1" style="margin:0 0 4px;font-size:22px;font-weight:500">Quizzes</h2>'+
- '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary)">Bookkeeping. Choose a subject to open its quiz.</p>'+
+ '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary)">Choose a subject to open its quiz. Your score is calculated when you submit.</p>'+
  (items?'<ul class="ql">'+items+'</ul>':'<div class="card">No quizzes yet. They appear here when your course opens.</div>');
 }
 function intro(){
  var x=st.quiz,left=x.att<MAX;
  return '<div class="card"><i class="ti ti-clipboard-check" style="font-size:32px;color:#0a8f84" aria-hidden="true"></i>'+
  '<h2 id="hd" tabindex="-1" style="margin:8px 0 2px;font-size:22px;font-weight:500">'+esc(x.subject)+'</h2>'+
- '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary)">Week '+x.week+' quiz, '+esc(x.topic.toLowerCase())+'</p>'+
+ '<p style="margin:0 0 16px;font-size:14px;color:var(--text-secondary)">'+esc(x.topic)+'</p>'+
  '<ul style="list-style:none;margin:0 0 16px;padding:0;display:flex;flex-direction:column;gap:10px;font-size:14px">'+
  '<li><i class="ti ti-help-circle" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>'+Q.length+' questions</li>'+
- '<li><i class="ti ti-clock" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>'+Math.round(TIME/60)+' minutes</li>'+
- '<li><i class="ti ti-target" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>Pass mark: '+PASS+'%</li>'+
+ '<li><i class="ti ti-clock" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>'+x.minutes+' minutes</li>'+
+ '<li><i class="ti ti-target" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>Pass mark: '+x.pass+'%</li>'+
  '<li><i class="ti ti-refresh" style="margin-right:10px;color:var(--text-secondary)" aria-hidden="true"></i>Attempts used: '+x.att+' of '+MAX+'</li></ul>'+
- '<p style="margin:0 0 18px;font-size:13px;color:var(--text-secondary)">'+(left?'You can move between questions. Your answers are checked when you submit.':'No attempts left, ask your instructor for help.')+'</p>'+
+ '<p style="margin:0 0 18px;font-size:13px;color:var(--text-secondary)">'+(left?'You can move between questions. Your answers are scored when you submit.':'No attempts left, ask your instructor for help.')+'</p>'+
  '<div style="display:flex;gap:10px;flex-wrap:wrap;align-items:center">'+(left?'<button class="b p" data-a="start">Start quiz</button>':'')+'<button type="button" class="lnk" data-a="list">Back to quizzes</button></div></div>';
 }
 function question(){
  var q=Q[st.i],last=st.i===Q.length-1,u=unans();
- var opts=q.o.map(function(t,k){var on=st.a[st.i]===k;return '<label class="opt'+(on?' on':'')+'"><input type="radio" name="q'+st.i+'" value="'+k+'"'+(on?' checked':'')+'><span>'+t+'</span></label>';}).join("");
+ var opts=q.o.map(function(t,k){var on=st.a[st.i]===k;return '<label class="opt'+(on?' on':'')+'"><input type="radio" name="q'+st.i+'" value="'+k+'"'+(on?' checked':'')+'><span>'+esc(t)+'</span></label>';}).join("");
  var dots=Q.map(function(x,k){var a=st.a[k]!==undefined;return '<button class="dot'+(a?' a':'')+'" data-a="go" data-n="'+k+'"'+(k===st.i?' aria-current="step"':'')+' aria-label="Question '+(k+1)+(a?', answered':', not answered')+'">'+(k+1)+'</button>';}).join("");
  return '<p style="margin:0 0 8px;font-size:13px;color:var(--text-secondary)">'+esc(st.quiz.subject)+'</p>'+
  '<div class="row" style="margin-bottom:10px"><span style="font-size:14px;color:var(--text-secondary)">Question '+(st.i+1)+' of '+Q.length+'</span><span style="font-size:14px"><i class="ti ti-clock" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i><span id="tm">'+fmt(st.t)+'</span></span></div>'+
  '<div role="progressbar" aria-label="Quiz progress" aria-valuenow="'+(st.i+1)+'" aria-valuemin="1" aria-valuemax="'+Q.length+'" style="height:6px;background:var(--border);border-radius:3px;overflow:hidden"><div style="width:'+((st.i+1)/Q.length*100)+'%;height:100%;background:#0a8f84"></div></div>'+
- '<h2 id="hd" tabindex="-1" style="margin:24px 0 16px;font-size:19px;font-weight:500;line-height:1.4">'+q.q+'</h2>'+
+ '<h2 id="hd" tabindex="-1" style="margin:24px 0 16px;font-size:19px;font-weight:500;line-height:1.4">'+esc(q.q)+'</h2>'+
  '<div role="radiogroup" aria-labelledby="hd">'+opts+'</div>'+
  '<div role="group" aria-label="Jump to question" style="display:flex;gap:8px;margin:18px 0;flex-wrap:wrap">'+dots+'</div>'+
  (last&&u>0?'<p style="margin:0 0 12px;font-size:13px;color:var(--text-warning)"><i class="ti ti-alert-circle" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i>You have '+u+' unanswered question'+(u>1?'s':'')+'.</p>':'')+
@@ -129,19 +158,21 @@ function question(){
  (last?'<button class="b p" data-a="submit">Submit quiz</button>':'<button class="b p" data-a="next">Next<i class="ti ti-arrow-right" style="margin-left:6px;vertical-align:-2px" aria-hidden="true"></i></button>')+'</div>';
 }
 function results(){
- var x=st.quiz,n=score(),pct=Math.round(n/Q.length*100),ok=pct>=PASS,left=x.att<MAX;
- var badge=ok?'<span style="background:var(--bg-success);color:var(--text-success);padding:3px 12px;border-radius:8px;font-size:13px"><i class="ti ti-circle-check" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i>Passed</span>':'<span style="background:var(--bg-warning);color:var(--text-warning);padding:3px 12px;border-radius:8px;font-size:13px"><i class="ti ti-alert-circle" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i>Not passed</span>';
+ var x=st.quiz,score=st.result||{percent:0,correct:0,total:Q.length,passed:false,pass_percent:x.pass,late:false},ok=Boolean(score.passed),left=x.att<MAX;
+ var badge=ok?'<span style="background:var(--bg-success);color:var(--text-success);padding:3px 12px;border-radius:8px;font-size:13px"><i class="ti ti-circle-check" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i>Passed</span>':'<span style="background:var(--bg-warning);color:var(--text-warning);padding:3px 12px;border-radius:8px;font-size:13px"><i class="ti ti-alert-circle" style="margin-right:4px;vertical-align:-2px" aria-hidden="true"></i>'+(score.late?'Time is up':'Not passed')+'</span>';
  var retake='<button class="b'+(ok?'':' p')+'" data-a="retake">Retake quiz</button>';
  var back='<button type="button" class="b'+(ok?' p':'')+'" data-a="list"'+(ok?'':' style="border:0.5px solid var(--border-strong);background:transparent"')+'>Back to quizzes</button>';
  var btns=ok?back+(left?retake:''):(left?retake+back:back);
- var rev=Q.map(function(item,i){var a=st.a[i],right=a===item.c;
-  return '<div class="rv"><div style="display:flex;gap:8px;align-items:flex-start"><i class="ti '+(right?'ti-circle-check':'ti-circle-x')+'" style="font-size:20px;margin-top:1px;color:'+(right?'var(--text-success)':'var(--text-danger)')+'" aria-hidden="true"></i><div><div style="font-size:14px;font-weight:500"><span class="sr-only">'+(right?'Correct. ':'Incorrect. ')+'</span>'+(i+1)+'. '+item.q+'</div>'+
-  '<div style="font-size:13px;margin-top:4px;color:var(--text-secondary)">Your answer: '+(a===undefined?'Not answered':item.o[a])+'</div>'+
-  (right?'':'<div style="font-size:13px;color:var(--text-success)">Correct answer: '+item.o[item.c]+'</div>')+
-  '<div style="font-size:13px;margin-top:4px;color:var(--text-secondary)">'+item.e+'</div></div></div></div>';}).join("");
+ var rev=(st.review||[]).map(function(item,i){
+  var given=item.given==null||item.given<0?'Not answered':(item.choices[item.given]||'Not answered');
+  return '<div class="rv"><div style="display:flex;gap:8px;align-items:flex-start"><i class="ti '+(item.right?'ti-circle-check':'ti-circle-x')+'" style="font-size:20px;margin-top:1px;color:'+(item.right?'var(--text-success)':'var(--text-danger)')+'" aria-hidden="true"></i><div><div style="font-size:14px;font-weight:500"><span class="sr-only">'+(item.right?'Correct. ':'Incorrect. ')+'</span>'+(i+1)+'. '+esc(item.prompt)+'</div>'+
+  '<div style="font-size:13px;margin-top:4px;color:var(--text-secondary)">Your answer: '+esc(given)+'</div>'+
+  (item.right?'':'<div style="font-size:13px;color:var(--text-success)">Correct answer: '+esc(item.choices[item.correct_index]||'')+'</div>')+
+  (item.explanation?'<div style="font-size:13px;margin-top:4px;color:var(--text-secondary)">'+esc(item.explanation)+'</div>':'')+'</div></div></div>';
+ }).join("");
  return '<div class="card" style="text-align:center"><h2 id="hd" tabindex="-1" style="margin:0 0 4px;font-size:16px;font-weight:500">'+esc(x.subject)+' results</h2>'+
- '<div style="font-size:44px;font-weight:500;line-height:1.2">'+pct+'%</div>'+
- '<div style="font-size:14px;color:var(--text-secondary);margin:2px 0 10px">'+n+' of '+Q.length+' correct, pass mark '+PASS+'%</div>'+badge+
+ '<div style="font-size:44px;font-weight:500;line-height:1.2">'+score.percent+'%</div>'+
+ '<div style="font-size:14px;color:var(--text-secondary);margin:2px 0 10px">'+score.correct+' of '+score.total+' correct, pass mark '+score.pass_percent+'%</div>'+badge+
  '<div style="font-size:13px;color:var(--text-secondary);margin:10px 0 16px">Attempt '+x.att+' of '+MAX+(ok||left?'':'. No attempts left, ask your instructor for help.')+'</div>'+
  '<div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">'+btns+'</div></div>'+
  '<div class="card" style="margin-top:14px;padding:6px 20px 10px"><div style="font-size:16px;font-weight:500;padding:14px 0 10px">Review your answers</div>'+rev+'</div>';
@@ -149,6 +180,17 @@ function results(){
 function draw(focus){
  root.innerHTML=st.s==="list"?list():st.s==="intro"?intro():st.s==="q"?question():results();
  var el=document.querySelector(focus||"#hd");if(el)el.focus();
+}
+function load(){
+ root.innerHTML='<p style="color:var(--text-secondary)">Loading quizzes…</p>';
+ var current=api();
+ if(!current){catalog([]);draw();return;}
+ current.rpc("sync_scheduled_unlocks").then(function(){return current.rpc("student_open_quizzes");},function(){return current.rpc("student_open_quizzes");}).then(function(result){
+  if(!result||result.error){root.innerHTML='<div class="card">'+esc(result&&result.error?result.error.message:"Quizzes could not be loaded.")+'</div>';return;}
+  catalog(result.data||[]);
+  st.s="list";
+  draw();
+ });
 }
 root.addEventListener("click",function(e){
  var b=e.target.closest("[data-a]");if(!b)return;var a=b.dataset.a;
@@ -163,7 +205,7 @@ root.addEventListener("click",function(e){
 root.addEventListener("change",function(e){
  if(e.target.type==="radio"){st.a[st.i]=+e.target.value;draw("#body input:checked");}
 });
-draw();
+if(window.BryllaAuth)BryllaAuth.ready.then(load);else load();
 })();
 </script>
 </body>

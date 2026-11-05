@@ -1504,7 +1504,11 @@
 				unlocksLoaded = true;
 				return Promise.resolve();
 			}
-			return client.from("course_module_unlocks").select("module_key").eq("course_id", "bookkeeping").then(function (result) {
+			return client.rpc("sync_scheduled_unlocks").then(function () {
+				return client.from("course_module_unlocks").select("module_key").eq("course_id", "bookkeeping");
+			}, function () {
+				return client.from("course_module_unlocks").select("module_key").eq("course_id", "bookkeeping");
+			}).then(function (result) {
 				unlockedWeeks = {};
 				(result.data || []).forEach(function (row) { unlockedWeeks[String(row.module_key)] = true; });
 				unlocksLoaded = true;

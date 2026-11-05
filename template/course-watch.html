@@ -277,7 +277,7 @@
 		var unlockedWeeks = {};
 		function itemLocked(item) {
 			if (!item) return true;
-			if (item.kind === "guide") return !signedIn;
+			if (item.kind === "guide") return !unlockedWeeks["getting-started"];
 			var key = item.moduleKey != null ? String(item.moduleKey) : String(item.week || "");
 			return !unlockedWeeks[key];
 		}
@@ -895,7 +895,11 @@
 			return client.auth.getSession().then(function (session) {
 				signedIn = Boolean(session.data.session);
 				if (!signedIn) return null;
-				return client.from("course_module_unlocks").select("module_key").eq("course_id", courseKey);
+				return client.rpc("sync_scheduled_unlocks").then(function () {
+					return client.from("course_module_unlocks").select("module_key").eq("course_id", courseKey);
+				}, function () {
+					return client.from("course_module_unlocks").select("module_key").eq("course_id", courseKey);
+				});
 			}).then(function (result) {
 				unlockedWeeks = {};
 				if (result && result.data) result.data.forEach(function (row) { unlockedWeeks[String(row.module_key)] = true; });
