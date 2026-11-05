@@ -1515,10 +1515,10 @@
 		current.rpc("founder_pending_accounts").then(function (result) {
 			if (!document.body.contains(host)) return;
 			var rows = result.error ? [] : (result.data || []);
-			host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Student accounts waiting for approval</h2><p class="mb-3">A new student can sign in only after you approve the account.</p>' +
+			host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Accounts waiting for approval</h2><p class="mb-3">Approve a student or instructor account after payment. Approval sends an email so they can sign in.</p>' +
 				(result.error ? empty(result.error.message || "Accounts could not be loaded.") : (rows.length ? "<ul class=\"list-unstyled mb-0\">" + rows.map(function (row) {
 					return '<li class="d-flex justify-content-between align-items-center gap-3 py-2 border-bottom"><span>' + esc(row.full_name || row.email || "Student") + " · " + esc(row.email || "") + '</span><button class="btn btn-primary btn-sm" type="button" data-approve-student="' + esc(row.id) + '">Approve</button></li>';
-				}).join("") + "</ul>" : '<p class="mb-0">No student accounts are waiting.</p>')) + "</div>";
+				}).join("") + "</ul>" : '<p class="mb-0">No accounts are waiting.</p>')) + "</div>";
 			host.querySelectorAll("[data-approve-student]").forEach(function (button) {
 				button.addEventListener("click", function () {
 					button.disabled = true;
@@ -1528,7 +1528,7 @@
 							toast(saved.error.message || "The account could not be approved.");
 							return;
 						}
-						toast("Student account approved.");
+						toast("Account approved. A sign-in email has been sent.");
 						paintPendingAccounts();
 					});
 				});
