@@ -1289,6 +1289,9 @@
 	function financeNotice() {
 		return '<div class="card"><div class="card-body"><h2 class="h5 fw-bold">Payments are not connected</h2><p class="mb-2">Gross sales, refunds, provider fees, net receipts and outstanding balances stay hidden until a payment provider confirms a transaction.</p><p class="mb-0">Revenue is not estimated from course prices or enrolments.</p></div></div>';
 	}
+	function instructorInviteCard() {
+		return '<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>';
+	}
 	function moduleUnlockCard() {
 		return '<div class="card mb-3" id="module-unlocks"><div class="card-body"><h2 class="h5 fw-bold">Open course modules</h2><p class="mb-3">Open a module when students should see it. This applies to Bookkeeping and to every course added later.</p><div id="module-unlock-list"><p role="status">Loading modules…</p></div></div></div>';
 	}
@@ -1374,9 +1377,9 @@
 		var count = totals(data);
 		var wide = "col-md-6 col-xl-3";
 		root.innerHTML = '<div class="dash-head"><div><h1 class="welcome-badge">Welcome, ' + esc(welcomeName(data)) + '</h1><p class="mb-0">Students, courses, and modules for the academy.</p></div></div>' +
+			instructorInviteCard() +
 			moduleUnlockCard() +
 			'<div class="card mb-3" id="published-courses"><div class="card-body"><h2 class="h5 fw-bold">Published courses</h2><p role="status">Loading courses…</p></div></div>' +
-			'<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>' +
 			'<div class="card mb-3" id="recent-enrolments"><div class="card-body"><h2 class="h5 fw-bold">Recent enrolments</h2><p role="status">Loading enrolments…</p></div></div><div class="row">' +
 			statCard("isax isax-book", "bg-success-transparent", "Awaiting approval", "…", "admin-courses.html", "", wide) +
 			statCard("isax isax-profile-2user5", "bg-info-transparent", "Total students", "…", "admin-students.html", "", wide) +
@@ -1542,11 +1545,11 @@
 		client.rpc("founder_instructor_invite").then(function (result) {
 			if (!document.body.contains(node)) return;
 			if (result.error || !result.data) {
-				node.textContent = "The registration link is not available yet.";
+				node.textContent = result.error && result.error.message ? result.error.message : "The registration link is not available yet.";
 				return;
 			}
 			var url = "https://bryllaacademy.vercel.app/instructor-register?code=" + encodeURIComponent(result.data);
-			node.innerHTML = '<a href="' + esc(url) + '">' + esc(url) + "</a>";
+			node.innerHTML = '<a href="' + esc(url) + '" style="overflow-wrap:anywhere">' + esc(url) + "</a>";
 		});
 	}
 	function courseEditLink(course) {
@@ -1662,6 +1665,7 @@
 		var current = staffClient();
 		function draw(people) {
 			root.innerHTML = '<h1 class="h5 fw-bold">Instructors</h1><p class="mb-3">People who register with the private instructor link appear here, along with anyone you add.</p>' +
+				instructorInviteCard() +
 				(people.length ? table(
 					[{ label: "Instructor" }, { label: "Email" }, { label: "Joined" }],
 					people.map(function (person) {
@@ -1688,13 +1692,15 @@
 					load();
 				});
 			});
+			paintInstructorInvite();
 		}
 		function load() {
 			root.innerHTML = '<h1 class="h5 fw-bold">Instructors</h1><p role="status">Loading instructors…</p>';
 			if (!current) return;
 			current.rpc("founder_list_instructors").then(function (result) {
 				if (result.error) {
-					root.innerHTML = '<h1 class="h5 fw-bold">Instructors</h1>' + empty(result.error.message || "Instructors could not be loaded.");
+					root.innerHTML = '<h1 class="h5 fw-bold">Instructors</h1>' + instructorInviteCard() + empty(result.error.message || "Instructors could not be loaded.");
+					paintInstructorInvite();
 					return;
 				}
 				draw(result.data || []);
