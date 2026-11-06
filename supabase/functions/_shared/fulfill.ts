@@ -1,13 +1,4 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { assessPayment } from "./payment-policy.mjs";
-
-export type PaystackTransaction = {
-	status: string;
-	reference: string;
-	amount: number;
-	currency: string;
-	id?: number;
-};
 
 export function serviceClient(): SupabaseClient {
 	const url = Deno.env.get("SUPABASE_URL") ?? "";
@@ -16,62 +7,7 @@ export function serviceClient(): SupabaseClient {
 	return createClient(url, key, { auth: { persistSession: false } });
 }
 
-export async function verifyWithPaystack(reference: string): Promise<PaystackTransaction> {
-	const secret = Deno.env.get("PAYSTACK_SECRET_KEY") ?? "";
-	if (!secret) throw new Error("Paystack is not configured.");
-	const response = await fetch("https://api.paystack.co/transaction/verify/" + encodeURIComponent(reference), {
-		headers: { Authorization: "Bearer " + secret },
-	});
-	const payload = await response.json();
-	if (!response.ok || !payload.status) throw new Error("Paystack could not verify this transaction.");
-	return payload.data;
-}
-
-export async function fulfil(supabase: SupabaseClient, reference: string) {
-	const transaction = await verifyWithPaystack(reference);
-	const { data: order, error } = await supabase.from("orders").select("*").eq("paystack_reference", reference).maybeSingle();
-	if (error) throw new Error("The order could not be loaded.");
-	const decision = assessPayment(order, transaction);
-	if (!decision.ok) {
-		if (order && decision.code === "not_successful") {
-			await supabase.from("orders").update({ status: transaction.status === "abandoned" ? "abandoned" : "failed", updated_at: new Date().toISOString() }).eq("id", order.id).eq("status", "pending");
-		}
-		return { ok: false, code: decision.code };
-	}
-	if (!decision.duplicate) {
-		const { data: paid } = await supabase.from("orders").update({
-			status: "paid",
-			fulfilled_at: new Date().toISOString(),
-			updated_at: new Date().toISOString(),
-		}).eq("id", order.id).eq("status", "pending").select("*").maybeSingle();
-		if (!paid) {
-			const { data: current } = await supabase.from("orders").select("status").eq("id", order.id).maybeSingle();
-			if (!current || current.status !== "paid") return { ok: false, code: "not_fulfilled" };
-		}
-		await supabase.from("payments").upsert({
-			order_id: order.id,
-			paystack_reference: reference,
-			paystack_id: transaction.id ?? null,
-			status: "success",
-			amount_minor: transaction.amount,
-			currency: transaction.currency,
-			verified_at: new Date().toISOString(),
-		}, { onConflict: "paystack_reference" });
-		if (order.purpose !== "registration") {
-			await supabase.from("enrollments").upsert({
-				order_id: order.id,
-				course_id: order.course_id,
-				email: order.email,
-				user_id: order.user_id,
-				status: order.user_id ? "active" : "pending_setup",
-			}, { onConflict: "order_id" });
-		}
-	}
-	const setup = await sendSetupEmail(supabase, order);
-	return { ok: true, code: decision.code, email: setup.status, setupUrl: setup.link, kind: setup.kind };
-}
-
-async function sendSetupEmail(supabase: SupabaseClient, order: { id: string; email: string; full_name: string; course_id: string; user_id: string | null; purpose?: string | null }) {
+export async function sendAccountSetup(supabase: SupabaseClient, order: { id: string; email: string; full_name: string; course_id: string; user_id: string | null; purpose?: string | null }) {
 	const site = Deno.env.get("SITE_URL") || "https://bryllaacademy.vercel.app";
 	const { data: course } = await supabase.from("courses").select("title").eq("id", order.course_id).maybeSingle();
 	const courseTitle = course?.title ?? "your course";
