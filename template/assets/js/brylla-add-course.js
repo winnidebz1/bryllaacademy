@@ -891,26 +891,8 @@
 
 	function previewPrice() {
 		var node = $("course-price-preview");
-		var amount = $("course-price");
-		var currency = $("course-currency");
-		if (!node || !amount || !window.BryllaCurrency) return;
-		function draw() {
-			Promise.all([BryllaCurrency.rates(), BryllaCurrency.inflation()]).then(function (parts) {
-				var result = BryllaCurrency.convert(amount.value || 0, currency.value, BryllaCurrency.visitorCurrency(), parts[1], parts[0]);
-				if (!result || !Number(amount.value)) {
-					node.textContent = "Visitors see this price in their local currency, with a small buffer so the converted price is not under the amount you set.";
-					return;
-				}
-				node.textContent = result.converted
-					? "A visitor in your current location would see about " + BryllaCurrency.format(result.amount, result.currency) + ", including the conversion buffer."
-					: "Visitors who use " + currency.value + " see this amount exactly. Other currencies include a conversion buffer.";
-			}).catch(function () {
-				node.textContent = "The price is stored in " + currency.value + ".";
-			});
-		}
-		amount.addEventListener("input", draw);
-		currency.addEventListener("change", draw);
-		draw();
+		if (!node) return;
+		node.textContent = "Prices on the site are shown in Ghana cedis.";
 	}
 
 	pointDashboardLinks();

@@ -2120,17 +2120,13 @@
 			root.innerHTML = '<h1 class="h5 fw-bold">Platform settings</h1><form id="academy-settings" class="card"><div class="card-body">' +
 				'<label class="form-label" for="set-name">Academy name</label><input class="form-control mb-3" id="set-name" value="' + esc(values.academy_name || "") + '">' +
 				'<label class="form-label" for="set-email">Support email</label><input class="form-control mb-3" id="set-email" type="email" value="' + esc(values.support_email || "") + '">' +
-				'<label class="form-label" for="set-currency">Default currency</label><input class="form-control mb-3" id="set-currency" value="' + esc(values.default_currency || "GHS") + '">' +
-				'<label class="form-label" for="set-inflation">Conversion buffer (%)</label><input class="form-control mb-3" id="set-inflation" type="number" min="0" max="25" step="0.1" value="' + esc(values.inflation_percent || "3") + '">' +
-				'<p class="text-muted">When a visitor sees a price in another currency, this buffer is added so the converted price does not fall below the amount you set.</p>' +
+				'<p class="text-muted">Prices on the site are shown in Ghana cedis. Selar and Paystack convert the payment for the visitor.</p>' +
 				'<button class="btn btn-primary rounded-pill" type="submit">Save settings</button></div></form>';
 			document.getElementById("academy-settings").addEventListener("submit", function (event) {
 				event.preventDefault();
 				var pairs = [
 					["academy_name", document.getElementById("set-name").value.trim()],
-					["support_email", document.getElementById("set-email").value.trim()],
-					["default_currency", document.getElementById("set-currency").value.trim().toUpperCase()],
-					["inflation_percent", document.getElementById("set-inflation").value.trim()]
+					["support_email", document.getElementById("set-email").value.trim()]
 				];
 				pairs.reduce(function (chain, pair) {
 					return chain.then(function () {

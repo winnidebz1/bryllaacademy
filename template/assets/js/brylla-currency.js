@@ -68,18 +68,7 @@
 	}
 
 	function paint() {
-		var nodes = document.querySelectorAll("[data-price-amount]");
-		if (!nodes.length) return;
-		var local = visitorCurrency();
-		Promise.all([rates(), inflation()]).then(function (parts) {
-			nodes.forEach(function (node) {
-				var result = convert(node.getAttribute("data-price-amount"), node.getAttribute("data-price-currency") || "GHS", local, parts[1], parts[0]);
-				if (!result) return;
-				var label = format(result.amount, result.currency);
-				if (node.getAttribute("data-price-prefix")) label = node.getAttribute("data-price-prefix") + label;
-				node.textContent = label;
-			});
-		}).catch(function () { /* keep the original price */ });
+		return;
 	}
 
 	window.BryllaCurrency = { visitorCurrency: visitorCurrency, format: format, convert: convert, rates: rates, inflation: inflation, paint: paint };

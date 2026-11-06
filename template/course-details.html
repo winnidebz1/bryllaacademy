@@ -299,7 +299,6 @@
 	<script src="assets/js/bootstrap.bundle.min.js"></script>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
-	<script src="assets/js/brylla-currency.js"></script>
 	<script>
 		(function () {
 			var params = new URLSearchParams(location.search);
@@ -318,7 +317,7 @@
 				if (!isFinite(number)) return;
 				target.setAttribute("data-price-amount", String(number));
 				target.setAttribute("data-price-currency", currency || "GHS");
-				target.textContent = (currency || "GHS") + " " + number;
+				target.textContent = "GHS " + number;
 			}
 			if (!share && (!courseId || courseId === "bookkeeping") && window.BryllaPublic && BryllaPublic.client) {
 				BryllaPublic.client().rpc("public_course_listing", { p_course: "bookkeeping" }).then(function (result) {
@@ -332,7 +331,6 @@
 					putListingPrice("registration", course.registration_fee, course.currency);
 					putListingPrice("enrolment", course.enrolment_fee, course.currency);
 					if (course.title) document.title = course.title + " course details | Brylla Academy";
-					if (window.BryllaCurrency && BryllaCurrency.paint) BryllaCurrency.paint();
 				});
 			}
 			if (!card || (!courseId && !share) || (courseId === "bookkeeping" && !share)) {
@@ -367,7 +365,7 @@
 			function money(amount, currency) {
 				var number = Number(amount);
 				if (!isFinite(number)) number = 0;
-				return (currency || "GHS") + " " + number.toLocaleString(undefined, { maximumFractionDigits: 2 });
+				return "GHS " + number.toLocaleString(undefined, { maximumFractionDigits: 2 });
 			}
 			function showCourse(course) {
 				card.replaceChildren();

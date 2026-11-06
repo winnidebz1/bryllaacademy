@@ -30,7 +30,7 @@
 		if (!isFinite(number)) return;
 		target.setAttribute("data-price-amount", String(number));
 		target.setAttribute("data-price-currency", currency || "GHS");
-		target.textContent = (currency || "GHS") + " " + number;
+		target.textContent = "GHS " + number;
 	}
 	function fillBookkeeping(course) {
 		var article = document.getElementById("bookkeeping");
@@ -89,7 +89,7 @@
 		var side = node("div", "featured-course-enrollment");
 		side.setAttribute("aria-label", (course.title || "Course") + " fee");
 		side.appendChild(node("p", "tuition-label", "Total course fee"));
-		var price = node("p", "course-price", (course.currency || "GHS") + " " + (course.price_amount || 0));
+		var price = node("p", "course-price", "GHS " + (course.price_amount || 0));
 		price.setAttribute("data-price-amount", String(course.price_amount || 0));
 		price.setAttribute("data-price-currency", course.currency || "GHS");
 		side.appendChild(price);
@@ -100,7 +100,7 @@
 			[["Registration fee", registration], ["Course fee", enrolment]].forEach(function (pair) {
 				var row = document.createElement("li");
 				row.appendChild(node("span", "", pair[0]));
-				var amount = node("strong", "", (course.currency || "GHS") + " " + (pair[1] || 0));
+				var amount = node("strong", "", "GHS " + (pair[1] || 0));
 				amount.setAttribute("data-price-amount", String(pair[1] || 0));
 				amount.setAttribute("data-price-currency", course.currency || "GHS");
 				row.appendChild(amount);
@@ -123,7 +123,6 @@
 	client.rpc("public_course_listing", { p_course: "bookkeeping" }).then(function (result) {
 		if (result.error || !result.data) return;
 		fillBookkeeping(result.data);
-		if (window.BryllaCurrency && BryllaCurrency.paint) BryllaCurrency.paint();
 	});
 
 	client.rpc("public_open_courses").then(function (result) {
@@ -142,6 +141,5 @@
 			else grid.appendChild(featured);
 		});
 		if (group && !group.querySelector(".coming-card")) group.hidden = true;
-		if (window.BryllaCurrency && BryllaCurrency.paint) BryllaCurrency.paint();
 	});
 })();

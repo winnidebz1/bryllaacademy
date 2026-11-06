@@ -508,12 +508,7 @@
 					</div>
 					<div class="pay-choice">
 						<a class="btn btn-brand" href="https://selar.com/1246a06832" target="_blank" rel="noopener">International Payment</a>
-						<button class="btn btn-outline-brand" type="button" data-show-momo>Local Payment</button>
-						<ol class="momo-steps" id="momo-steps" hidden>
-							<li>Open MTN MoMo and send <strong>GHS 550</strong> for the Bookkeeping course fee.</li>
-							<li>In the reference, enter your <strong>full name</strong>, the same name you will use on your Brylla Academy account.</li>
-							<li>Confirm the payment and keep the receipt.</li>
-						</ol>
+						<a class="btn btn-outline-brand" href="https://paystack.shop/pay/brylla-bookkeeping-course" target="_blank" rel="noopener">Local Payment</a>
 					</div>
 				</div>
 			</dialog>
@@ -680,8 +675,8 @@
 					<p>These services can be purchased without enrolling in a course. Use Order to go to the Selar page for that service.</p>
 				</div>
 				<div class="audit-grid services-grid">
-					<article class="audit-card" id="linkedin-optimization"><span class="toolkit-icon"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></span><h3>Done-for-You LinkedIn Profile Optimization</h3><p>A service for professionals and freelancers who want to improve their LinkedIn profiles, communicate their value more clearly, and position themselves for career or business opportunities.</p><div class="audit-price"><a class="btn btn-brand" data-service-order="linkedin" href="contact-us?service=linkedin-optimization">Order</a></div></article>
-					<article class="audit-card" id="upwork-optimization"><span class="toolkit-icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span><h3>Done-for-You Upwork Profile Optimization</h3><p>A service for freelancers who want a professionally optimized Upwork profile that clearly communicates their skills, experience, and value to potential clients.</p><div class="audit-price"><a class="btn btn-outline-brand" data-service-order="upwork" href="contact-us?service=upwork-optimization">Order</a></div></article>
+					<article class="audit-card" id="linkedin-optimization"><span class="toolkit-icon"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></span><h3>Done-for-You LinkedIn Profile Optimization</h3><p>A service for professionals and freelancers who want to improve their LinkedIn profiles, communicate their value more clearly, and position themselves for career or business opportunities.</p><div class="audit-price"><a class="btn btn-brand" data-service-order="linkedin" href="https://priscilla-quaidoo.nestuge.com/linkedin-optimisation" target="_blank" rel="noopener">Order</a></div></article>
+					<article class="audit-card" id="upwork-optimization"><span class="toolkit-icon"><i class="fa-solid fa-briefcase" aria-hidden="true"></i></span><h3>Done-for-You Upwork Profile Optimization</h3><p>A service for freelancers who want a professionally optimized Upwork profile that clearly communicates their skills, experience, and value to potential clients.</p><div class="audit-price"><a class="btn btn-outline-brand" data-service-order="upwork" href="https://priscilla-quaidoo.nestuge.com/upwork-optimisation" target="_blank" rel="noopener">Order</a></div></article>
 				</div>
 			</div>
 		</section>
@@ -812,7 +807,6 @@
 			const notifyDialog = document.getElementById("course-notify-dialog");
 			const registerDialog = document.getElementById("bookkeeping-register-dialog");
 			const enrolDialog = document.getElementById("bookkeeping-enrol-dialog");
-			const momoSteps = document.getElementById("momo-steps");
 			const notifyForm = document.getElementById("course-notify-form");
 			const notifyName = document.getElementById("notify-name");
 			const notifyEmail = document.getElementById("notify-email");
@@ -830,13 +824,6 @@
 					if (dialog) dialog.showModal();
 				});
 			});
-			const momoButton = document.querySelector("[data-show-momo]");
-			if (momoButton) {
-				momoButton.addEventListener("click", () => {
-					momoSteps.hidden = false;
-				});
-			}
-
 			document.querySelectorAll("[data-dialog-open]").forEach((trigger) => {
 				trigger.addEventListener("click", () => {
 					activeTrigger = trigger;
@@ -871,7 +858,6 @@
 					if (event.target === dialog) dialog.close();
 				});
 				dialog.addEventListener("close", () => {
-					if (dialog === enrolDialog) momoSteps.hidden = true;
 					if (activeTrigger) activeTrigger.focus();
 				});
 			});
@@ -1023,7 +1009,6 @@
 	</script>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
-	<script src="assets/js/brylla-currency.js"></script>
 	<script src="assets/js/brylla-home-courses.js"></script>
 </body>
 </html>
