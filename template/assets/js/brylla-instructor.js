@@ -976,6 +976,147 @@
 			return { error: result.error, data: result.data || [] };
 		});
 	}
+	function scoreCsvCell(value) {
+		var text = value == null ? "" : String(value);
+		if (/[",\r\n]/.test(text)) return '"' + text.replace(/"/g, '""') + '"';
+		return text;
+	}
+	function scoreRowsFor(students) {
+		var rows = [["Student", "Email", "Quiz", "Percentage", "Result", "Attempt", "Date"]];
+		students.forEach(function (student) {
+			if (!student.scores.length) {
+				rows.push([student.name, student.email, "", "", "No score yet", "", ""]);
+				return;
+			}
+			student.scores.forEach(function (score) {
+				rows.push([
+					student.name,
+					student.email,
+					score.title,
+					score.percent == null ? "" : score.percent + "%",
+					score.passed ? "Passed" : "Not passed",
+					score.attempt == null ? "" : String(score.attempt),
+					score.submitted_at ? formatDate(score.submitted_at) : ""
+				]);
+			});
+		});
+		return rows;
+	}
+	function downloadTextFile(filename, text, type) {
+		var blob = new Blob([text], { type: type });
+		var link = document.createElement("a");
+		link.href = URL.createObjectURL(blob);
+		link.download = filename;
+		link.click();
+		URL.revokeObjectURL(link.href);
+	}
+	function downloadScorePdf(students) {
+		var lines = ["Brylla Academy student scores", ""];
+		students.forEach(function (student) {
+			lines.push(student.name + "  " + student.email);
+			if (!student.scores.length) lines.push("No quiz score yet.");
+			student.scores.forEach(function (score) {
+				lines.push((score.title || "Quiz") + "  " + (score.percent == null ? "" : score.percent + "%") + "  " + (score.passed ? "Passed" : "Not passed") + "  Attempt " + (score.attempt || 1));
+			});
+			lines.push("");
+		});
+		var wrapped = [];
+		lines.forEach(function (line) {
+			var text = String(line).replace(/[^\x20-\x7E]/g, "?");
+			if (!text) { wrapped.push(""); return; }
+			while (text.length > 90) {
+				wrapped.push(text.slice(0, 90));
+				text = text.slice(90);
+			}
+			wrapped.push(text);
+		});
+		var chunks = [];
+		for (var index = 0; index < wrapped.length; index += 46) chunks.push(wrapped.slice(index, index + 46));
+		if (!chunks.length) chunks.push(["No students selected."]);
+		var objects = [];
+		function add(body) { objects.push(body); return objects.length; }
+		add("<< /Type /Catalog /Pages 2 0 R >>");
+		add("");
+		add("<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>");
+		var pageIds = [];
+		chunks.forEach(function (chunk) {
+			var content = ["BT", "/F1 11 Tf", "14 TL", "40 800 Td"];
+			chunk.forEach(function (line, lineIndex) {
+				var safe = line.replace(/[\\()]/g, function (ch) { return "\\" + ch; });
+				if (lineIndex) content.push("T*");
+				content.push("(" + safe + ") Tj");
+			});
+			content.push("ET");
+			var stream = content.join("\n");
+			var contentId = add("<< /Length " + stream.length + " >>\nstream\n" + stream + "\nendstream");
+			pageIds.push(add("<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Contents " + contentId + " 0 R /Resources << /Font << /F1 3 0 R >> >> >>"));
+		});
+		objects[1] = "<< /Type /Pages /Count " + pageIds.length + " /Kids [" + pageIds.map(function (id) { return id + " 0 R"; }).join(" ") + "] >>";
+		var body = "%PDF-1.4\n";
+		var offsets = [0];
+		objects.forEach(function (object, objectIndex) {
+			offsets.push(body.length);
+			body += (objectIndex + 1) + " 0 obj\n" + object + "\nendobj\n";
+		});
+		var xref = body.length;
+		body += "xref\n0 " + (objects.length + 1) + "\n0000000000 65535 f \n";
+		offsets.slice(1).forEach(function (offset) {
+			body += String(offset).padStart(10, "0") + " 00000 n \n";
+		});
+		body += "trailer << /Size " + (objects.length + 1) + " /Root 1 0 R >>\nstartxref\n" + xref + "\n%%EOF";
+		var blob = new Blob([body], { type: "application/pdf" });
+		var link = document.createElement("a");
+		link.href = URL.createObjectURL(blob);
+		link.download = "brylla-student-scores.pdf";
+		link.click();
+		URL.revokeObjectURL(link.href);
+	}
+	function selectedScoreStudents(host) {
+		var chosen = {};
+		host.querySelectorAll("[data-score-student]:checked").forEach(function (box) { chosen[box.value] = true; });
+		return (host._students || []).filter(function (student) { return chosen[student.id]; });
+	}
+	function paintStudentScores() {
+		var host = document.getElementById("student-scores");
+		var current = staffClient();
+		if (!host || !current) return;
+		current.rpc("founder_student_scores").then(function (result) {
+			if (!document.body.contains(host)) return;
+			if (result.error) {
+				host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Student scores</h2>' + empty(result.error.message || "Scores could not be loaded.") + "</div>";
+				return;
+			}
+			var students = result.data || [];
+			host._students = students;
+			host.innerHTML = '<div class="card-body"><h2 class="h5 fw-bold">Student scores</h2><p class="mb-3">Choose one or more students, then download their quiz scores as a PDF, a CSV file, or a spreadsheet.</p>' +
+				(students.length ? '<label class="d-flex align-items-center gap-2 mb-2"><input type="checkbox" id="score-all"> Select all students</label><ul class="list-unstyled mb-3">' + students.map(function (student) {
+					var count = student.scores.length;
+					return '<li class="py-1"><label class="d-flex align-items-center gap-2"><input type="checkbox" data-score-student value="' + esc(student.id) + '"><span>' + esc(student.name || student.email || "Student") + " · " + count + " score" + (count === 1 ? "" : "s") + "</span></label></li>";
+				}).join("") + '</ul><div class="d-flex flex-wrap gap-2"><button class="btn btn-primary btn-sm" type="button" data-score-download="pdf">Download PDF</button><button class="btn btn-light btn-sm" type="button" data-score-download="csv">Download CSV</button><button class="btn btn-light btn-sm" type="button" data-score-download="sheet">Download spreadsheet</button></div><p class="mt-2 mb-0" id="score-download-status" role="status"></p>' : '<p class="mb-0">No student accounts yet. Scores appear here after a student submits a quiz.</p>') + "</div>";
+			var all = document.getElementById("score-all");
+			if (all) {
+				all.addEventListener("change", function () {
+					host.querySelectorAll("[data-score-student]").forEach(function (box) { box.checked = all.checked; });
+				});
+			}
+			host.querySelectorAll("[data-score-download]").forEach(function (button) {
+				button.addEventListener("click", function () {
+					var status = document.getElementById("score-download-status");
+					var picked = selectedScoreStudents(host);
+					if (!picked.length) {
+						status.textContent = "Choose at least one student.";
+						return;
+					}
+					var rows = scoreRowsFor(picked);
+					var kind = button.getAttribute("data-score-download");
+					if (kind === "pdf") downloadScorePdf(picked);
+					else if (kind === "csv") downloadTextFile("brylla-student-scores.csv", rows.map(function (row) { return row.map(scoreCsvCell).join(","); }).join("\r\n"), "text/csv");
+					else downloadTextFile("brylla-student-scores.xls", "<html><head><meta charset=\"utf-8\"></head><body><table>" + rows.map(function (row) { return "<tr>" + row.map(function (cell) { return "<td>" + esc(cell) + "</td>"; }).join("") + "</tr>"; }).join("") + "</table></body></html>", "application/vnd.ms-excel");
+					status.textContent = "Downloaded scores for " + picked.length + " student" + (picked.length === 1 ? "" : "s") + ".";
+				});
+			});
+		});
+	}
 	function watchEnrolments(onChange) {
 		watchEnrolments.redraw = onChange;
 		var current = staffClient();
@@ -1073,7 +1214,7 @@
 
 	function renderAdminStudents(root) {
 		function draw(rows, error) {
-			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><div id="pending-accounts" class="card mb-3"><div class="card-body"><p role="status">Loading accounts…</p></div></div><p class="mb-3">Every student enrolled in a course is listed here, including a student who is still setting up an account.</p>' +
+			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><div class="card mb-3" id="student-scores"><div class="card-body"><h2 class="h5 fw-bold">Student scores</h2><p role="status">Loading scores…</p></div></div><div id="pending-accounts" class="card mb-3"><div class="card-body"><p role="status">Loading accounts…</p></div></div><p class="mb-3">Every student enrolled in a course is listed here, including a student who is still setting up an account.</p>' +
 				(error ? empty(error.message || "Students could not be loaded.") : (rows.length ? table(
 					[{ label: "Student" }, { label: "Email" }, { label: "Course" }, { label: "Enrolled" }, { label: "Status" }],
 					rows.map(function (row) {
@@ -1081,6 +1222,7 @@
 					})
 				) : empty("No students have enrolled yet.")));
 			paintPendingAccounts();
+			paintStudentScores();
 		}
 		root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><p role="status">Loading enrolments…</p>';
 		function refresh() {
@@ -1484,6 +1626,7 @@
 		var wide = "col-md-6 col-xl-3";
 		root.innerHTML = '<div class="dash-head"><div><h1 class="welcome-badge">Welcome, ' + esc(welcomeName(data)) + '</h1><p class="mb-0">Students, courses, and modules for the academy.</p></div></div>' +
 			instructorInviteCard() +
+			'<div class="card mb-3" id="student-scores"><div class="card-body"><h2 class="h5 fw-bold">Student scores</h2><p role="status">Loading scores…</p></div></div>' +
 			moduleUnlockCard() +
 			'<div class="card mb-3" id="published-courses"><div class="card-body"><h2 class="h5 fw-bold">Published courses</h2><p role="status">Loading courses…</p></div></div>' +
 			'<div class="card mb-3" id="recent-enrolments"><div class="card-body"><h2 class="h5 fw-bold">Recent enrolments</h2><p role="status">Loading enrolments…</p></div></div><div class="row">' +
@@ -1498,6 +1641,7 @@
 			}
 		});
 		paintInstructorInvite();
+		paintStudentScores();
 		paintModuleUnlocks();
 		paintPublishedCourses();
 		paintPendingCourses();
