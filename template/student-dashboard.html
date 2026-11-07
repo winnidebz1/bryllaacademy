@@ -773,7 +773,8 @@
 				"label": "Learning",
 				"items": [
 					{ "label": "My courses", "href": "student-courses", "icon": "courses" },
-					{ "label": "Quizzes", "href": "student-quiz", "icon": "assignments" }
+					{ "label": "Quizzes", "href": "student-quiz", "icon": "assignments" },
+					{ "label": "Certificates", "href": "student-certificates", "icon": "certificate" }
 				]
 			},
 			{
@@ -1695,7 +1696,6 @@
 					});
 					(parts[1].data || []).forEach(function (row) {
 						if (row.courses) rememberCourse(courses, row.courses);
-						owned[row.course_id] = true;
 					});
 					const progressRows = parts[5].error ? [] : (parts[5].data || []);
 					const notices = parts[6].error ? [] : (parts[6].data || []);

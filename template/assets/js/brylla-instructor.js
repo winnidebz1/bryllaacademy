@@ -72,7 +72,9 @@
 			{ label: "Instructors", href: "admin-instructors.html", icon: "isax isax-user", page: "admin-instructors" }
 		] },
 		{ label: "Operations", items: [
-			{ label: "Announcements", href: "admin-announcements.html", icon: "isax isax-volume-high5", page: "admin-announcements" }
+			{ label: "Announcements", href: "admin-announcements.html", icon: "isax isax-volume-high5", page: "admin-announcements" },
+			{ label: "Certificates", href: "admin-certificates.html", icon: "isax isax-note-215", page: "certificates" },
+			{ label: "Contacts", href: "admin-contacts.html", icon: "isax isax-profile-2user5", page: "admin-contacts" }
 		] },
 		{ label: "Account", items: [
 			{ label: "My profile", href: "admin-profile.html", icon: "isax isax-user", page: "profile" },
@@ -1243,7 +1245,7 @@
 			var choices = question && Array.isArray(question.choices) ? question.choices : ["", "", "", ""];
 			while (choices.length < 4) choices.push("");
 			var correct = question && question.correct_index != null ? question.correct_index : 0;
-			return '<fieldset class="border rounded-3 p-3 mb-3"><label class="form-label">Question</label><textarea class="form-control mb-2" data-prompt rows="2" required>' + esc(question && question.prompt || "") + '</textarea>' +
+			return '<fieldset class="quiz-question border rounded-3 p-3 mb-3"><label class="form-label">Question</label><textarea class="form-control mb-2" data-prompt rows="2" required>' + esc(question && question.prompt || "") + '</textarea>' +
 				choices.slice(0, 4).map(function (choice, index) {
 					return '<label class="form-label">Answer ' + String.fromCharCode(65 + index) + '</label><input class="form-control mb-2" data-choice value="' + esc(choice) + '" required>';
 				}).join("") +
@@ -1267,11 +1269,18 @@
 				'<label class="form-label" for="quiz-title">Title</label><input class="form-control mb-2" id="quiz-title" required>' +
 				'<label class="form-label" for="quiz-minutes">Time limit in minutes</label><input class="form-control mb-2" id="quiz-minutes" type="number" min="1" max="180" value="10" required>' +
 				'<label class="form-label" for="quiz-pass">Pass mark (%)</label><input class="form-control mb-3" id="quiz-pass" type="number" min="1" max="100" value="70" required>' +
-				'<div id="quiz-questions"></div><button class="btn btn-light rounded-pill me-2" type="button" id="add-question">Add question</button>' +
+				'<p class="text-muted">Click Add question to type a question, four answers, and the correct answer.</p><div id="quiz-questions"></div><button class="btn btn-light rounded-pill me-2" type="button" id="add-question">Add question</button>' +
 				'<button class="btn btn-primary rounded-pill" type="submit">Save quiz</button><p id="quiz-status" class="mt-2 mb-0" role="status"></p></form></div></div>';
 			var box = document.getElementById("quiz-questions");
-			function addQuestion(question) { box.insertAdjacentHTML("beforeend", questionFields(question)); }
-			addQuestion();
+			function addQuestion(question) {
+				box.insertAdjacentHTML("beforeend", questionFields(question));
+				var fields = box.querySelectorAll("fieldset");
+				if (fields.length === 1) fields[0].id = "first-field";
+				else Array.prototype.forEach.call(fields, function (field, index) {
+					if (index) field.removeAttribute("id");
+				});
+				fields[fields.length - 1].scrollIntoView({ block: "center" });
+			}
 			document.getElementById("add-question").addEventListener("click", function () { addQuestion(); });
 			box.addEventListener("click", function (event) {
 				var button = event.target.closest("[data-remove-question]");
@@ -1394,7 +1403,219 @@
 	}
 
 	function renderCertificates(root) {
-		root.innerHTML = '<h1 class="h5 fw-bold">Certificates</h1>' + empty("Certificates are not issued yet. Lesson progress stays on each student's course page.");
+		var founder = currentArea() === "admin";
+		var current = staffClient();
+		root.innerHTML = '<h1 class="h5 fw-bold">Certificates</h1><p role="status">Loading certificates…</p>';
+		if (!current) {
+			root.innerHTML = '<h1 class="h5 fw-bold">Certificates</h1>' + empty("Sign in again to see certificates.");
+			return;
+		}
+		current.rpc("founder_certificate_board").then(function (result) {
+			if (!document.body.contains(root)) return;
+			if (result.error) {
+				root.innerHTML = '<h1 class="h5 fw-bold">Certificates</h1>' + empty(result.error.message || "Certificates could not be loaded.");
+				return;
+			}
+			var rows = result.data || [];
+			function derived(row) {
+				if (row.result_override) return row.result_override;
+				if (Number(row.assessment_score) >= Number(row.pass_mark || 70) && Number(row.assessment_score) > 0) return "passed";
+				if (Number(row.assessment_score) > 0) return "failed";
+				return "pending";
+			}
+			function draw() {
+				var query = (document.getElementById("cert-search") || {}).value || "";
+				var course = (document.getElementById("cert-course") || {}).value || "all";
+				var status = (document.getElementById("cert-status") || {}).value || "all";
+				var list = rows.filter(function (row) {
+					var resultLabel = derived(row);
+					if (course !== "all" && row.course_id !== course) return false;
+					if (status === "issued" && row.certificate_status !== "issued") return false;
+					if (status === "pending" && (row.certificate_status === "issued" || resultLabel !== "passed")) return false;
+					if (status === "passed" && resultLabel !== "passed") return false;
+					if (status === "failed" && resultLabel !== "failed") return false;
+					return (row.student_name || "").toLowerCase().indexOf(query.toLowerCase()) !== -1;
+				});
+				var issued = rows.filter(function (row) { return row.certificate_status === "issued"; }).length;
+				var passed = rows.filter(function (row) { return derived(row) === "passed"; }).length;
+				var failed = rows.filter(function (row) { return derived(row) === "failed"; }).length;
+				var eligible = rows.filter(function (row) { return derived(row) === "passed" && row.certificate_status !== "issued"; }).length;
+				var courses = {};
+				rows.forEach(function (row) { courses[row.course_id] = row.course_title; });
+				root.innerHTML = '<h1 class="h5 fw-bold">Certificates</h1><p class="mb-3">Use the academy certificate design. Only a student marked as passed can be issued a certificate.</p>' +
+					'<div class="row g-2 mb-3"><div class="col-6 col-md"><div class="card"><div class="card-body"><span>Students</span><h4>' + rows.length + '</h4></div></div></div><div class="col-6 col-md"><div class="card"><div class="card-body"><span>Passed</span><h4>' + passed + '</h4></div></div></div><div class="col-6 col-md"><div class="card"><div class="card-body"><span>Failed</span><h4>' + failed + '</h4></div></div></div><div class="col-6 col-md"><div class="card"><div class="card-body"><span>Eligible</span><h4>' + eligible + '</h4></div></div></div><div class="col-6 col-md"><div class="card"><div class="card-body"><span>Issued</span><h4>' + issued + '</h4></div></div></div></div>' +
+					'<div class="d-flex flex-wrap gap-2 mb-3"><input class="form-control" id="cert-search" placeholder="Search student" value="' + esc(query) + '"><select class="form-select w-auto" id="cert-course"><option value="all">All courses</option>' +
+					Object.keys(courses).map(function (id) { return '<option value="' + esc(id) + '"' + (id === course ? " selected" : "") + ">" + esc(courses[id]) + "</option>"; }).join("") +
+					'</select><select class="form-select w-auto" id="cert-status"><option value="all">All statuses</option><option value="passed">Passed</option><option value="failed">Failed</option><option value="pending">Pending issuance</option><option value="issued">Issued</option></select></div>' +
+					(list.length ? table(
+						[{ label: "Student" }, { label: "Email" }, { label: "Course" }, { label: "Score" }, { label: "Result" }, { label: "Certificate" }, { label: "Actions" }],
+						list.map(function (row) {
+							var resultLabel = derived(row);
+							var actions = "";
+							if (founder && resultLabel !== "passed") actions += '<button class="btn btn-light btn-sm" type="button" data-result="passed" data-user="' + esc(row.user_id) + '" data-course="' + esc(row.course_id) + '">Mark passed</button> ';
+							if (founder && resultLabel !== "failed") actions += '<button class="btn btn-light btn-sm" type="button" data-result="failed" data-user="' + esc(row.user_id) + '" data-course="' + esc(row.course_id) + '">Mark failed</button> ';
+							if (founder && resultLabel === "passed" && row.certificate_status !== "issued") actions += '<button class="btn btn-primary btn-sm" type="button" data-issue="' + esc(row.user_id) + '" data-course="' + esc(row.course_id) + '">Issue</button>';
+							if (row.certificate_status === "issued") {
+								actions += '<button class="btn btn-light btn-sm" type="button" data-preview="' + esc(row.certificate_id) + '">Preview</button> ';
+								if (founder) actions += '<button class="btn btn-light btn-sm" type="button" data-revoke="' + esc(row.certificate_id) + '">Revoke</button>';
+							}
+							return "<tr>" + cell("Student", esc(row.student_name || "")) + cell("Email", esc(row.email || "")) + cell("Course", esc(row.course_title || "")) + cell("Score", esc(String(row.assessment_score || 0)) + "% / " + esc(String(row.pass_mark || 70)) + "%") + cell("Result", esc(resultLabel)) + cell("Certificate", esc(row.certificate_number || row.certificate_status || "Not issued")) + "<td>" + (actions || "—") + "</td></tr>";
+						})
+					) : empty("No student results yet.")) +
+					'<p class="mt-3 mb-0">Public verification: <a href="verify-certificate">verify-certificate</a></p><div id="cert-preview" class="mt-4"></div>';
+				document.getElementById("cert-status").value = status;
+				["cert-search", "cert-course", "cert-status"].forEach(function (id) {
+					document.getElementById(id).addEventListener("change", draw);
+					document.getElementById(id).addEventListener("input", draw);
+				});
+				root.querySelectorAll("[data-result]").forEach(function (button) {
+					button.addEventListener("click", function () {
+						current.rpc("founder_set_course_result", {
+							p_user: button.getAttribute("data-user"),
+							p_course: button.getAttribute("data-course"),
+							p_result: button.getAttribute("data-result"),
+							p_completion: new Date().toISOString().slice(0, 10)
+						}).then(function (done) {
+							if (done.error) toast(done.error.message || "The result could not be saved.");
+							else location.reload();
+						});
+					});
+				});
+				root.querySelectorAll("[data-issue]").forEach(function (button) {
+					button.addEventListener("click", function () {
+						var row = rows.filter(function (item) { return item.user_id === button.getAttribute("data-issue") && item.course_id === button.getAttribute("data-course"); })[0];
+						if (!row) return;
+						var name = window.prompt("Name to print on the certificate", row.student_name || "");
+						if (!name) return;
+						var title = window.prompt("Course title to print", row.course_title || "") || row.course_title;
+						current.rpc("founder_issue_certificate", {
+							p_user: row.user_id,
+							p_course: row.course_id,
+							p_display_name: name,
+							p_course_title: title,
+							p_issue_date: new Date().toISOString().slice(0, 10),
+							p_completion: row.completion_date || new Date().toISOString().slice(0, 10)
+						}).then(function (done) {
+							if (done.error) toast(done.error.message || "The certificate could not be issued.");
+							else {
+								toast("Certificate issued.");
+								previewCertificate(done.data || {});
+							}
+						});
+					});
+				});
+				root.querySelectorAll("[data-revoke]").forEach(function (button) {
+					button.addEventListener("click", function () {
+						var reason = window.prompt("Reason for revocation", "") || "Revoked";
+						current.rpc("founder_revoke_certificate", { p_certificate: button.getAttribute("data-revoke"), p_reason: reason }).then(function (done) {
+							if (done.error) toast(done.error.message || "The certificate could not be revoked.");
+							else location.reload();
+						});
+					});
+				});
+				root.querySelectorAll("[data-preview]").forEach(function (button) {
+					button.addEventListener("click", function () {
+						var row = rows.filter(function (item) { return item.certificate_id === button.getAttribute("data-preview"); })[0];
+						if (row) previewCertificate(row);
+					});
+				});
+			}
+			function previewCertificate(row) {
+				var host = document.getElementById("cert-preview");
+				if (!host) return;
+				host.innerHTML = '<h2 class="h6 fw-bold">Certificate preview</h2><canvas id="cert-canvas" style="width:100%;max-width:900px;border:1px solid #d5e0ea;background:#fff"></canvas><p class="mt-2"><button class="btn btn-primary btn-sm" type="button" id="cert-download">Download PDF</button></p>';
+				var canvas = document.getElementById("cert-canvas");
+				var image = new Image();
+				image.onload = function () {
+					canvas.width = image.width;
+					canvas.height = image.height;
+					var ctx = canvas.getContext("2d");
+					ctx.drawImage(image, 0, 0);
+					ctx.textAlign = "center";
+					ctx.fillStyle = "#13b8ad";
+					ctx.font = "700 42px Raleway, Arial";
+					ctx.fillText(row.display_name || row.student_name || "", canvas.width * 0.5, canvas.height * 0.48);
+					ctx.font = "600 22px Raleway, Arial";
+					ctx.fillText(row.course_title || "", canvas.width * 0.5, canvas.height * 0.58);
+					ctx.fillStyle = "#122d49";
+					ctx.font = "16px Raleway, Arial";
+					ctx.fillText(row.issue_date || "", canvas.width * 0.78, canvas.height * 0.78);
+					ctx.fillStyle = "#60748a";
+					ctx.font = "12px Raleway, Arial";
+					ctx.fillText(row.certificate_number || "", canvas.width * 0.5, canvas.height * 0.92);
+				};
+				image.src = "assets/img/certificates/brylla-certificate.jpg";
+				document.getElementById("cert-download").addEventListener("click", function () {
+					canvas.toBlob(function (blob) {
+						if (!blob) return;
+						var link = document.createElement("a");
+						link.href = URL.createObjectURL(blob);
+						link.download = (row.certificate_number || "certificate") + ".png";
+						link.click();
+						URL.revokeObjectURL(link.href);
+					}, "image/png");
+				});
+			}
+			draw();
+		});
+	}
+	function renderLeads(root) {
+		var current = staffClient();
+		root.innerHTML = '<h1 class="h5 fw-bold">Contacts</h1><p role="status">Loading contacts…</p>';
+		if (!current) return;
+		Promise.all([
+			current.rpc("founder_contacts", { p_query: "", p_kind: "all", p_course: "", p_freebie: "" }),
+			current.rpc("founder_lead_stats")
+		]).then(function (parts) {
+			if (parts[0].error) {
+				root.innerHTML = '<h1 class="h5 fw-bold">Contacts</h1>' + empty(parts[0].error.message || "Contacts could not be loaded.");
+				return;
+			}
+			var rows = parts[0].data || [];
+			var stats = parts[1].data || {};
+			function draw() {
+				var query = (document.getElementById("lead-search") || {}).value || "";
+				var kind = (document.getElementById("lead-kind") || {}).value || "all";
+				var filtered = rows.filter(function (row) {
+					if (kind === "waitlist" && !(row.waitlists || []).length) return false;
+					if (kind === "freebie" && !(row.downloads || []).length) return false;
+					return (row.full_name + " " + row.email).toLowerCase().indexOf(query.toLowerCase()) !== -1;
+				});
+				root.innerHTML = '<h1 class="h5 fw-bold">Contacts</h1><p>These records belong to Brylla Academy. Resend is only a copy for email sending.</p>' +
+					'<p>Contacts: ' + (stats.contacts || 0) + ' · Waitlist: ' + (stats.waitlist || 0) + ' · Downloads: ' + (stats.downloads || 0) + '</p>' +
+					'<div class="d-flex flex-wrap gap-2 mb-3"><input class="form-control" id="lead-search" placeholder="Search name or email" value="' + esc(query) + '"><select class="form-select w-auto" id="lead-kind"><option value="all">All</option><option value="waitlist">Waitlist</option><option value="freebie">Freebies</option></select><button class="btn btn-light" type="button" id="lead-export">Export CSV</button></div>' +
+					(filtered.length ? table(
+						[{ label: "Name" }, { label: "Email" }, { label: "Signed up" }, { label: "Consent" }, { label: "Unsubscribed" }, { label: "Sync" }],
+						filtered.map(function (row) {
+							return "<tr>" + cell("Name", esc(row.full_name || "")) + cell("Email", esc(row.email || "")) + cell("Signed up", esc(formatDate(row.created_at))) + cell("Consent", row.marketing_consent ? "Yes" : "No") + cell("Unsubscribed", row.unsubscribe_status ? "Yes" : "No") + cell("Sync", esc(row.sync_status || "pending")) + "</tr>";
+						})
+					) : empty("No contacts yet."));
+				document.getElementById("lead-kind").value = kind;
+				document.getElementById("lead-search").addEventListener("input", draw);
+				document.getElementById("lead-kind").addEventListener("change", draw);
+				document.getElementById("lead-export").addEventListener("click", function () {
+					var lines = [["Name", "Email", "Signed up", "Consent", "Unsubscribed", "Waitlists", "Freebies", "Sync"]];
+					filtered.forEach(function (row) {
+						lines.push([
+							row.full_name,
+							row.email,
+							row.created_at,
+							row.marketing_consent ? "yes" : "no",
+							row.unsubscribe_status ? "yes" : "no",
+							(row.waitlists || []).map(function (item) { return item.course_id; }).join(";"),
+							(row.downloads || []).map(function (item) { return item.freebie_id; }).join(";"),
+							row.sync_status || ""
+						]);
+					});
+					var csv = lines.map(function (line) { return line.map(scoreCsvCell).join(","); }).join("\r\n");
+					var link = document.createElement("a");
+					link.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" }));
+					link.download = "brylla-contacts.csv";
+					link.click();
+				});
+			}
+			draw();
+		});
 	}
 
 	function renderProfile(root, data) {
@@ -2120,13 +2341,17 @@
 			root.innerHTML = '<h1 class="h5 fw-bold">Platform settings</h1><form id="academy-settings" class="card"><div class="card-body">' +
 				'<label class="form-label" for="set-name">Academy name</label><input class="form-control mb-3" id="set-name" value="' + esc(values.academy_name || "") + '">' +
 				'<label class="form-label" for="set-email">Support email</label><input class="form-control mb-3" id="set-email" type="email" value="' + esc(values.support_email || "") + '">' +
+				'<label class="form-label" for="set-provider">Email marketing provider</label><select class="form-select mb-3" id="set-provider"><option value="resend">Resend</option><option value="mailerlite">MailerLite</option><option value="kit">Kit</option><option value="brevo">Brevo</option></select>' +
+				'<p class="text-muted">Contacts are stored in Brylla Academy. The provider is only used to send marketing email. Switching provider does not rebuild the forms.</p>' +
 				'<p class="text-muted">Prices on the site are shown in Ghana cedis. Selar and Paystack convert the payment for the visitor.</p>' +
 				'<button class="btn btn-primary rounded-pill" type="submit">Save settings</button></div></form>';
+			document.getElementById("set-provider").value = values.email_provider || "resend";
 			document.getElementById("academy-settings").addEventListener("submit", function (event) {
 				event.preventDefault();
 				var pairs = [
 					["academy_name", document.getElementById("set-name").value.trim()],
-					["support_email", document.getElementById("set-email").value.trim()]
+					["support_email", document.getElementById("set-email").value.trim()],
+					["email_provider", document.getElementById("set-provider").value]
 				];
 				pairs.reduce(function (chain, pair) {
 					return chain.then(function () {
@@ -2149,6 +2374,7 @@
 		quiz: renderQuiz,
 		"quiz-results": renderResults,
 		certificates: renderCertificates,
+		"admin-contacts": renderLeads,
 		profile: renderProfile,
 		analytics: renderAnalytics,
 		help: function (root) {

@@ -314,3 +314,8 @@ body.sidebar-collapsed .app-sidebar span, body.sidebar-collapsed .app-nav-label 
 	.app-search { display: none; }
 	.app-profile-button > span:last-child { display: none; }
 }
+.instructor-app fieldset,
+.instructor-app fieldset.quiz-question,
+.instructor-app #quiz-questions fieldset {
+	display: block !important;
+}

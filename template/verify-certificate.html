@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<title>Verify a certificate | Brylla Academy</title>
+	<link rel="icon" type="image/png" href="assets/img/logo.png">
+	<link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400;600;700&display=swap" rel="stylesheet">
+	<style>
+		body { margin: 0; font-family: Raleway, "Segoe UI", Arial, sans-serif; background: #f4f8fb; color: #122d49; }
+		main { max-width: 560px; margin: 0 auto; padding: 48px 16px; }
+		.card { background: #fff; border: 1px solid #e3ebf2; border-radius: 16px; padding: 32px 24px; }
+		label { display: block; font-weight: 600; margin: 12px 0 6px; }
+		input, button { width: 100%; padding: 12px 14px; border-radius: 10px; border: 1px solid #d5e0ea; font: inherit; }
+		button { background: #073b70; color: #fff; border: 0; font-weight: 700; cursor: pointer; margin-top: 16px; }
+		a { color: #073b70; }
+	</style>
+</head>
+<body>
+	<main>
+		<div class="card">
+			<p><a href="/">Brylla Academy</a></p>
+			<h1>Verify a certificate</h1>
+			<p>Enter the certificate number printed on the document. This page does not show private student records.</p>
+			<form id="verify-form">
+				<label for="certificate-number">Certificate number</label>
+				<input id="certificate-number" name="number" required maxlength="40" placeholder="BRY-2027-XXXXXXXX">
+				<button type="submit">Verify</button>
+			</form>
+			<p id="verify-status" role="status"></p>
+		</div>
+	</main>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script>
+		document.getElementById("verify-form").addEventListener("submit", function (event) {
+			event.preventDefault();
+			var status = document.getElementById("verify-status");
+			var client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
+			if (!client) { status.textContent = "Verification is not available right now."; return; }
+			status.textContent = "Checking…";
+			client.rpc("verify_certificate", { p_number: document.getElementById("certificate-number").value }).then(function (result) {
+				if (result.error) { status.textContent = result.error.message || "The certificate could not be checked."; return; }
+				var row = result.data || {};
+				if (!row.valid) { status.textContent = row.message || "This certificate is not valid."; return; }
+				status.textContent = row.student_name + " completed " + row.course_title + " on " + row.issue_date + ". Certificate " + row.certificate_number + " is valid.";
+			});
+		});
+	</script>
+</body>
+</html>

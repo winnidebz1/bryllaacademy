@@ -1,0 +1,106 @@
+(function () {
+	function endpoint() {
+		var config = window.BryllaPublic || {};
+		return String(config.supabaseUrl || "").replace(/\/$/, "") + "/functions/v1/lead-capture";
+	}
+
+	function rpcSubmit(body) {
+		var config = window.BryllaPublic || {};
+		var client = config.client ? config.client() : null;
+		if (!client) return Promise.reject(new Error("The form is not connected."));
+		return client.rpc("submit_lead", {
+			p_kind: body.kind,
+			p_full_name: body.fullName,
+			p_email: body.email,
+			p_consent: Boolean(body.marketingConsent),
+			p_course: body.courseId || null,
+			p_freebie: body.freebieId || null,
+			p_source: body.source || "website",
+			p_honeypot: body.company || ""
+		}).then(function (result) {
+			if (result.error) throw new Error(result.error.message || "The form could not be saved.");
+			if (!result.data || !result.data.ok) throw new Error((result.data && result.data.error) || "The form could not be saved.");
+			return result.data;
+		});
+	}
+
+	function postLead(body) {
+		var config = window.BryllaPublic || {};
+		var url = endpoint();
+		if (!config.supabaseUrl || !config.supabaseAnonKey) return Promise.reject(new Error("The form is not connected."));
+		var controller = typeof AbortController === "function" ? new AbortController() : null;
+		var timer = controller ? setTimeout(function () { controller.abort(); }, 4000) : null;
+		return fetch(url, {
+			method: "POST",
+			headers: {
+				"Content-Type": "application/json",
+				apikey: config.supabaseAnonKey,
+				Authorization: "Bearer " + config.supabaseAnonKey
+			},
+			body: JSON.stringify(body),
+			signal: controller ? controller.signal : undefined
+		}).then(function (response) {
+			return response.json().catch(function () { return {}; }).then(function (payload) {
+				if (payload && payload.ok) return payload;
+				return rpcSubmit(body);
+			});
+		}).catch(function () {
+			return rpcSubmit(body);
+		}).finally(function () {
+			if (timer) clearTimeout(timer);
+		});
+	}
+
+	function startDownload(url, filename) {
+		if (!url) return;
+		var link = document.createElement("a");
+		link.href = url;
+		if (filename) link.setAttribute("download", filename);
+		link.rel = "noopener";
+		document.body.appendChild(link);
+		link.click();
+		link.remove();
+	}
+
+	function bindForm(form) {
+		if (!form || form.getAttribute("data-lead-bound") === "1") return;
+		form.setAttribute("data-lead-bound", "1");
+		var status = form.querySelector("[data-lead-status]");
+		form.addEventListener("submit", function (event) {
+			event.preventDefault();
+			var name = form.querySelector("[name='full_name'], [name='name']");
+			var email = form.querySelector("[name='email']");
+			var consent = form.querySelector("[name='marketing_consent']");
+			var company = form.querySelector("[name='company']");
+			var kind = form.getAttribute("data-lead-kind") || "waitlist";
+			if (status) {
+				status.hidden = false;
+				status.textContent = "Saving…";
+			}
+			postLead({
+				kind: kind,
+				fullName: name ? name.value.trim() : "",
+				email: email ? email.value.trim() : "",
+				marketingConsent: Boolean(consent && consent.checked),
+				courseId: form.getAttribute("data-course-id") || "",
+				freebieId: form.getAttribute("data-freebie-id") || "",
+				source: form.getAttribute("data-lead-source") || "website",
+				company: company ? company.value : ""
+			}).then(function (result) {
+				if (status) status.textContent = result.message || "Saved.";
+				if (kind === "freebie" && result.download_url) {
+					startDownload(result.download_url, form.getAttribute("data-download-name") || "");
+				}
+				form.querySelectorAll("input, button").forEach(function (field) {
+					if (field.name === "company") return;
+					field.disabled = true;
+				});
+			}).catch(function (error) {
+				if (status) status.textContent = error.message || "The form could not be saved.";
+			});
+		});
+	}
+
+	window.BryllaLeads = { postLead: postLead, bindForm: bindForm, startDownload: startDownload };
+	document.querySelectorAll("form[data-lead-kind]").forEach(bindForm);
+})();

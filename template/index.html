@@ -182,6 +182,13 @@
 		.notify-form label { display: block; margin-bottom: var(--space-1); color: var(--navy-deep); font-size: 14px; font-weight: 650; }
 		.notify-form input { width: 100%; min-height: 46px; padding: 10px 12px; border: 1px solid #8398aa; border-radius: 8px; color: var(--ink); font: inherit; }
 		.notify-form input:focus-visible { outline: 3px solid rgba(19,184,173,.45); outline-offset: 2px; border-color: var(--teal-dark); }
+		.notify-form .company-field, .notify-form input[name="company"] { position: absolute; left: -9999px; height: 0; width: 0; opacity: 0; }
+		.notify-form .consent-line { display: flex; gap: 8px; align-items: flex-start; font-weight: 500; margin: 12px 0; }
+		.notify-form .consent-line input { width: auto; min-height: 0; }
+		.toolkit-card form label { display: block; margin: 8px 0 4px; font-weight: 650; }
+		.toolkit-card form input { width: 100%; min-height: 42px; margin-bottom: 8px; padding: 8px 10px; border: 1px solid #8398aa; border-radius: 8px; }
+		.toolkit-card form .company-field, .toolkit-card form input[name="company"] { position: absolute; left: -9999px; }
+		.toolkit-card form .consent-line { display: flex; gap: 8px; align-items: flex-start; font-weight: 500; }
 		.notify-error { margin: var(--space-1) 0 0; color: #a12622 !important; font-size: 13px; }
 		.notify-service-message { margin: var(--space-3) 0 0; color: #a12622 !important; font-size: 14px; font-weight: 650; }
 		.notify-service-message.is-success { color: var(--teal-dark) !important; }
@@ -349,7 +356,6 @@
 							<li><a href="#bookkeeping">Bookkeeping</a></li>
 							<li><a href="#project-management">Project Management — Coming Soon</a></li>
 							<li><a href="#digital-marketing">Digital Marketing — Coming Soon</a></li>
-							<li><a href="#podcast-management">Podcast Management — Coming Soon</a></li>
 						</ul>
 					</li>
 					<li class="menu-drop">
@@ -456,7 +462,7 @@
 							<p class="course-meta"><i class="fa-regular fa-clock" aria-hidden="true"></i><span data-listing="duration">Eight weeks, from 4 January 2027 to 1 March 2027</span></p>
 							<p class="course-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Cohort: <strong data-listing="cohort">4 January 2027 to 1 March 2027</strong></span></p>
 							<button class="btn btn-brand enroll-button" type="button" data-pay-dialog="bookkeeping-register-dialog">Register</button>
-							<button class="btn enroll-button complete-enrollment" type="button" data-pay-dialog="bookkeeping-enrol-dialog">Complete Enrollment</button>
+							<a class="btn enroll-button complete-enrollment" href="https://paystack.shop/pay/brylla-bookkeeping-course" target="_blank" rel="noopener">Complete Enrollment</a>
 							<a class="course-syllabus-link" href="course-details">View more</a>
 						</div>
 					</article>
@@ -477,13 +483,6 @@
 								<p class="coming-timing"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Coming Soon</span></p>
 								<button class="notify-button" type="button" data-course-notify="digital-marketing" data-course-label="Digital Marketing">Join the Waitlist</button>
 							</article>
-							<article class="course-card coming-card" id="podcast-management" aria-labelledby="podcast-management-title">
-								<span class="coming-card-icon"><i class="fa-solid fa-microphone" aria-hidden="true"></i></span>
-								<h3 id="podcast-management-title">Podcast Management</h3>
-								<p>Learn how to support podcasters with the planning, coordination, and administrative tasks involved in running a podcast. This course will cover essential podcast management activities, including episode scheduling, guest coordination, content organization, and podcast publishing support.</p>
-								<p class="coming-timing"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Coming Soon</span></p>
-								<button class="notify-button" type="button" data-course-notify="podcast-management" data-course-label="Podcast Management">Join the Waitlist</button>
-							</article>
 						</div>
 					</div>
 				</div>
@@ -497,18 +496,6 @@
 					<div class="pay-choice">
 						<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">International Payment</a>
 						<a class="btn btn-outline-brand" href="bookkeeping-registration">Local Payment</a>
-					</div>
-				</div>
-			</dialog>
-			<dialog class="course-dialog" id="bookkeeping-enrol-dialog" aria-labelledby="bookkeeping-enrol-title">
-				<div class="course-dialog-content">
-					<div class="course-dialog-header">
-						<p class="mb-0" id="bookkeeping-enrol-title">Complete Enrollment</p>
-						<button class="course-dialog-close" type="button" data-dialog-close aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-					</div>
-					<div class="pay-choice">
-						<a class="btn btn-brand" href="https://selar.com/1246a06832" target="_blank" rel="noopener">International Payment</a>
-						<a class="btn btn-outline-brand" href="https://paystack.shop/pay/brylla-bookkeeping-course" target="_blank" rel="noopener">Local Payment</a>
 					</div>
 				</div>
 			</dialog>
@@ -610,6 +597,9 @@
 						<input id="notify-name" name="name" type="text" autocomplete="name" required maxlength="120">
 						<label for="notify-email">Email address</label>
 						<input id="notify-email" name="email" type="email" autocomplete="email" required maxlength="160" aria-describedby="notify-email-error">
+						<label class="company-field" for="notify-company">Company</label>
+						<input id="notify-company" name="company" type="text" tabindex="-1" autocomplete="off">
+						<label class="consent-line" for="notify-consent"><input id="notify-consent" name="marketing_consent" type="checkbox"> Send me course updates by email. See the <a href="privacy-policy">privacy notice</a>.</label>
 						<p class="notify-error" id="notify-email-error" role="alert" hidden></p>
 						<button class="notify-button" type="submit">Join the Waitlist</button>
 					</form>
@@ -806,7 +796,6 @@
 			const syllabusDialog = document.getElementById("course-syllabus-dialog");
 			const notifyDialog = document.getElementById("course-notify-dialog");
 			const registerDialog = document.getElementById("bookkeeping-register-dialog");
-			const enrolDialog = document.getElementById("bookkeeping-enrol-dialog");
 			const notifyForm = document.getElementById("course-notify-form");
 			const notifyName = document.getElementById("notify-name");
 			const notifyEmail = document.getElementById("notify-email");
@@ -853,7 +842,7 @@
 				trigger.addEventListener("click", () => trigger.closest("dialog").close());
 			});
 
-			[syllabusDialog, notifyDialog, registerDialog, enrolDialog].forEach((dialog) => {
+			[syllabusDialog, notifyDialog, registerDialog].forEach((dialog) => {
 				dialog.addEventListener("click", (event) => {
 					if (event.target === dialog) dialog.close();
 				});
@@ -883,33 +872,26 @@
 					notifyEmail.focus();
 					return;
 				}
-				const client = window.BryllaPublic && BryllaPublic.client ? BryllaPublic.client() : null;
-				if (!client) {
-					notifyServiceMessage.textContent = "The waitlist could not be saved. Email admin@bryllagroup.org instead.";
-					notifyServiceMessage.classList.remove("is-success");
-					notifyServiceMessage.hidden = false;
-					return;
-				}
 				const submitButton = notifyForm.querySelector("button");
 				submitButton.disabled = true;
-				client.from("course_waitlist").insert({
-					course_id: selectedCourse,
-					full_name: notifyName.value,
-					email: notifyEmail.value
+				window.BryllaLeads.postLead({
+					kind: "waitlist",
+					fullName: notifyName.value,
+					email: notifyEmail.value,
+					marketingConsent: document.getElementById("notify-consent").checked,
+					courseId: selectedCourse,
+					source: "homepage-waitlist",
+					company: document.getElementById("notify-company").value
 				}).then((result) => {
 					submitButton.disabled = false;
-					if (result.error) {
-						const duplicate = result.error.code === "23505" || /duplicate/i.test(result.error.message || "");
-						notifyServiceMessage.textContent = duplicate
-							? "You're already on the waitlist for this course."
-							: "The waitlist could not be saved. Email admin@bryllagroup.org instead.";
-						notifyServiceMessage.classList.remove("is-success");
-						notifyServiceMessage.hidden = false;
-						return;
-					}
 					notifyForm.hidden = true;
-					notifyServiceMessage.textContent = `You're on the waitlist for ${selectedLabel}. We'll email you when it opens.`;
+					notifyServiceMessage.textContent = result.message || `You're on the waitlist for ${selectedLabel}.`;
 					notifyServiceMessage.classList.add("is-success");
+					notifyServiceMessage.hidden = false;
+				}).catch((error) => {
+					submitButton.disabled = false;
+					notifyServiceMessage.textContent = (error && error.message) || "The waitlist could not be saved. Email admin@bryllagroup.org instead.";
+					notifyServiceMessage.classList.remove("is-success");
 					notifyServiceMessage.hidden = false;
 				});
 			});
@@ -947,18 +929,20 @@
 						const copy = document.createElement("p");
 						copy.textContent = resource.description;
 						card.append(icon, title, copy);
-						if (resource.ready === false || !resource.href) {
+						if (resource.ready === false || !resource.id) {
 							const note = document.createElement("p");
 							note.className = "resource-note";
 							note.textContent = "Coming soon";
 							card.append(note);
 						} else {
-							const link = document.createElement("a");
-							link.className = "resource-link";
-							link.href = resource.href;
-							link.textContent = "Download guide";
-							if (resource.download) link.setAttribute("download", resource.download);
-							card.append(link);
+							const form = document.createElement("form");
+							form.setAttribute("data-lead-kind", "freebie");
+							form.setAttribute("data-freebie-id", resource.id);
+							form.setAttribute("data-lead-source", "homepage-freebie");
+							if (resource.download) form.setAttribute("data-download-name", resource.download);
+							form.innerHTML = '<label>Full name</label><input name="full_name" required maxlength="120"><label>Email address</label><input name="email" type="email" required><label class="company-field">Company</label><input name="company" tabindex="-1" autocomplete="off"><label class="consent-line"><input name="marketing_consent" type="checkbox"> Email me related resources. See the <a href="privacy-policy">privacy notice</a>.</label><button class="resource-link" type="submit">Get My Freebie</button><p data-lead-status role="status"></p>';
+							card.append(form);
+							if (window.BryllaLeads) window.BryllaLeads.bindForm(form);
 						}
 						resourceList.append(card);
 					});
@@ -1009,6 +993,7 @@
 	</script>
 	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-leads.js"></script>
 	<script src="assets/js/brylla-home-courses.js"></script>
 </body>
 </html>
