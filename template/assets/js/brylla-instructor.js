@@ -1485,21 +1485,20 @@
 					button.addEventListener("click", function () {
 						var row = rows.filter(function (item) { return item.user_id === button.getAttribute("data-issue") && item.course_id === button.getAttribute("data-course"); })[0];
 						if (!row) return;
-						var name = window.prompt("Name to print on the certificate", row.student_name || "");
-						if (!name) return;
-						var title = window.prompt("Course title to print", row.course_title || "") || row.course_title;
+						button.disabled = true;
 						current.rpc("founder_issue_certificate", {
 							p_user: row.user_id,
 							p_course: row.course_id,
-							p_display_name: name,
-							p_course_title: title,
+							p_display_name: row.student_name || "",
+							p_course_title: row.course_title || "",
 							p_issue_date: new Date().toISOString().slice(0, 10),
 							p_completion: row.completion_date || new Date().toISOString().slice(0, 10)
 						}).then(function (done) {
+							button.disabled = false;
 							if (done.error) toast(done.error.message || "The certificate could not be issued.");
 							else {
 								toast("Certificate issued.");
-								previewCertificate(done.data || {});
+								previewCertificate(done.data || row);
 							}
 						});
 					});
