@@ -279,7 +279,7 @@
 			'<a class="academy-footer-brand" href="/"><span class="academy-footer-mark"><img src="assets/img/logo.png" alt=""></span>' +
 			'<span><strong>Brylla Academy</strong><span class="tagline">Practical professional skills taught for the remote world.</span></span></a>' +
 			'<nav class="academy-footer-links" aria-label="Footer navigation">' +
-			'<a href="/#courses">Courses</a><a href="/#services">Professional Services</a><a href="/#toolkit">Free Resource</a><a href="contact-us">Contact Us</a>' +
+			'<a href="/#courses">Courses</a><a href="/#services">Professional Services</a><a href="free-materials">Free materials</a><a href="contact-us">Contact Us</a>' +
 			'</nav></div><p class="copyright">&copy; 2026 Brylla Academy. All rights reserved.</p></div></footer>';
 	}
 	function shell(page, data) {
