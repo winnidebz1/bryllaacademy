@@ -55,6 +55,46 @@
 		ctx.restore();
 	}
 
+	function printProgramme(ctx, course, width, height) {
+		var title = String(course || "").replace(/[\[\]]/g, "");
+		var left = "for successfully completing the ";
+		var right = " Programme at";
+		var size = Math.round(height * 0.021);
+		ctx.save();
+		ctx.textBaseline = "middle";
+		ctx.font = "500 " + size + "px Raleway, Arial";
+		var leftW = ctx.measureText(left).width;
+		ctx.font = "700 " + size + "px Raleway, Arial";
+		var titleW = ctx.measureText(title).width;
+		ctx.font = "500 " + size + "px Raleway, Arial";
+		var rightW = ctx.measureText(right).width;
+		var maxWidth = width * 0.78;
+		while (leftW + titleW + rightW > maxWidth && size > 14) {
+			size -= 1;
+			ctx.font = "500 " + size + "px Raleway, Arial";
+			leftW = ctx.measureText(left).width;
+			ctx.font = "700 " + size + "px Raleway, Arial";
+			titleW = ctx.measureText(title).width;
+			ctx.font = "500 " + size + "px Raleway, Arial";
+			rightW = ctx.measureText(right).width;
+		}
+		var x = (width - (leftW + titleW + rightW)) / 2;
+		var y = height * 0.638;
+		ctx.textAlign = "left";
+		ctx.fillStyle = NAVY;
+		ctx.font = "500 " + size + "px Raleway, Arial";
+		ctx.fillText(left, x, y);
+		ctx.fillStyle = TEAL;
+		ctx.font = "700 " + size + "px Raleway, Arial";
+		ctx.fillText(title, x + leftW, y);
+		ctx.fillStyle = NAVY;
+		ctx.font = "500 " + size + "px Raleway, Arial";
+		ctx.fillText(right, x + leftW + titleW, y);
+		ctx.textAlign = "center";
+		ctx.fillText("Brylla Academy", width / 2, y + size * 1.45);
+		ctx.restore();
+	}
+
 	function formatDate(value) {
 		var text = String(value || "").trim();
 		var match = /^(\d{4})-(\d{2})-(\d{2})/.exec(text);
@@ -74,14 +114,14 @@
 				var width = canvas.width;
 				var height = canvas.height;
 				var nameBox = { x: width * 0.279, y: height * 0.513, w: width * 0.425, h: height * 0.071 };
-				var programmeBox = { x: width * 0.465, y: height * 0.623, w: width * 0.191, h: height * 0.03 };
+				var programmeBox = { x: width * 0.16, y: height * 0.615, w: width * 0.68, h: height * 0.058 };
 				var dateBox = { x: width * 0.775, y: height * 0.767, w: width * 0.1, h: height * 0.028 };
-				if (nameBox) blendOut(ctx, nameBox);
-				if (programmeBox && programmeBox !== nameBox) blendOut(ctx, programmeBox);
-				if (dateBox) blendOut(ctx, dateBox);
-				printInSlot(ctx, String(row.display_name || row.student_name || "").replace(/[\[\]]/g, ""), nameBox, TEAL, "700", nameBox ? Math.round(nameBox.h * 0.82) : 56);
-				printInSlot(ctx, String(row.course_title || "").replace(/[\[\]]/g, ""), programmeBox, TEAL, "700", programmeBox ? Math.round(programmeBox.h * 0.9) : 22);
-				printInSlot(ctx, formatDate(row.issue_date), dateBox, NAVY, "600", dateBox ? Math.round(dateBox.h * 0.85) : 16);
+				blendOut(ctx, nameBox);
+				blendOut(ctx, programmeBox);
+				blendOut(ctx, dateBox);
+				printInSlot(ctx, String(row.display_name || row.student_name || "").replace(/[\[\]]/g, ""), nameBox, TEAL, "700", Math.round(nameBox.h * 0.82));
+				printProgramme(ctx, row.course_title, width, height);
+				printInSlot(ctx, formatDate(row.issue_date), dateBox, NAVY, "600", Math.round(dateBox.h * 0.85));
 				resolve(canvas);
 			};
 			image.onerror = function () { reject(new Error("The certificate template could not be loaded.")); };
