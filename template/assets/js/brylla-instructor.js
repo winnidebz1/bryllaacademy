@@ -1524,41 +1524,22 @@
 				if (!host) return;
 				host.innerHTML = '<h2 class="h6 fw-bold">Certificate preview</h2><canvas id="cert-canvas" style="width:100%;max-width:900px;border:1px solid #d5e0ea;background:#fff"></canvas><p class="mt-2"><button class="btn btn-primary btn-sm" type="button" id="cert-download">Download PDF</button></p>';
 				var canvas = document.getElementById("cert-canvas");
-				var image = new Image();
-				image.onload = function () {
-					canvas.width = image.width;
-					canvas.height = image.height;
-					var ctx = canvas.getContext("2d");
-					var width = canvas.width;
-					var height = canvas.height;
-					ctx.drawImage(image, 0, 0);
-					ctx.textAlign = "center";
-					ctx.fillStyle = "#f4f8fb";
-					ctx.fillRect(width * 0.12, height * 0.50, width * 0.76, height * 0.08);
-					ctx.fillRect(width * 0.12, height * 0.59, width * 0.76, height * 0.07);
-					ctx.fillRect(width * 0.70, height * 0.73, width * 0.18, height * 0.05);
-					ctx.fillStyle = "#13b8ad";
-					ctx.font = "700 64px Raleway, Arial";
-					ctx.fillText(row.display_name || row.student_name || "", width * 0.5, height * 0.555);
-					ctx.fillStyle = "#122d49";
-					ctx.font = "500 24px Raleway, Arial";
-					ctx.fillText("for successfully completing the " + (row.course_title || "") + " Programme at Brylla Academy", width * 0.5, height * 0.635);
-					ctx.font = "16px Raleway, Arial";
-					ctx.fillText(row.issue_date || "", width * 0.795, height * 0.765);
-					ctx.fillStyle = "#60748a";
-					ctx.font = "14px Raleway, Arial";
-					ctx.fillText(row.certificate_number || "", width * 0.5, height * 0.925);
-				};
-				image.src = "assets/img/certificates/brylla-certificate.jpg";
-				document.getElementById("cert-download").addEventListener("click", function () {
-					canvas.toBlob(function (blob) {
-						if (!blob) return;
-						var link = document.createElement("a");
-						link.href = URL.createObjectURL(blob);
-						link.download = (row.certificate_number || "certificate") + ".png";
-						link.click();
-						URL.revokeObjectURL(link.href);
-					}, "image/png");
+				var paint = window.BryllaCertificate && BryllaCertificate.draw
+					? BryllaCertificate.draw(canvas, row)
+					: Promise.reject(new Error("Certificate drawing is not available."));
+				paint.then(function () {
+					document.getElementById("cert-download").addEventListener("click", function () {
+						canvas.toBlob(function (blob) {
+							if (!blob) return;
+							var link = document.createElement("a");
+							link.href = URL.createObjectURL(blob);
+							link.download = (row.certificate_number || "certificate") + ".png";
+							link.click();
+							URL.revokeObjectURL(link.href);
+						}, "image/png");
+					});
+				}).catch(function (error) {
+					toast(error.message || "The certificate could not be previewed.");
 				});
 			}
 			draw();
