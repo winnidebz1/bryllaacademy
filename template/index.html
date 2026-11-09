@@ -145,8 +145,6 @@
 		.courses-section .enroll-button { display: flex; min-height: 48px; align-items: center; justify-content: center; margin-top: var(--space-2); border-radius: 8px; font-size: 14px; text-decoration: none; }
 		.complete-enrollment { color: #6d7f92; background: #d7e0e8; border: 1px solid #d7e0e8; }
 		.complete-enrollment:hover, .complete-enrollment:focus-visible { color: #fff; background: var(--navy); border-color: var(--navy); }
-		.pay-choice { display: grid; gap: 8px; }
-		.pay-choice .btn, .pay-choice button.btn { width: 100%; font: inherit; cursor: pointer; }
 		.momo-steps { margin: 4px 0 0; padding-left: 18px; color: #40566b; }
 		.momo-steps li + li { margin-top: 8px; }
 		.course-syllabus-link { align-self: center; margin-top: var(--space-2); padding: 4px 8px; border: 0; background: transparent; color: #075f5a; font: inherit; font-size: 13px; font-weight: 650; text-decoration: underline; text-underline-offset: 3px; cursor: pointer; }
@@ -483,7 +481,7 @@
 							<p class="fee-note" data-listing="fee-note">Pay the GHS 50 registration fee first. The remaining GHS 550 covers enrolment in the course.</p>
 							<p class="course-meta"><i class="fa-regular fa-clock" aria-hidden="true"></i><span data-listing="duration">Eight weeks, from 4 January 2027 to 1 March 2027</span></p>
 							<p class="course-meta"><i class="fa-regular fa-calendar" aria-hidden="true"></i><span>Cohort: <strong data-listing="cohort">4 January 2027 to 1 March 2027</strong></span></p>
-							<button class="btn btn-brand enroll-button" type="button" data-pay-dialog="bookkeeping-register-dialog">Register</button>
+							<a class="btn btn-brand enroll-button" href="https://paystack.shop/pay/brylla-bookkeeping-registration" target="_blank" rel="noopener">Register</a>
 							<a class="btn enroll-button complete-enrollment" href="https://paystack.shop/pay/brylla-bookkeeping-course" target="_blank" rel="noopener">Complete Enrollment</a>
 							<a class="course-syllabus-link" href="course-details">View more</a>
 						</div>
@@ -509,18 +507,6 @@
 					</div>
 				</div>
 			</div>
-			<dialog class="course-dialog" id="bookkeeping-register-dialog" aria-labelledby="bookkeeping-register-title">
-				<div class="course-dialog-content">
-					<div class="course-dialog-header">
-						<p class="mb-0" id="bookkeeping-register-title">Register</p>
-						<button class="course-dialog-close" type="button" data-dialog-close aria-label="Close"><i class="fa-solid fa-xmark" aria-hidden="true"></i></button>
-					</div>
-					<div class="pay-choice">
-						<a class="btn btn-brand" href="https://selar.com/02t97qfbf2" target="_blank" rel="noopener">International Payment</a>
-						<a class="btn btn-outline-brand" href="bookkeeping-registration">Local Payment</a>
-					</div>
-				</div>
-			</dialog>
 			<dialog class="course-dialog" id="course-syllabus-dialog" aria-labelledby="course-syllabus-title">
 				<div class="course-dialog-content">
 					<div class="course-dialog-header">
@@ -815,7 +801,6 @@
 		(() => {
 			const syllabusDialog = document.getElementById("course-syllabus-dialog");
 			const notifyDialog = document.getElementById("course-notify-dialog");
-			const registerDialog = document.getElementById("bookkeeping-register-dialog");
 			const notifyForm = document.getElementById("course-notify-form");
 			const notifyName = document.getElementById("notify-name");
 			const notifyEmail = document.getElementById("notify-email");
@@ -826,13 +811,6 @@
 			let selectedLabel = "";
 			let activeTrigger = null;
 
-			document.querySelectorAll("[data-pay-dialog]").forEach((trigger) => {
-				trigger.addEventListener("click", () => {
-					activeTrigger = trigger;
-					const dialog = document.getElementById(trigger.dataset.payDialog);
-					if (dialog) dialog.showModal();
-				});
-			});
 			document.querySelectorAll("[data-dialog-open]").forEach((trigger) => {
 				trigger.addEventListener("click", () => {
 					activeTrigger = trigger;
@@ -862,7 +840,7 @@
 				trigger.addEventListener("click", () => trigger.closest("dialog").close());
 			});
 
-			[syllabusDialog, notifyDialog, registerDialog].forEach((dialog) => {
+			[syllabusDialog, notifyDialog].forEach((dialog) => {
 				dialog.addEventListener("click", (event) => {
 					if (event.target === dialog) dialog.close();
 				});
