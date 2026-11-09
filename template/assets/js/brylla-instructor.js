@@ -11,7 +11,9 @@
 		{ week: 3, title: "Payables and reconciliations" },
 		{ week: 4, title: "Assets, loans, and adjustments" },
 		{ week: 5, title: "Xero and merchant apps" },
-		{ week: 6, title: "Month-end close and career" }
+		{ week: 6, title: "Month-end close and career" },
+		{ week: 7, title: "Catch-up" },
+		{ week: 8, title: "Mentorship" }
 	];
 	var SOURCE = {
 		instructor: { firstName: "", lastName: "", email: "", phone: "", bio: "", photo: "", qualifications: [], experience: [] },
@@ -485,7 +487,7 @@
 		if (!modules.length) return '<div class="card mt-4"><div class="card-body"><h2 class="h5 fw-bold">Module assignments</h2><p class="mb-0">This course has no modules yet.</p></div></div>';
 		var current = modules.filter(function (module) { return module.week === selectedWeek; })[0] || modules[0];
 		selectedWeek = current.week;
-		return '<div class="card mt-4" id="module-editor"><div class="card-body"><h2 class="h5 fw-bold">Module assignments</h2><p class="text-muted">Instructions students see at the end of ' + esc(course.title) + '.</p>' +
+		return '<div class="card mt-4" id="module-editor"><div class="card-body"><h2 class="h5 fw-bold">Module assignments</h2><p class="text-muted">Instructions students see at the end of ' + esc(course.title) + '. Add the welcome video and other lesson files from <a href="' + (currentArea() === "admin" ? "add-course.html?from=admin&course=" : "add-course.html?course=") + encodeURIComponent(course.id) + '">Modules and lessons</a>.</p>' +
 			'<label class="form-label" for="module-week">Module</label><select class="form-select mb-3" id="module-week">' + modules.map(function (module) {
 				return '<option value="' + module.week + '"' + (module.week === current.week ? " selected" : "") + ">Week " + module.week + ": " + esc(module.title) + "</option>";
 			}).join("") + '</select><label class="form-label" for="module-text">Instructions</label>' +
@@ -1734,7 +1736,7 @@
 		return '<div class="card mb-3" id="instructor-invite"><div class="card-body"><h2 class="h5 fw-bold">Instructor registration</h2><p class="mb-2">Share this link only with instructors. It is not shown on the student site.</p><p class="mb-0" id="instructor-invite-link">Loading the registration link…</p></div></div>';
 	}
 	function moduleUnlockCard() {
-		return '<div class="card mb-3" id="module-unlocks"><div class="card-body"><h2 class="h5 fw-bold">Open course modules</h2><p class="mb-3">Getting started opens at midnight on 4 January 2027. Week 1 opens at midnight on 5 January 2027. Each following week opens at midnight, one week later. You can still open a module early or close it.</p><div id="module-unlock-list"><p role="status">Loading modules…</p></div></div></div>';
+		return '<div class="card mb-3" id="module-unlocks"><div class="card-body"><h2 class="h5 fw-bold">Open course modules</h2><p class="mb-3">Getting started opens at midnight on 4 January 2027. Week 1 opens at midnight on 5 January 2027. Each following week, including week 8, opens at midnight one week later. You can still open a module early or close it. Use Edit on a course to add the welcome video and platform walkthrough under Getting started.</p><div id="module-unlock-list"><p role="status">Loading modules…</p></div></div></div>';
 	}
 	function modulesForCourse(course, topics, modules) {
 		if (course.id === "bookkeeping") {

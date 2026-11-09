@@ -268,7 +268,9 @@
 				var id = "w" + module.week + "l" + (index + 1);
 				ALL.push({ id: id, kind: "lesson", week: module.week, moduleKey: String(module.week), topic: module.title, n: index + 1, title: title, min: 0, lengthSeconds: 0, preview: false, summary: SUMMARIES[id] || title });
 			});
-			ALL.push({ id: "w" + module.week + "live", kind: "live", week: module.week, moduleKey: String(module.week), topic: module.title, n: 0, title: module.live, min: 0, lengthSeconds: 0, preview: false, summary: "A live session with your instructor." });
+			if (module.live) {
+				ALL.push({ id: "w" + module.week + "live", kind: "live", week: module.week, moduleKey: String(module.week), topic: module.title, n: 0, title: module.live, min: 0, lengthSeconds: 0, preview: false, summary: "A live session with your instructor." });
+			}
 		});
 		if (courseKey === "bookkeeping") {
 			ALL.unshift(
@@ -776,7 +778,45 @@
 				return;
 			}
 			applyLessonLinks(links);
+			applyGettingStarted(topics, modules, media);
 			applyUploadedMedia(modules, media);
+		}
+		function applyGettingStarted(topics, modules, media) {
+			if (courseKey !== "bookkeeping") return;
+			var topic = (topics || []).filter(function (row) {
+				return String(row.title || "").trim().toLowerCase() === "getting started";
+			})[0];
+			if (!topic) return;
+			var rows = (modules || []).filter(function (module) { return module.topic_id === topic.id; })
+				.slice()
+				.sort(function (a, b) { return (a.position || 0) - (b.position || 0); });
+			if (!rows.length) return;
+			ALL = ALL.filter(function (item) { return item.week !== 0; });
+			var startItems = rows.map(function (module, index) {
+				var title = String(module.title || "").trim();
+				var lower = title.toLowerCase();
+				var isWelcome = /welcome/.test(lower);
+				var isTutorial = /platform|walkthrough|how to use/.test(lower);
+				var id = isWelcome ? "welcome" : (isTutorial ? "platform-tutorial" : "gs-" + module.id);
+				return {
+					id: id,
+					kind: "guide",
+					week: 0,
+					moduleKey: "getting-started",
+					moduleId: module.id,
+					topic: "Start here",
+					n: index + 1,
+					title: title,
+					min: 0,
+					lengthSeconds: module.duration_seconds || 0,
+					preview: false,
+					summary: title,
+					videoUrl: module.video_url || "",
+					pageUrl: isTutorial && !module.video_url ? "platform-tutorial.html" : "",
+					downloads: []
+				};
+			});
+			ALL = startItems.concat(ALL);
 		}
 		function applyUploadedMedia(modules, media) {
 			var byTitle = {};

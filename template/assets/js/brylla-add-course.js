@@ -437,6 +437,47 @@
 			renderTopics(topicRows);
 		});
 	}
+	function ensureGettingStarted() {
+		if (courseId !== "bookkeeping") return Promise.resolve();
+		var wanted = ["Welcome to Brylla Academy", "How to use the learning platform"];
+		var topic = (topicRows || []).filter(function (row) {
+			return String(row.title || "").trim().toLowerCase() === "getting started";
+		})[0];
+		var makeTopic = topic
+			? Promise.resolve(topic)
+			: client.from("course_topics").insert({ course_id: courseId, title: "Getting started", position: 0 }).select("id,title,position").maybeSingle().then(function (saved) {
+				if (saved.error) throw new Error(saved.error.message || "Getting started could not be added.");
+				return saved.data;
+			});
+		return makeTopic.then(function (row) {
+			if (!row || !row.id) return;
+			var existing = {};
+			(row.modules || (topicRows.filter(function (item) { return item.id === row.id; })[0] || {}).modules || []).forEach(function (module) {
+				existing[String(module.title || "").trim().toLowerCase()] = true;
+			});
+			var missing = wanted.filter(function (title) { return !existing[title.toLowerCase()]; });
+			if (!missing.length) return;
+			return client.from("course_modules").select("position").eq("topic_id", row.id).order("position", { ascending: false }).limit(1).then(function (result) {
+				var last = result.data && result.data[0] ? Number(result.data[0].position) : 0;
+				if (!isFinite(last)) last = 0;
+				return missing.reduce(function (chain, title, index) {
+					return chain.then(function () {
+						return client.from("course_modules").insert({
+							course_id: courseId,
+							topic_id: row.id,
+							title: title,
+							video_url: "",
+							position: last + index + 1
+						});
+					});
+				}, Promise.resolve());
+			});
+		}).then(function () {
+			return loadTopics();
+		}).catch(function () {
+			return loadTopics();
+		});
+	}
 	function loadFaqs() {
 		return client.from("course_faqs").select("id,question,answer").eq("course_id", courseId).order("position").then(function (result) {
 			renderFaqs(result.data || []);
@@ -904,7 +945,9 @@
 	requireStaff().then(function () {
 		return openRequestedCourse();
 	}).then(function () {
-		return Promise.all([loadCourse(), loadTopics(), loadFaqs(), loadFiles(), loadVideoLinks()]);
+		return Promise.all([loadCourse(), loadTopics(), loadFaqs(), loadFiles(), loadVideoLinks()]).then(function () {
+			return ensureGettingStarted();
+		});
 	}).then(function () {
 		bindUploads();
 		bindSave();

@@ -8,7 +8,9 @@
 		{ week: 3, title: "Payables and reconciliations", live: "Find the difference", lessons: ["Accounts payable", "Bank reconciliation", "Credit card reconciliation"] },
 		{ week: 4, title: "Assets, loans, and adjustments", live: "Schedule lab", lessons: ["Fixed assets and depreciation", "Amortization, prepaid expenses, and accruals", "Loan accounts"] },
 		{ week: 5, title: "Xero and merchant apps", live: "Messy e-commerce month", lessons: ["Xero from start to finish", "Stripe", "PayPal and reconciling merchant payouts"] },
-		{ week: 6, title: "Month-end close and career", live: "Capstone presentations and mock interviews", lessons: ["Month-end close and financial reports", "Real-world practice: cleanup and catch-up", "Job sites, applications, and using AI"] }
+		{ week: 6, title: "Month-end close and career", live: "Capstone presentations and mock interviews", lessons: ["Month-end close and financial reports", "Real-world practice: cleanup and catch-up", "Job sites, applications, and using AI"] },
+		{ week: 7, title: "Catch-up", live: "", lessons: ["Time to finish outstanding assignments from weeks 1 to 6", "No new lessons are added this week"] },
+		{ week: 8, title: "Mentorship", live: "", lessons: ["Mentorship on the bookkeeping work and professional readiness", "Guidance on applying the skills. Mentorship does not guarantee employment, clients, or income"] }
 	];
 	var lessons = [];
 	var lives = [];
@@ -16,7 +18,7 @@
 		module.lessons.forEach(function (title, index) {
 			lessons.push({ id: "w" + module.week + "l" + (index + 1), week: module.week, title: title, minutes: LESSON_MINUTES });
 		});
-		lives.push({ id: "w" + module.week + "live", week: module.week, title: module.live });
+		if (module.live) lives.push({ id: "w" + module.week + "live", week: module.week, title: module.live });
 	});
 
 	function read(key) {
