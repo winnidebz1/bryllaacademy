@@ -269,14 +269,36 @@
 		:focus-visible { outline: 3px solid var(--orange); outline-offset: 3px; }
 
 		@media (min-width: 768px) and (max-width: 1199.98px) {
+			.header-inner { min-height: 72px; flex-wrap: wrap; gap: 10px 16px; }
+			.brand-lockup { order: 1; }
+			.navbar-toggler { order: 2; }
+			.header-actions { order: 3; margin-left: auto; margin-right: 0; }
+			.navbar-collapse { order: 4; width: 100%; flex-basis: 100%; padding: 3px 0 12px; }
+			.nav-links { align-items: stretch; flex-direction: column; gap: 0; }
+			.nav-links > li { border-top: 1px solid var(--line); }
+			.nav-links a { display: block; padding: 9px 3px; }
+			.menu-drop > ul { display: grid; position: static; min-width: 0; padding: 0 0 6px 14px; border: 0; border-radius: 0; box-shadow: none; }
 			.hero { padding: 28px 0 36px; }
 			.hero-stage { min-height: 0; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(240px, .95fr); grid-template-rows: auto auto; gap: 16px 22px; align-items: start; }
 			.hero-content { grid-column: 1; grid-row: 1; width: auto; padding-top: 4px; }
-			.feature-visual { position: relative; top: auto; right: auto; grid-column: 2; grid-row: 1 / span 2; width: auto; height: 100%; min-height: 240px; align-self: stretch; }
-			.feature-grid { position: relative; right: auto; bottom: auto; left: auto; grid-column: 1; grid-row: 2; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 0; }
+			.feature-visual { position: relative; top: auto; right: auto; grid-column: 2; grid-row: 1 / span 2; width: auto; height: 100%; min-height: 280px; max-height: 420px; align-self: stretch; }
+			.feature-grid { position: relative; right: auto; bottom: auto; left: auto; grid-column: 1 / -1; grid-row: 3; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 0; }
 			.hero-highlight { min-height: 72px; }
-			.audit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			.hero-highlight:nth-child(4), .hero-highlight:nth-child(5) { grid-column: span 1; }
+			.benefit-grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+			.benefit-item:nth-child(4), .benefit-item:nth-child(5) { grid-column: auto; }
+			.featured-course { grid-template-columns: minmax(0, 1fr); gap: var(--space-4); }
+			.featured-course-enrollment { padding: var(--space-4) 0 0; border-top: 1px solid var(--line); border-left: 0; }
+			.audit-grid, .services-grid, .toolkit-grid, .stories-grid, .steps-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 			.coming-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			.cta-box, .footer-inner { align-items: flex-start; flex-wrap: wrap; }
+			.footer-links { max-width: 100%; }
+		}
+		@media (min-width: 768px) and (max-width: 991.98px) {
+			.feature-grid { grid-template-columns: 1fr 1fr; }
+			.hero-highlight:last-child { grid-column: 1 / -1; }
+			.benefit-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+			.benefit-item:last-child { grid-column: 1 / -1; }
 		}
 		@media (max-width: 991.98px) {
 			.header-inner { min-height: 72px; }
@@ -340,7 +362,7 @@
 </head>
 <body>
 	<header class="site-header">
-		<nav class="container header-inner navbar navbar-expand-lg" aria-label="Main navigation">
+		<nav class="container header-inner navbar navbar-expand-xl" aria-label="Main navigation">
 			<a class="brand-lockup" href="#home" aria-label="Brylla Academy home">
 				<span class="brand-window"><img src="assets/img/logo.png" alt="Brylla Academy — digital skills for virtual work"></span>
 			</a>
@@ -660,7 +682,7 @@
 			<div class="container">
 				<div class="section-heading">
 					<h2 id="reviews-title">Professional Services</h2>
-					<p>These services can be purchased without enrolling in a course. Use Order to go to the Selar page for that service.</p>
+					<p>These services can be purchased without enrolling in a course.</p>
 				</div>
 				<div class="audit-grid services-grid">
 					<article class="audit-card" id="linkedin-optimization"><span class="toolkit-icon"><i class="fa-brands fa-linkedin-in" aria-hidden="true"></i></span><h3>Done-for-You LinkedIn Profile Optimization</h3><p>A service for professionals and freelancers who want to improve their LinkedIn profiles, communicate their value more clearly, and position themselves for career or business opportunities.</p><div class="audit-price"><a class="btn btn-brand" data-service-order="linkedin" href="https://priscilla-quaidoo.nestuge.com/linkedin-optimisation" target="_blank" rel="noopener">Order</a></div></article>

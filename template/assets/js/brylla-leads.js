@@ -53,9 +53,15 @@
 
 	function startDownload(url, filename) {
 		if (!url) return;
+		var absolute = url;
+		try {
+			absolute = url.charAt(0) === "/" || /^https?:/i.test(url)
+				? new URL(url, window.location.origin).href
+				: window.location.origin + "/" + url.replace(/^\.\//, "");
+		} catch (_error) {}
 		var link = document.createElement("a");
-		link.href = url;
-		if (filename) link.setAttribute("download", filename);
+		link.href = absolute;
+		link.setAttribute("download", filename || absolute.split("/").pop() || "download.pdf");
 		link.rel = "noopener";
 		document.body.appendChild(link);
 		link.click();
@@ -96,9 +102,21 @@
 			var kind = form.getAttribute("data-lead-kind") || "waitlist";
 			var fullName = name ? name.value.trim() : "";
 			var address = email ? email.value.trim() : "";
+			var file = form.getAttribute("data-file") || "";
+			var filename = form.getAttribute("data-download-name") || "";
+			var fallback = form.querySelector("[data-download-link]");
 			if (status) {
 				status.hidden = false;
-				status.textContent = "Saving…";
+				status.textContent = kind === "freebie" ? "Starting download…" : "Saving…";
+			}
+			if (kind === "freebie" && file) {
+				if (fallback) {
+					fallback.removeAttribute("hidden");
+					fallback.setAttribute("href", file.charAt(0) === "/" ? file : "/" + file.replace(/^\.\//, ""));
+					fallback.click();
+				} else {
+					startDownload(file, filename);
+				}
 			}
 			postLead({
 				kind: kind,
@@ -111,14 +129,11 @@
 				company: company ? company.value : ""
 			}).then(function (result) {
 				rememberLead(fullName, address);
-				if (status) status.textContent = result.message || "Saved.";
-				if (kind === "freebie" && result.download_url) {
-					startDownload(result.download_url, form.getAttribute("data-download-name") || "");
-				}
+				if (status) status.textContent = result.message || (kind === "freebie" ? "Your download is starting." : "Saved.");
 				var submit = form.querySelector("[type='submit']");
 				if (submit) submit.disabled = true;
 			}).catch(function (error) {
-				if (status) status.textContent = error.message || "The form could not be saved.";
+				if (status) status.textContent = (file ? "Your download is starting. " : "") + (error.message || "The form could not be saved.");
 			});
 		});
 	}
