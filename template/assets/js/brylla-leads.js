@@ -104,20 +104,11 @@
 			var address = email ? email.value.trim() : "";
 			var file = form.getAttribute("data-file") || "";
 			var filename = form.getAttribute("data-download-name") || "";
-			var fallback = form.querySelector("[data-download-link]");
 			if (status) {
 				status.hidden = false;
 				status.textContent = kind === "freebie" ? "Starting download…" : "Saving…";
 			}
-			if (kind === "freebie" && file) {
-				if (fallback) {
-					fallback.removeAttribute("hidden");
-					fallback.setAttribute("href", file.charAt(0) === "/" ? file : "/" + file.replace(/^\.\//, ""));
-					fallback.click();
-				} else {
-					startDownload(file, filename);
-				}
-			}
+			if (kind === "freebie" && file) startDownload(file, filename);
 			postLead({
 				kind: kind,
 				fullName: fullName,
