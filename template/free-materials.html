@@ -48,6 +48,13 @@
 		.materials-list article { padding: 22px 24px; border: 1px solid var(--line); border-radius: 16px; background: #fff; box-shadow: 0 8px 26px rgba(7,59,112,.04); }
 		.materials-list h2 { margin: 0 0 8px; font-size: 20px; }
 		.materials-list p { margin: 0 0 14px; color: var(--muted); }
+		.materials-list form { margin: 0; }
+		.materials-list label { display: block; margin: 8px 0 4px; color: var(--navy-deep); font-weight: 650; }
+		.materials-list input[type="text"], .materials-list input[type="email"] { width: 100%; min-height: 42px; margin-bottom: 8px; padding: 8px 10px; border: 1px solid #8398aa; border-radius: 8px; font: inherit; }
+		.materials-list .company-field, .materials-list input[name="company"] { position: absolute; left: -9999px; height: 0; width: 0; opacity: 0; }
+		.materials-list .consent-line { display: flex; gap: 8px; align-items: flex-start; margin: 8px 0 12px; font-weight: 500; }
+		.materials-list .consent-line input { width: auto; min-height: 0; margin-top: 3px; }
+		.materials-list [data-lead-status] { margin: 10px 0 0; color: var(--teal-dark); }
 		.site-footer { padding: 35px 0; background: #041f3c; color: #d1e0ed; }
 		.footer-inner { display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 		.footer-brand { display: flex; align-items: center; gap: 13px; text-decoration: none; }
@@ -110,28 +117,58 @@
 			<div class="materials-intro">
 				<p class="eyebrow">Free materials</p>
 				<h1>Download the freebies</h1>
-				<p>Guides, checklists, and job-search resources. No course enrolment is required. Use the link on each item to download it.</p>
+				<p>Guides, checklists, and job-search resources. Enter your name and email to download each file. No course enrolment is required.</p>
 			</div>
 			<ul class="materials-list">
 				<li>
 					<article>
 						<h2>Client Readiness Checklist</h2>
 						<p>A practical checklist for preparing your tools, communication, and delivery before you start client work.</p>
-						<a class="btn btn-brand" href="assets/resources/Client-Readiness-Checklist.pdf" download="Brylla-Academy-Client-Readiness-Checklist.pdf">Download</a>
+						<form data-lead-kind="freebie" data-freebie-id="client-readiness-checklist" data-lead-source="free-materials" data-download-name="Brylla-Academy-Client-Readiness-Checklist.pdf">
+							<label>Full name</label>
+							<input name="full_name" type="text" autocomplete="name" required maxlength="120">
+							<label>Email address</label>
+							<input name="email" type="email" autocomplete="email" required maxlength="160">
+							<label class="company-field">Company</label>
+							<input name="company" type="text" tabindex="-1" autocomplete="off">
+							<label class="consent-line"><input name="marketing_consent" type="checkbox"> Send me free resources and course updates by email. See the <a href="privacy-policy">privacy notice</a>.</label>
+							<button class="btn btn-brand" type="submit">Download</button>
+							<p data-lead-status hidden></p>
+						</form>
 					</article>
 				</li>
 				<li>
 					<article>
 						<h2>Job Boards and Platforms</h2>
 						<p>A short list of job boards and platforms you can use to find remote and freelance roles.</p>
-						<a class="btn btn-brand" href="assets/resources/Job-Boards-and-Platforms.pdf" download="Brylla-Academy-Job-Boards-and-Platforms.pdf">Download</a>
+						<form data-lead-kind="freebie" data-freebie-id="job-boards-and-platforms" data-lead-source="free-materials" data-download-name="Brylla-Academy-Job-Boards-and-Platforms.pdf">
+							<label>Full name</label>
+							<input name="full_name" type="text" autocomplete="name" required maxlength="120">
+							<label>Email address</label>
+							<input name="email" type="email" autocomplete="email" required maxlength="160">
+							<label class="company-field">Company</label>
+							<input name="company" type="text" tabindex="-1" autocomplete="off">
+							<label class="consent-line"><input name="marketing_consent" type="checkbox"> Send me free resources and course updates by email. See the <a href="privacy-policy">privacy notice</a>.</label>
+							<button class="btn btn-brand" type="submit">Download</button>
+							<p data-lead-status hidden></p>
+						</form>
 					</article>
 				</li>
 				<li>
 					<article>
 						<h2>LinkedIn Optimisation Guide</h2>
 						<p>A guide to strengthening your LinkedIn profile so it clearly shows your skills, experience, and the work you want.</p>
-						<a class="btn btn-brand" href="assets/resources/LinkedIn-Optimisation-Guide.pdf" download="Brylla-Academy-LinkedIn-Optimisation-Guide.pdf">Download</a>
+						<form data-lead-kind="freebie" data-freebie-id="linkedin-optimisation-guide-pdf" data-lead-source="free-materials" data-download-name="Brylla-Academy-LinkedIn-Optimisation-Guide.pdf">
+							<label>Full name</label>
+							<input name="full_name" type="text" autocomplete="name" required maxlength="120">
+							<label>Email address</label>
+							<input name="email" type="email" autocomplete="email" required maxlength="160">
+							<label class="company-field">Company</label>
+							<input name="company" type="text" tabindex="-1" autocomplete="off">
+							<label class="consent-line"><input name="marketing_consent" type="checkbox"> Send me free resources and course updates by email. See the <a href="privacy-policy">privacy notice</a>.</label>
+							<button class="btn btn-brand" type="submit">Download</button>
+							<p data-lead-status hidden></p>
+						</form>
 					</article>
 				</li>
 			</ul>
@@ -157,5 +194,8 @@
 		</div>
 	</footer>
 	<script src="assets/js/bootstrap.bundle.min.js"></script>
+	<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+	<script src="assets/js/brylla-public-config.js"></script>
+	<script src="assets/js/brylla-leads.js"></script>
 </body>
 </html>

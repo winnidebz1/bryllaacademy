@@ -55,6 +55,9 @@ async function syncResend(contact: MarketingContact): Promise<SyncResult> {
 	const payload = await response.json().catch(() => ({}));
 	if (!response.ok) {
 		const message = typeof payload.message === "string" ? payload.message : "Resend could not save this contact.";
+		if (/already exists|already been added|contact already/i.test(message)) {
+			return { ok: true, provider: "resend", externalId: String(payload.id || payload.data?.id || ""), error: "" };
+		}
 		return { ok: false, provider: "resend", externalId: "", error: message.slice(0, 180) };
 	}
 	return { ok: true, provider: "resend", externalId: String(payload.id || payload.data?.id || ""), error: "" };

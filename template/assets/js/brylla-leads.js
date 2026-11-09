@@ -62,39 +62,61 @@
 		link.remove();
 	}
 
+	var LEAD_STORE = "brylla-freebie-lead";
+
+	function rememberLead(name, email) {
+		try {
+			sessionStorage.setItem(LEAD_STORE, JSON.stringify({ name: name, email: email }));
+		} catch (_error) {}
+	}
+
+	function savedLead() {
+		try {
+			return JSON.parse(sessionStorage.getItem(LEAD_STORE) || "null");
+		} catch (_error) {
+			return null;
+		}
+	}
+
 	function bindForm(form) {
 		if (!form || form.getAttribute("data-lead-bound") === "1") return;
 		form.setAttribute("data-lead-bound", "1");
 		var status = form.querySelector("[data-lead-status]");
+		var name = form.querySelector("[name='full_name'], [name='name']");
+		var email = form.querySelector("[name='email']");
+		var saved = savedLead();
+		if (saved) {
+			if (name && !name.value) name.value = saved.name || "";
+			if (email && !email.value) email.value = saved.email || "";
+		}
 		form.addEventListener("submit", function (event) {
 			event.preventDefault();
-			var name = form.querySelector("[name='full_name'], [name='name']");
-			var email = form.querySelector("[name='email']");
 			var consent = form.querySelector("[name='marketing_consent']");
 			var company = form.querySelector("[name='company']");
 			var kind = form.getAttribute("data-lead-kind") || "waitlist";
+			var fullName = name ? name.value.trim() : "";
+			var address = email ? email.value.trim() : "";
 			if (status) {
 				status.hidden = false;
 				status.textContent = "Saving…";
 			}
 			postLead({
 				kind: kind,
-				fullName: name ? name.value.trim() : "",
-				email: email ? email.value.trim() : "",
+				fullName: fullName,
+				email: address,
 				marketingConsent: Boolean(consent && consent.checked),
 				courseId: form.getAttribute("data-course-id") || "",
 				freebieId: form.getAttribute("data-freebie-id") || "",
 				source: form.getAttribute("data-lead-source") || "website",
 				company: company ? company.value : ""
 			}).then(function (result) {
+				rememberLead(fullName, address);
 				if (status) status.textContent = result.message || "Saved.";
 				if (kind === "freebie" && result.download_url) {
 					startDownload(result.download_url, form.getAttribute("data-download-name") || "");
 				}
-				form.querySelectorAll("input, button").forEach(function (field) {
-					if (field.name === "company") return;
-					field.disabled = true;
-				});
+				var submit = form.querySelector("[type='submit']");
+				if (submit) submit.disabled = true;
 			}).catch(function (error) {
 				if (status) status.textContent = error.message || "The form could not be saved.";
 			});

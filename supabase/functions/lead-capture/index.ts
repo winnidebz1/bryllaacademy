@@ -28,7 +28,7 @@ Deno.serve(async (request) => {
 		if (saved.error) return json({ ok: false, error: saved.error.message || "The form could not be saved." }, 400);
 		const payload = saved.data || {};
 		if (!payload.ok) return json(payload, 400);
-		if (payload.contact_id && payload.marketing_consent && !payload.unsubscribed) {
+		if (payload.contact_id && payload.sync_needed !== false && !payload.unsubscribed) {
 			await syncLater(supabase, String(payload.contact_id), String(body.fullName || ""), String(body.email || ""), payload, body);
 		}
 		return json(payload);
