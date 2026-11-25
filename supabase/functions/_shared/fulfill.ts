@@ -1,4 +1,5 @@
 import { createClient, SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logActivity } from "./activity.ts";
 
 export function serviceClient(): SupabaseClient {
 	const url = Deno.env.get("SUPABASE_URL") ?? "";
@@ -67,6 +68,23 @@ export async function sendAccountSetup(supabase: SupabaseClient, order: { id: st
 		kind: "account_setup",
 		status: responseOk ? "sent" : "failed",
 	}, { onConflict: "order_id,kind" });
+	await logActivity(supabase, {
+		event_type: responseOk ? "payment.fulfillment.emailed" : "system.email.failed",
+		category: responseOk ? "Payment" : "System",
+		action: responseOk ? "Account setup emailed" : "Account setup email failed",
+		description: responseOk
+			? "Account setup email sent after payment fulfillment"
+			: "Account setup email failed after payment fulfillment",
+		actor_email: order.email,
+		actor_name: order.full_name,
+		actor_role: "System",
+		target_type: "order",
+		target_id: order.id,
+		target_name: order.course_id,
+		metadata: { purpose: purpose, kind: kind },
+		status: responseOk ? "Success" : "Failed",
+		severity: responseOk ? "Info" : "Error",
+	});
 	return { status: responseOk ? "sent" : "failed", link, kind };
 }
 

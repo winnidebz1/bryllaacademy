@@ -180,7 +180,24 @@
 
 	async function signOut() {
 		try {
-			if (client) await client.auth.signOut({ scope: "local" });
+			if (client) {
+				try {
+					await client.rpc("log_client_activity", {
+						p_event_type: "auth.logout",
+						p_category: "Authentication",
+						p_action: "Logout",
+						p_description: "Signed out",
+						p_target_type: "auth",
+						p_target_id: user && user.id ? user.id : null,
+						p_target_name: null,
+						p_metadata: {},
+						p_status: "Success",
+						p_severity: "Info",
+						p_session_id: null
+					});
+				} catch (_error) { /* logging must not block sign-out */ }
+				await client.auth.signOut({ scope: "local" });
+			}
 		} catch (error) {
 			// The saved session is removed below even when the network call fails.
 		}

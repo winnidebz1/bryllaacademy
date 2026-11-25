@@ -1,6 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import { corsHeaders, json } from "../_shared/http.ts";
 import { syncMarketingContact } from "../_shared/email-provider.ts";
+import { logActivity } from "../_shared/activity.ts";
 
 function serviceClient() {
 	const url = Deno.env.get("SUPABASE_URL") ?? "";
@@ -31,6 +32,22 @@ Deno.serve(async (request) => {
 		if (payload.contact_id && payload.sync_needed !== false && !payload.unsubscribed) {
 			await syncLater(supabase, String(payload.contact_id), String(body.fullName || ""), String(body.email || ""), payload, body);
 		}
+		const kind = String(body.kind || "lead");
+		await logActivity(supabase, {
+			event_type: kind === "waitlist" ? "website.waitlist.submitted" : (kind === "freebie" ? "website.download.requested" : "website.contact.submitted"),
+			category: "Website",
+			action: kind === "waitlist" ? "Waitlist submitted" : (kind === "freebie" ? "Free material download requested" : "Lead submitted"),
+			description: kind === "waitlist" ? "A visitor joined a course waitlist" : (kind === "freebie" ? "A visitor requested a free material" : "A website lead was submitted"),
+			actor_name: String(body.fullName || body.full_name || ""),
+			actor_email: String(body.email || "").trim().toLowerCase(),
+			actor_role: "Anonymous",
+			target_type: kind === "freebie" ? "freebie" : "lead",
+			target_id: String(body.freebieId || body.courseId || body.freebie_id || body.course_id || kind),
+			target_name: String(body.freebieId || body.courseId || body.freebie_id || body.course_id || kind),
+			metadata: { kind: kind, source: String(body.source || "website") },
+			status: "Success",
+			severity: "Info",
+		});
 		return json(payload);
 	} catch (_error) {
 		return json({ ok: false, error: "The form could not be saved. Try again." }, 500);

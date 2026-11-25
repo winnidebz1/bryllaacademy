@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { logActivity } from "../_shared/activity.ts";
 
 const corsHeaders = {
 	"Access-Control-Allow-Origin": "*",
@@ -72,8 +73,35 @@ async function sendCode(supabase: ReturnType<typeof serviceClient>, email: strin
 	await supabase.from("email_events").insert({ email, kind: "signup_code", status: sent.ok ? "sent" : "failed" });
 	if (!sent.ok) {
 		await supabase.from("signup_codes").delete().eq("email", email);
+		await logActivity(supabase, {
+			event_type: "system.email.failed",
+			category: "System",
+			action: "Signup email failed",
+			description: "Could not email the signup password link",
+			actor_email: email,
+			actor_role: "System",
+			target_type: "signup",
+			target_id: email,
+			status: "Failed",
+			severity: "Error",
+			metadata: { kind: "signup_code" },
+		});
 		return json({ error: sent.error || "The link could not be emailed. Try again." }, 502);
 	}
+	await logActivity(supabase, {
+		event_type: "student.registered",
+		category: "Student",
+		action: "Signup started",
+		description: "Signup link emailed so the student can choose a password",
+		actor_name: name,
+		actor_email: email,
+		actor_role: "Anonymous",
+		target_type: "signup",
+		target_id: email,
+		target_name: name,
+		status: "Success",
+		severity: "Info",
+	});
 	return json({ ok: true });
 }
 
@@ -147,6 +175,21 @@ async function completeSignup(supabase: ReturnType<typeof serviceClient>, email:
 		await supabase.from("profiles").update({ full_name: row.data.full_name }).eq("id", userId);
 	}
 	await supabase.from("signup_codes").delete().eq("email", email);
+	await logActivity(supabase, {
+		event_type: "auth.password.set",
+		category: "Authentication",
+		action: "Password created",
+		description: "Student finished signup and created a password",
+		actor_id: userId,
+		actor_name: row.data.full_name,
+		actor_email: email,
+		actor_role: "Student",
+		target_type: "profile",
+		target_id: userId || email,
+		target_name: row.data.full_name,
+		status: "Success",
+		severity: "Info",
+	});
 	return json({ ok: true });
 }
 

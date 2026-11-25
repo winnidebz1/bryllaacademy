@@ -76,7 +76,8 @@
 		{ label: "Operations", items: [
 			{ label: "Announcements", href: "admin-announcements.html", icon: "isax isax-volume-high5", page: "admin-announcements" },
 			{ label: "Certificates", href: "admin-certificates.html", icon: "isax isax-note-215", page: "certificates" },
-			{ label: "Contacts", href: "admin-contacts.html", icon: "isax isax-profile-2user5", page: "admin-contacts" }
+			{ label: "Contacts", href: "admin-contacts.html", icon: "isax isax-profile-2user5", page: "admin-contacts" },
+			{ label: "Activity & Audit Logs", href: "admin-activity-logs.html", icon: "isax isax-security-safe", page: "admin-activity-logs" }
 		] },
 		{ label: "Account", items: [
 			{ label: "My profile", href: "admin-profile.html", icon: "isax isax-user", page: "profile" },
@@ -416,7 +417,7 @@
 			'<div class="d-flex flex-wrap gap-2"><a class="btn btn-primary rounded-pill" href="add-course.html">Create course</a><a class="btn btn-light rounded-pill" href="instructor-assignment.html">Review submissions</a></div></div>' +
 			'<div class="row">' +
 			statCard("isax isax-teacher5", "bg-primary-transparent", "My courses", String(count.courses), "#my-courses", "all") +
-			statCard("isax isax-profile-2user5", "bg-info-transparent", "My students", String(count.students), "instructor-students.html") +
+			statCard("isax isax-profile-2user5", "bg-info-transparent", "My students", "…", "instructor-students.html") +
 			statCard("isax isax-clipboard-text5", "bg-warning-transparent", "Pending reviews", String(grading.length), "instructor-assignment.html") +
 			statCard("isax isax-medal-star5", "bg-success-transparent", "Course completion", rate(completion), "instructor-analytics.html") +
 			'</div><div class="card mb-4" id="attention"><div class="card-body"><h2 class="h5 fw-bold">Needs your attention</h2>' +
@@ -638,6 +639,8 @@
 				document.getElementById("earnings-readout").textContent = MONTHS[Number(button.getAttribute("data-month")) - 1] + " " + earningsYear + ", " + money(button.getAttribute("data-amount"));
 			});
 		});
+		paintInstructorStudentCounts(root);
+		syncInstructorStudents(data, root);
 	}
 
 	function renderCourses(root, data) {
@@ -891,14 +894,15 @@
 					return '<option value="' + option[0] + '"' + (option[0] === statusFilter ? " selected" : "") + ">" + option[1] + "</option>";
 				}).join("") + "</select></div>" +
 				(list.length ? table(
-					[{ label: "Assignment", sort: "title" }, { label: "Course" }, { label: "Module" }, { label: "Due date", sort: "due" }, { label: "Total marks" }, { label: "Submitted" }, { label: "To grade" }, { label: "Status", sort: "status" }],
+					[{ label: "Assignment", sort: "title" }, { label: "Course" }, { label: "Module" }, { label: "Due date", sort: "due" }, { label: "Total marks" }, { label: "Submitted" }, { label: "To grade" }, { label: "Status", sort: "status" }, { label: "Actions" }],
 					list.map(function (item) {
 						var course = courseById(data, item.courseId);
 						var module = course && course.modules ? course.modules.filter(function (entry) { return entry.week === Number(item.moduleWeek); })[0] : null;
 						var waiting = submitted(item.id).filter(function (row) { return row.score == null; }).length;
 						return "<tr>" + cell("Assignment", esc(item.title)) + cell("Course", esc(course ? course.title : "")) + cell("Module", module ? "Week " + module.week + ": " + esc(module.title) : "Not set") +
 							cell("Due date", formatDate(item.due)) + cell("Total marks", String(item.marks || 0)) + cell("Submitted", String(submitted(item.id).length)) +
-							cell("To grade", '<button class="linkish" type="button" data-grade-list="' + esc(item.id) + '">' + waiting + "</button>") + cell("Status", statusBadge(item.status || "draft")) + "</tr>";
+							cell("To grade", '<button class="linkish" type="button" data-grade-list="' + esc(item.id) + '">' + waiting + "</button>") + cell("Status", statusBadge(item.status || "draft")) +
+							cell("Actions", '<button class="btn btn-light btn-sm" type="button" data-delete-assignment="' + esc(item.id) + '" data-delete-title="' + esc(item.title) + '" aria-label="Delete ' + esc(item.title) + '" title="Delete"><i class="isax isax-trash" aria-hidden="true"></i></button>') + "</tr>";
 					})
 				) : empty(data.assignments.length ? "No assignments match." : "No assignments yet. Create one for a module.")) +
 				'<div id="grade-list" class="mt-3"></div>' +
@@ -957,6 +961,33 @@
 					document.getElementById("grade-list").innerHTML = rows.length ? rows.map(gradeForm).join("") : empty("No submissions to grade yet.");
 				});
 			});
+			root.querySelectorAll("[data-delete-assignment]").forEach(function (button) {
+				button.addEventListener("click", function () {
+					var id = button.getAttribute("data-delete-assignment");
+					var title = button.getAttribute("data-delete-title") || "this assignment";
+					if (!window.confirm("Delete \"" + title + "\"? Students will no longer see it.")) return;
+					var current = staffClient();
+					if (!current) { toast("Sign in again, then delete the assignment."); return; }
+					toast("Deleting assignment…");
+					current.rpc("delete_course_assignment", { p_assignment: id }).then(function (result) {
+						if (result.error) {
+							return current.from("course_assignments").delete().eq("id", id).eq("kind", "assignment").then(function (fallback) {
+								if (fallback.error) { toast(fallback.error.message || "The assignment could not be deleted."); return; }
+								data.assignments = data.assignments.filter(function (item) { return item.id !== id; });
+								save(data);
+								toast("Assignment deleted.");
+								draw();
+							});
+						}
+						data.assignments = data.assignments.filter(function (item) { return item.id !== id; });
+						save(data);
+						toast("Assignment deleted.");
+						draw();
+					}).catch(function () {
+						toast("The assignment could not be deleted.");
+					});
+				});
+			});
 		}
 		root.addEventListener("submit", function (event) {
 			var form = event.target.closest("[data-grade]");
@@ -978,6 +1009,90 @@
 		if (!current) return Promise.resolve({ error: { message: "Sign in to see enrolments." }, data: [] });
 		return current.rpc("founder_enrolments").then(function (result) {
 			return { error: result.error, data: result.data || [] };
+		});
+	}
+	function loadStaffEnrolments() {
+		var current = staffClient();
+		if (!current) return Promise.resolve({ error: { message: "Sign in to see enrolments." }, data: [] });
+		return current.rpc("staff_enrolments").then(function (result) {
+			if (result.error) {
+				return current.rpc("founder_enrolments").then(function (fallback) {
+					return { error: fallback.error, data: fallback.data || [] };
+				});
+			}
+			return { error: null, data: result.data || [] };
+		}).catch(function () {
+			return { error: { message: "Enrolments could not be loaded." }, data: [] };
+		});
+	}
+	function applyStaffEnrolments(data, rows) {
+		var people = {};
+		var students = [];
+		var enrolments = [];
+		(rows || []).forEach(function (row) {
+			var email = String(row.email || "").toLowerCase();
+			var personKey = row.user_id || email || String(row.id || "");
+			var studentId = personKey;
+			if (!people[personKey]) {
+				people[personKey] = {
+					id: studentId,
+					name: row.student_name || row.email || "Student",
+					email: row.email || "",
+					lastActive: row.enrolled_at || ""
+				};
+				students.push(people[personKey]);
+			}
+			enrolments.push({
+				id: row.id,
+				studentId: studentId,
+				courseId: row.course_id || "",
+				courseTitle: row.course_title || "",
+				status: row.status === "active" ? "on track" : (row.status || "inactive"),
+				rawStatus: row.status || "",
+				progress: null,
+				quizAverage: null,
+				submitted: 0,
+				enrolledAt: row.enrolled_at || ""
+			});
+		});
+		data.students = students;
+		data.enrolments = enrolments;
+		return { students: students.length, enrolments: enrolments.length };
+	}
+	function paintInstructorStudentCounts(root) {
+		if (!root) return;
+		root.querySelectorAll(".card-body span").forEach(function (label) {
+			if (label.textContent !== "My students") return;
+			var value = label.parentElement.querySelector("h4");
+			if (value) value.setAttribute("data-live-students", "");
+		});
+		root.querySelectorAll("tr[data-course]").forEach(function (row) {
+			var courseId = row.getAttribute("data-course");
+			var cellNode = row.querySelector('[data-label="Students"]');
+			if (cellNode) cellNode.setAttribute("data-live-course-students", courseId);
+		});
+	}
+	function refreshLiveStudentCounts(data) {
+		var value = document.querySelector("[data-live-students]");
+		if (value && document.body.contains(value)) value.textContent = String((data.students || []).length);
+		document.querySelectorAll("[data-live-course-students]").forEach(function (node) {
+			if (!document.body.contains(node)) return;
+			node.textContent = String(studentCount(data, node.getAttribute("data-live-course-students")));
+		});
+	}
+	function syncInstructorStudents(data, root) {
+		return loadStaffEnrolments().then(function (result) {
+			if (result.error) {
+				if (root) {
+					var value = root.querySelector("[data-live-students]");
+					if (value) value.textContent = "Unavailable";
+				}
+				return result;
+			}
+			applyStaffEnrolments(data, result.data || []);
+			save(data);
+			refreshLiveStudentCounts(data);
+			return result;
 		});
 	}
 	function scoreCsvCell(value) {
@@ -1167,30 +1282,33 @@
 		var sortKey = "name";
 		var sortDir = 1;
 		var focusId = "";
+		var loading = true;
+		var loadError = "";
 		function draw() {
 			var list = data.students.filter(function (student) {
 				var enrolment = data.enrolments.filter(function (row) { return row.studentId === student.id; })[0];
 				var status = enrolment ? enrolment.status : "inactive";
-				var follow = status === "at risk" || status === "inactive";
+				var follow = status === "at risk" || status === "inactive" || status === "pending_setup";
 				if (filter === "on track" && status !== "on track") return false;
 				if (filter === "follow" && !follow) return false;
-				return (student.name || "").toLowerCase().indexOf(query.toLowerCase()) !== -1;
+				return (student.name || "").toLowerCase().indexOf(query.toLowerCase()) !== -1 || (student.email || "").toLowerCase().indexOf(query.toLowerCase()) !== -1;
 			});
 			list.sort(function (a, b) { return String(a[sortKey] || "").localeCompare(String(b[sortKey] || "")) * sortDir; });
-			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><div class="instructor-tools d-flex flex-wrap gap-2 mb-3"><label class="visually-hidden" for="student-search">Search students</label><input class="form-control" id="student-search" placeholder="Search students" value="' + esc(query) + '">' +
+			root.innerHTML = '<h1 class="h5 fw-bold">Students</h1><p class="mb-3">Students enrolled on the platform. This list updates from live enrolments.</p><div class="instructor-tools d-flex flex-wrap gap-2 mb-3"><label class="visually-hidden" for="student-search">Search students</label><input class="form-control" id="student-search" placeholder="Search students" value="' + esc(query) + '">' +
 				'<div role="group" aria-label="Filter students"><button class="btn btn-light" type="button" data-filter="all">All</button> <button class="btn btn-light" type="button" data-filter="on track">On track</button> <button class="btn btn-light" type="button" data-filter="follow">Needs follow-up</button></div></div>' +
-				(list.length ? table(
+				(loading ? '<p role="status">Loading students…</p>' : (loadError ? empty(loadError) : (list.length ? table(
 					[{ label: "Student", sort: "name" }, { label: "Course" }, { label: "Progress" }, { label: "Last active", sort: "lastActive" }, { label: "Status" }],
 					list.map(function (student) {
 						var enrolment = data.enrolments.filter(function (row) { return row.studentId === student.id; })[0];
-						var course = enrolment ? courseById(data, enrolment.courseId) : null;
+						var course = enrolment ? (courseById(data, enrolment.courseId) || { title: enrolment.courseTitle || "" }) : null;
 						var expanded = openId === student.id;
 						return '<tr><td data-label="Student"><button class="linkish" type="button" data-open="' + esc(student.id) + '" aria-expanded="' + expanded + '">' + esc(student.name) + "</button></td>" +
 							cell("Course", esc(course ? course.title : "Not enrolled")) + cell("Progress", enrolment && enrolment.progress != null ? rate(enrolment.progress) : "Not yet") +
 							cell("Last active", formatDate(student.lastActive)) + cell("Status", statusBadge(enrolment ? enrolment.status : "inactive")) + "</tr>" +
-							(expanded ? '<tr class="instructor-expand"><td colspan="5" data-label="Detail"><p>Weekly progress: ' + rate(enrolment && enrolment.progress) + "</p><p>Quiz average: " + rate(enrolment && enrolment.quizAverage) + "</p><p>Assignments submitted: " + (enrolment ? enrolment.submitted || 0 : 0) + '</p><a class="btn btn-light rounded-pill me-2" href="instructor-message.html">Send message</a><button class="btn btn-primary rounded-pill" type="button" data-remind="' + esc(student.id) + '">Send reminder</button></td></tr>' : "");
+							(expanded ? '<tr class="instructor-expand"><td colspan="5" data-label="Detail"><p>Email: ' + esc(student.email || "Not available") + "</p><p>Weekly progress: " + rate(enrolment && enrolment.progress) + "</p><p>Quiz average: " + rate(enrolment && enrolment.quizAverage) + "</p><p>Assignments submitted: " + (enrolment ? enrolment.submitted || 0 : 0) + '</p><a class="btn btn-light rounded-pill me-2" href="instructor-message.html">Send message</a><button class="btn btn-primary rounded-pill" type="button" data-remind="' + esc(student.id) + '">Send reminder</button></td></tr>' : "");
 					})
-				) : empty("No students yet. They appear here after they enrol."));
+				) : empty("No students yet. They appear here after they enrol."))));
+			if (loading || loadError) return;
 			if (focusId) restoreField(focusId);
 			document.getElementById("student-search").addEventListener("input", function (event) { query = event.target.value; focusId = "student-search"; draw(); });
 			root.querySelectorAll("[data-sort]").forEach(function (header) {
@@ -1214,6 +1332,14 @@
 			});
 		}
 		draw();
+		syncInstructorStudents(data, root).then(function (result) {
+			loading = false;
+			loadError = result && result.error ? (result.error.message || "Students could not be loaded.") : "";
+			draw();
+		});
+		watchEnrolments(function () {
+			syncInstructorStudents(data, root).then(function () { draw(); });
+		});
 	}
 
 	function renderAdminStudents(root) {
@@ -2177,10 +2303,12 @@
 		var completion = scored.length ? Math.round(scored.reduce(function (sum, row) { return sum + Number(row.progress); }, 0) / scored.length) : null;
 		root.innerHTML = '<h1 class="h5 fw-bold">Teaching analytics</h1><p>Completion and grading for your courses. Academy revenue is not shown here.</p><div class="row">' +
 			statCard("isax isax-teacher5", "bg-primary-transparent", "My courses", String(count.courses), "instructor-course.html") +
-			statCard("isax isax-profile-2user5", "bg-info-transparent", "My students", String(count.students), "instructor-students.html") +
+			statCard("isax isax-profile-2user5", "bg-info-transparent", "My students", "…", "instructor-students.html") +
 			statCard("isax isax-clipboard-text5", "bg-warning-transparent", "Pending reviews", String(pending), "instructor-assignment.html") +
 			statCard("isax isax-medal-star5", "bg-success-transparent", "Course completion", rate(completion), "instructor-analytics.html") +
 			"</div>";
+		paintInstructorStudentCounts(root);
+		syncInstructorStudents(data, root);
 	}
 	function renderMessages(root) {
 		root.innerHTML = '<h1 class="h5 fw-bold">Messages</h1><p>A message sent here shows on that student\'s notification bell. Students cannot see each other\'s messages.</p>' +
@@ -2353,6 +2481,260 @@
 		});
 	}
 
+	function renderActivityLogs(root) {
+		var current = staffClient();
+		var state = {
+			category: "All",
+			severity: "All",
+			status: "All",
+			role: "All",
+			search: "",
+			eventType: "",
+			targetId: "",
+			range: "30",
+			from: "",
+			to: "",
+			offset: 0,
+			limit: 40,
+			rows: [],
+			total: 0,
+			summary: null,
+			selected: null,
+			error: "",
+			loading: true
+		};
+		var channel = null;
+		function rangeBounds() {
+			var now = new Date();
+			var to = now.toISOString();
+			var from = null;
+			if (state.range === "today") {
+				var start = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
+				from = start.toISOString();
+			} else if (state.range === "yesterday") {
+				var yStart = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate() - 1));
+				var yEnd = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()) - 1);
+				return { from: yStart.toISOString(), to: yEnd.toISOString() };
+			} else if (state.range === "7") from = new Date(now.getTime() - 7 * 86400000).toISOString();
+			else if (state.range === "30") from = new Date(now.getTime() - 30 * 86400000).toISOString();
+			else if (state.range === "90") from = new Date(now.getTime() - 90 * 86400000).toISOString();
+			else if (state.range === "custom") {
+				from = state.from ? new Date(state.from).toISOString() : null;
+				to = state.to ? new Date(state.to).toISOString() : to;
+			}
+			return { from: from, to: to };
+		}
+		function severityBadge(value) {
+			var map = { Info: "badge-light", Warning: "badge-warning-transparent", Error: "badge-light", Critical: "badge-warning-transparent" };
+			return '<span class="badge ' + (map[value] || "badge-light") + '">' + esc(value || "Info") + "</span>";
+		}
+		function statusBadgeLocal(value) {
+			return '<span class="badge ' + (value === "Failed" ? "badge-light" : value === "Warning" ? "badge-warning-transparent" : "badge-success-transparent") + '">' + esc(value || "Success") + "</span>";
+		}
+		function summaryCards(summary) {
+			var s = summary || {};
+			return '<div class="row">' +
+				statCard("isax isax-activity", "bg-primary-transparent", "Total Activities", String(s.total == null ? "…" : s.total), "#activity-feed") +
+				statCard("isax isax-calendar-1", "bg-info-transparent", "Activities Today", String(s.today == null ? "…" : s.today), "#activity-feed") +
+				statCard("isax isax-profile-2user5", "bg-success-transparent", "Active Users Today", String(s.active_users_today == null ? "…" : s.active_users_today), "#activity-feed") +
+				statCard("isax isax-close-circle", "bg-warning-transparent", "Failed Activities", String(s.failed == null ? "…" : s.failed), "#activity-feed") +
+				statCard("isax isax-security-safe", "bg-danger-transparent", "Critical Security Events", String(s.critical == null ? "…" : s.critical), "#activity-feed") +
+				statCard("isax isax-warning-2", "bg-light", "System Errors", String(s.system_errors == null ? "…" : s.system_errors), "#activity-feed") +
+				"</div>";
+		}
+		function detailHtml(row) {
+			if (!row) return "";
+			function block(label, value) {
+				return '<p class="mb-2"><strong>' + esc(label) + ":</strong> " + value + "</p>";
+			}
+			function jsonBlock(label, value) {
+				if (value == null) return "";
+				return '<div class="mb-3"><strong>' + esc(label) + '</strong><pre class="bg-light border rounded p-2 small mb-0" style="white-space:pre-wrap">' + esc(JSON.stringify(value, null, 2)) + "</pre></div>";
+			}
+			var compare = "";
+			if (row.previous_values || row.new_values) {
+				compare = '<div class="mb-3"><strong>Before / after</strong><div class="row g-2 mt-1"><div class="col-md-6"><div class="border rounded p-2 bg-light"><div class="small text-muted mb-1">Previous</div><pre class="small mb-0" style="white-space:pre-wrap">' + esc(JSON.stringify(row.previous_values || {}, null, 2)) + '</pre></div></div><div class="col-md-6"><div class="border rounded p-2 bg-light"><div class="small text-muted mb-1">New</div><pre class="small mb-0" style="white-space:pre-wrap">' + esc(JSON.stringify(row.new_values || {}, null, 2)) + "</pre></div></div></div></div>";
+			}
+			return '<div class="card mb-3" id="activity-detail"><div class="card-body"><div class="d-flex justify-content-between gap-2 mb-2"><h2 class="h5 fw-bold mb-0">Activity detail</h2><button class="btn btn-light btn-sm" type="button" data-close-detail>Close</button></div>' +
+				block("Action", esc(row.action || "")) +
+				block("Description", esc(row.description || "")) +
+				block("Event type", esc(row.event_type || "")) +
+				block("Category", esc(row.category || "")) +
+				block("Actor", esc((row.actor_name || "System") + (row.actor_email ? " · " + row.actor_email : ""))) +
+				block("Role", esc(row.actor_role || "")) +
+				block("When", esc(formatDate(row.created_at))) +
+				block("Target", esc([row.target_type, row.target_name || row.target_id].filter(Boolean).join(" · ") || "None")) +
+				block("Status", statusBadgeLocal(row.status)) +
+				block("Severity", severityBadge(row.severity)) +
+				block("Request ID", esc(row.request_id || "None")) +
+				block("Session", esc(row.session_id || "None")) +
+				compare +
+				jsonBlock("Metadata", row.metadata) +
+				"</div></div>";
+		}
+		function feedHtml() {
+			if (state.loading) return '<p role="status">Loading activity…</p>';
+			if (state.error) return empty(state.error);
+			if (!state.rows.length) return empty("No activity matches these filters.");
+			return '<ul class="list-unstyled mb-0">' + state.rows.map(function (row) {
+				return '<li class="border rounded p-3 mb-2"><button class="linkish text-start w-100" type="button" data-open-activity="' + esc(row.id) + '"><div class="d-flex flex-wrap justify-content-between gap-2"><strong>[' + esc(row.actor_role || "System") + "] " + esc(row.action || row.event_type) + "</strong><span>" + esc(formatDate(row.created_at)) + "</span></div><p class=\"mb-1 mt-1\">" + esc(row.description || "") + "</p><div class=\"d-flex flex-wrap gap-2 small\">" + esc(row.category || "") + " · " + statusBadgeLocal(row.status) + " " + severityBadge(row.severity) + (row.target_name ? " · " + esc(row.target_name) : "") + "</div></button></li>";
+			}).join("") + "</ul>";
+		}
+		function draw() {
+			var categories = ["All", "Website", "Student", "Instructor", "Admin", "Payment", "Course", "Enrollment", "Authentication", "Security", "Notification", "System"];
+			root.innerHTML = '<div class="dash-head"><div><h1 class="h5 fw-bold mb-1">Activity & Audit Logs</h1><p class="mb-0">Monitor platform activity, review important changes, and track everything happening across Brylla Academy.</p></div><div class="d-flex flex-wrap gap-2"><button class="btn btn-light rounded-pill" type="button" id="activity-refresh">Refresh</button><button class="btn btn-primary rounded-pill" type="button" id="activity-export">Export CSV</button></div></div>' +
+				summaryCards(state.summary) +
+				'<div class="card mb-3"><div class="card-body"><div class="row g-2 align-items-end">' +
+				'<div class="col-md-3"><label class="form-label" for="al-search">Search</label><input class="form-control" id="al-search" value="' + esc(state.search) + '" placeholder="Actor, description, course"></div>' +
+				'<div class="col-md-2"><label class="form-label" for="al-category">Category</label><select class="form-select" id="al-category">' + categories.map(function (item) { return '<option value="' + item + '"' + (item === state.category ? " selected" : "") + ">" + item + "</option>"; }).join("") + "</select></div>" +
+				'<div class="col-md-2"><label class="form-label" for="al-severity">Severity</label><select class="form-select" id="al-severity">' + ["All", "Info", "Warning", "Error", "Critical"].map(function (item) { return '<option value="' + item + '"' + (item === state.severity ? " selected" : "") + ">" + item + "</option>"; }).join("") + "</select></div>" +
+				'<div class="col-md-2"><label class="form-label" for="al-status">Status</label><select class="form-select" id="al-status">' + ["All", "Success", "Failed", "Pending", "Warning"].map(function (item) { return '<option value="' + item + '"' + (item === state.status ? " selected" : "") + ">" + item + "</option>"; }).join("") + "</select></div>" +
+				'<div class="col-md-2"><label class="form-label" for="al-role">Role</label><select class="form-select" id="al-role">' + ["All", "Student", "Instructor", "Admin", "Anonymous", "System"].map(function (item) { return '<option value="' + item + '"' + (item === state.role ? " selected" : "") + ">" + item + "</option>"; }).join("") + "</select></div>" +
+				'<div class="col-md-3"><label class="form-label" for="al-range">Date range</label><select class="form-select" id="al-range">' + [["today", "Today"], ["yesterday", "Yesterday"], ["7", "Last 7 days"], ["30", "Last 30 days"], ["90", "Last 90 days"], ["custom", "Custom range"]].map(function (item) { return '<option value="' + item[0] + '"' + (item[0] === state.range ? " selected" : "") + ">" + item[1] + "</option>"; }).join("") + "</select></div>" +
+				'<div class="col-md-2"><label class="form-label" for="al-event">Event type</label><input class="form-control" id="al-event" value="' + esc(state.eventType) + '" placeholder="auth.login"></div>' +
+				'<div class="col-md-2"><label class="form-label" for="al-target">Target ID</label><input class="form-control" id="al-target" value="' + esc(state.targetId) + '"></div>' +
+				(state.range === "custom" ? '<div class="col-md-2"><label class="form-label" for="al-from">From</label><input class="form-control" id="al-from" type="datetime-local" value="' + esc(state.from) + '"></div><div class="col-md-2"><label class="form-label" for="al-to">To</label><input class="form-control" id="al-to" type="datetime-local" value="' + esc(state.to) + '"></div>' : "") +
+				'<div class="col-md-2"><button class="btn btn-primary w-100" type="button" id="al-apply">Apply filters</button></div>' +
+				"</div></div></div>" +
+				(state.selected ? detailHtml(state.selected) : "") +
+				'<div class="card mb-3" id="activity-feed"><div class="card-body"><div class="d-flex justify-content-between align-items-center mb-3"><h2 class="h5 fw-bold mb-0">Activity feed</h2><span class="small">' + (state.total ? ("Showing " + Math.min(state.offset + 1, state.total) + "-" + Math.min(state.offset + state.rows.length, state.total) + " of " + state.total) : "") + "</span></div>" + feedHtml() +
+				'<div class="d-flex gap-2 mt-3"><button class="btn btn-light" type="button" id="al-prev"' + (state.offset <= 0 ? " disabled" : "") + ">Previous</button><button class=\"btn btn-light\" type=\"button\" id=\"al-next\"" + (state.offset + state.rows.length >= state.total ? " disabled" : "") + ">Next</button></div></div></div>";
+			bind();
+		}
+		function bind() {
+			function readFilters() {
+				state.search = document.getElementById("al-search").value.trim();
+				state.category = document.getElementById("al-category").value;
+				state.severity = document.getElementById("al-severity").value;
+				state.status = document.getElementById("al-status").value;
+				state.role = document.getElementById("al-role").value;
+				state.range = document.getElementById("al-range").value;
+				state.eventType = document.getElementById("al-event").value.trim();
+				state.targetId = document.getElementById("al-target").value.trim();
+				if (state.range === "custom") {
+					state.from = (document.getElementById("al-from") || {}).value || "";
+					state.to = (document.getElementById("al-to") || {}).value || "";
+				}
+			}
+			document.getElementById("al-apply").addEventListener("click", function () { readFilters(); state.offset = 0; load(); });
+			document.getElementById("al-range").addEventListener("change", function () { readFilters(); draw(); });
+			document.getElementById("activity-refresh").addEventListener("click", function () { load(true); });
+			document.getElementById("activity-export").addEventListener("click", exportCsv);
+			document.getElementById("al-prev").addEventListener("click", function () { state.offset = Math.max(0, state.offset - state.limit); load(); });
+			document.getElementById("al-next").addEventListener("click", function () { state.offset += state.limit; load(); });
+			root.querySelectorAll("[data-open-activity]").forEach(function (button) {
+				button.addEventListener("click", function () {
+					state.selected = state.rows.filter(function (row) { return row.id === button.getAttribute("data-open-activity"); })[0] || null;
+					draw();
+					var detail = document.getElementById("activity-detail");
+					if (detail) detail.scrollIntoView({ block: "start" });
+				});
+			});
+			var close = root.querySelector("[data-close-detail]");
+			if (close) close.addEventListener("click", function () { state.selected = null; draw(); });
+		}
+		function load(keepOffset) {
+			if (!current) {
+				state.loading = false;
+				state.error = "Sign in as the founder to view activity logs.";
+				draw();
+				return;
+			}
+			if (!keepOffset) state.loading = true;
+			draw();
+			var bounds = rangeBounds();
+			Promise.all([
+				current.rpc("activity_logs_summary", { p_days: 30 }),
+				current.rpc("activity_logs_page", {
+					p_limit: state.limit,
+					p_offset: state.offset,
+					p_category: state.category === "All" ? null : state.category,
+					p_severity: state.severity === "All" ? null : state.severity,
+					p_status: state.status === "All" ? null : state.status,
+					p_role: state.role === "All" ? null : state.role,
+					p_search: state.search || null,
+					p_event_type: state.eventType || null,
+					p_target_id: state.targetId || null,
+					p_from: bounds.from,
+					p_to: bounds.to
+				})
+			]).then(function (results) {
+				var summary = results[0];
+				var page = results[1];
+				state.loading = false;
+				if (summary.error || page.error) {
+					state.error = (summary.error && summary.error.message) || (page.error && page.error.message) || "Activity logs could not be loaded.";
+					state.rows = [];
+					state.total = 0;
+					state.summary = null;
+					draw();
+					return;
+				}
+				state.error = "";
+				state.summary = summary.data || {};
+				state.rows = page.data || [];
+				state.total = state.rows.length ? Number(state.rows[0].total_count || state.rows.length) : 0;
+				draw();
+			}).catch(function () {
+				state.loading = false;
+				state.error = "Activity logs could not be loaded.";
+				draw();
+			});
+		}
+		function exportCsv() {
+			var bounds = rangeBounds();
+			if (!current) return;
+			toast("Preparing export…");
+			current.rpc("activity_logs_page", {
+				p_limit: 200,
+				p_offset: 0,
+				p_category: state.category === "All" ? null : state.category,
+				p_severity: state.severity === "All" ? null : state.severity,
+				p_status: state.status === "All" ? null : state.status,
+				p_role: state.role === "All" ? null : state.role,
+				p_search: state.search || null,
+				p_event_type: state.eventType || null,
+				p_target_id: state.targetId || null,
+				p_from: bounds.from,
+				p_to: bounds.to
+			}).then(function (result) {
+				if (result.error) { toast(result.error.message || "Export failed."); return; }
+				var rows = [["Date", "Actor", "Role", "Event", "Category", "Target", "Status", "Severity", "Description"]];
+				(result.data || []).forEach(function (row) {
+					rows.push([
+						row.created_at || "",
+						row.actor_name || "",
+						row.actor_role || "",
+						row.event_type || "",
+						row.category || "",
+						row.target_name || row.target_id || "",
+						row.status || "",
+						row.severity || "",
+						row.description || ""
+					]);
+				});
+				downloadTextFile("brylla-activity-logs.csv", rows.map(function (row) { return row.map(scoreCsvCell).join(","); }).join("\r\n"), "text/csv");
+				toast("Exported " + (result.data || []).length + " activities.");
+			});
+		}
+		function watch() {
+			if (!current || channel) return;
+			channel = current.channel("founder-activity-logs").on("postgres_changes", {
+				event: "INSERT",
+				schema: "public",
+				table: "activity_logs"
+			}, function (payload) {
+				var row = payload.new;
+				if (!row) return;
+				if (row.severity === "Critical") toast("Critical security event recorded.");
+				if (state.offset === 0) load(true);
+			}).subscribe();
+		}
+		draw();
+		load();
+		watch();
+	}
+
 	var PAGES = {
 		dashboard: renderDashboard,
 		courses: renderCourses,
@@ -2365,6 +2747,7 @@
 		"admin-contacts": renderLeads,
 		profile: renderProfile,
 		analytics: renderAnalytics,
+		"admin-activity-logs": renderActivityLogs,
 		help: function (root) {
 			root.innerHTML = '<h1 class="h5 fw-bold">Help</h1><div class="card"><div class="card-body"><p>Open courses, assignments, students, and announcements from the menu.</p><ul class="mb-0"><li><a href="/#faqs">Questions on the academy site</a></li><li><a href="contact-us">Contact Brylla Academy</a></li><li><a href="instructor-profile.html">Update your profile</a></li></ul></div></div>';
 		},

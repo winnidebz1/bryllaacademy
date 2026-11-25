@@ -157,6 +157,7 @@
 		<script src="assets/js/script.js"></script>
 		<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 		<script src="assets/js/brylla-public-config.js"></script>
+		<script src="assets/js/brylla-activity.js"></script>
 		<script>
 			(function () {
 				var config = window.BryllaPublic || {};
@@ -193,6 +194,19 @@
 					var result = await client.auth.signInWithPassword({ email: email, password: password });
 					if (result.error) {
 						button.disabled = false;
+						if (window.BryllaActivity) {
+							window.BryllaActivity.log({
+								event_type: "auth.login.failed",
+								category: "Authentication",
+								action: "Login failed",
+								description: "A sign-in attempt failed",
+								target_type: "auth",
+								target_id: email,
+								status: "Failed",
+								severity: "Warning",
+								metadata: { reason: "invalid_credentials" }
+							});
+						}
 						return showError(result.error.status === 400 ? "That email and password don't match. Try again, or use Forgot Password." : result.error.message);
 					}
 					var profile = await client.from("profiles").select("role,account_status").eq("id", result.data.user.id).maybeSingle();
@@ -200,7 +214,32 @@
 					if (role === "student" && profile.data.account_status === "pending") {
 						await client.auth.signOut({ scope: "local" });
 						button.disabled = false;
+						if (window.BryllaActivity) {
+							window.BryllaActivity.log({
+								event_type: "security.login.blocked_pending",
+								category: "Security",
+								action: "Pending account blocked from sign-in",
+								description: "A pending student account tried to sign in before approval",
+								target_type: "profile",
+								target_id: result.data.user.id,
+								status: "Warning",
+								severity: "Warning"
+							});
+						}
 						return showError("Your account is waiting for approval. We will email you when it is approved so you can sign in.");
+					}
+					if (window.BryllaActivity) {
+						window.BryllaActivity.log({
+							event_type: "auth.login.success",
+							category: "Authentication",
+							action: "Login succeeded",
+							description: "Signed in successfully",
+							target_type: "auth",
+							target_id: result.data.user.id,
+							status: "Success",
+							severity: "Info",
+							metadata: { role: role || "student" }
+						});
 					}
 					sessionStorage.setItem("brylla-role", role || "student");
 					if (role === "founder") location.replace("admin-dashboard");
